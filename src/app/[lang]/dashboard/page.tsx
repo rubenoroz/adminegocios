@@ -41,10 +41,13 @@ export default function DashboardPage() {
 
     if (status === "loading") {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div
+                className="flex items-center justify-center min-h-screen"
+                style={{ backgroundColor: '#ffffff' }}
+            >
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-                    <p className="mt-4 text-muted-text">Cargando...</p>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="mt-4" style={{ color: '#64748b' }}>Cargando...</p>
                 </div>
             </div>
         );

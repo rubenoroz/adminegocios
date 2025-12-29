@@ -37,7 +37,7 @@ export default async function RootLayout({
   const { lang } = await params;
   return (
     <html lang={lang} suppressHydrationWarning>
-      <body className={cn(inter.variable, "min-h-screen bg-background font-sans antialiased")}>
+      <body className={cn(inter.variable, "min-h-screen font-sans antialiased")} style={{ backgroundColor: '#ffffff' }}>
         <AuthProvider>
           <BrandingProvider>
             {children}

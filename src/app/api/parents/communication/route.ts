@@ -43,16 +43,7 @@ export async function GET(req: Request) {
         const studentIds: string[] = [];
         const courseIds: string[] = [];
 
-        // Fix: Explicitly type the parent account and its relations if needed, or rely on inference
-        // The issue 'parentAccounts does not exist' suggests the include might not be properly typed or the client isn't generated correctly.
-        // However, for now we will cast to any to bypass the strict check if the runtime behavior is correct, 
-        // or better, we ensure we are accessing the right property.
-        // Assuming the relation exists in schema (it does), let's try to fix the access.
-
-        const parentAccount = (user as any).parentAccounts[0];
-        const businessId = parentAccount.businessId;
-
-        parentAccount.students.forEach((sp: any) => {
+        (parentAccount as any).students.forEach((sp: any) => {
             studentIds.push(sp.studentId);
             sp.student.enrollments.forEach((enrollment: any) => {
                 courseIds.push(enrollment.courseId);

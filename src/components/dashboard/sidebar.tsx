@@ -30,14 +30,30 @@ import { useSession } from "next-auth/react";
 import { useBranding } from "@/context/branding-context";
 import Image from "next/image";
 
-export function Sidebar({ dict }: { dict: any }) {
+export function Sidebar({
+    dict,
+    serverBusinessType = "",
+    serverRole = "",
+    serverLogoUrl = null,
+    serverLogoOrientation = "SQUARE",
+    serverLogoHeight = 64
+}: {
+    dict: any;
+    serverBusinessType?: string;
+    serverRole?: string;
+    serverLogoUrl?: string | null;
+    serverLogoOrientation?: "HORIZONTAL" | "VERTICAL" | "SQUARE";
+    serverLogoHeight?: number;
+}) {
     const pathname = usePathname();
     const { data: session, status } = useSession();
     const locale = pathname.split("/")[1] || "es";
     const t = dict.dashboard.sidebar;
-    const businessType = session?.user?.businessType;
-    const role = session?.user?.role;
-    const isLoading = status === "loading";
+
+    // Usar valores del servidor como fallback mientras carga la sesión
+    const businessType = session?.user?.businessType || serverBusinessType;
+    const role = session?.user?.role || serverRole;
+    const isLoading = status === "loading" && !serverBusinessType;
 
     // Debug: Monitor session state
     if (session?.user) {
@@ -250,7 +266,12 @@ export function Sidebar({ dict }: { dict: any }) {
 
     const groupOrder = ["Dashboard", "Personas", "Escuela", "Finanzas", "Inventario", "Restaurante", "Administración"];
 
-    const { logoUrl, logoOrientation, sidebarColor, logoHeight } = useBranding();
+    const branding = useBranding();
+
+    // Usar valores del servidor como fallback mientras carga el branding
+    const logoUrl = branding.logoUrl || serverLogoUrl;
+    const logoOrientation = branding.logoUrl ? branding.logoOrientation : serverLogoOrientation;
+    const logoHeight = branding.logoUrl ? branding.logoHeight : serverLogoHeight;
 
     // Debug logo
     if (logoUrl) {
@@ -258,7 +279,7 @@ export function Sidebar({ dict }: { dict: any }) {
     }
 
     return (
-        <div className="sidebar flex flex-col h-full" style={{ backgroundColor: sidebarColor }}>
+        <div className="sidebar flex flex-col h-full" style={{ backgroundColor: 'inherit' }}>
             <div className="flex-none">
                 <Link href={`/${locale}/dashboard`} className={cn("sidebar-brand block", logoUrl && "px-4 py-4 h-auto")}>
                     {logoUrl ? (
