@@ -1,0 +1,85 @@
+{
+    "landing": {
+        "nav": {
+            "login": "ログイン",
+            "register": "登録"
+        },
+        "hero": {
+            "title": "インテリジェンスでビジネスを管理",
+            "subtitle": "小売、レストラン、学校向けのオールインワンプラットフォーム。オフラインファースト、多言語、適応型。",
+            "cta": "無料で始める",
+            "secondaryCta": "診断を受ける"
+        },
+        "diagnosis": {
+            "title": "ビジネス診断",
+            "description": "最適なプランを推奨するために、あなたのビジネスについて教えてください。",
+            "businessType": "ビジネスタイプ",
+            "store": "店舗",
+            "restaurant": "レストラン",
+            "school": "学校",
+            "service": "サービス",
+            "submit": "推奨事項を取得"
+        },
+        "features": {
+            "offline": "オフラインモード",
+            "offlineDesc": "インターネットがなくても作業を継続できます。データは自動的に同期されます。",
+            "adaptable": "適応性",
+            "adaptableDesc": "特定の業界向けのカスタムモジュール。",
+            "premium": "プレミアムデザイン",
+            "premiumDesc": "美しく直感的なインターフェース。"
+        },
+        "footer": {
+            "rights": "© 2025 Adminegocios. 全著作権所有。"
+        }
+    },
+    "dashboard": {
+        "sidebar": {
+            "home": "ホーム",
+            "inventory": "在庫",
+            "sales": "販売",
+            "employees": "従業員",
+            "accounting": "会計",
+            "restaurant": "レストラン",
+            "students": "学生",
+            "courses": "コース",
+            "reports": "レポート",
+            "settings": "設定",
+            "logout": "ログアウト"
+        },
+        "home": {
+            "title": "ダッシュボード",
+            "monthlySales": "月間売上",
+            "currentMonth": "今月",
+            "totalProducts": "製品総数",
+            "catalogTotal": "カタログ総数",
+            "stockAlerts": "在庫アラート",
+            "lowStock": "在庫不足製品",
+            "lowStockTitle": "在庫不足アラート",
+            "allGood": "すべて順調です。",
+            "loading": "ダッシュボードを読み込んでいます..."
+        }
+    },
+    "businessTypes": {
+        "retail": "小売店",
+        "restaurant": "レストラン",
+        "school": "学校",
+        "service": "サービス業"
+    },
+    "settings": {
+        "title": "設定",
+        "businessInfo": "ビジネス情報",
+        "businessName": "ビジネス名",
+        "businessType": "ビジネスタイプ",
+        "save": "変更を保存",
+        "manageBranches": "支店を管理"
+    },
+    "branches": {
+        "title": "支店",
+        "add": "支店を追加",
+        "name": "支店名",
+        "address": "住所",
+        "create": "作成",
+        "cancel": "キャンセル",
+        "loading": "読み込み中..."
+    }
+}

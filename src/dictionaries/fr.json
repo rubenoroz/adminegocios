@@ -1,0 +1,85 @@
+{
+    "landing": {
+        "nav": {
+            "login": "Connexion",
+            "register": "S'inscrire"
+        },
+        "hero": {
+            "title": "Gérez votre entreprise avec intelligence",
+            "subtitle": "La plateforme tout-en-un pour les magasins, restaurants et écoles. Hors ligne, multilingue et adaptable.",
+            "cta": "Commencer gratuitement",
+            "secondaryCta": "Faire un diagnostic"
+        },
+        "diagnosis": {
+            "title": "Diagnostic d'entreprise",
+            "description": "Parlez-nous de votre entreprise pour obtenir la meilleure recommandation.",
+            "businessType": "Type d'entreprise",
+            "store": "Magasin",
+            "restaurant": "Restaurant",
+            "school": "École",
+            "service": "Service",
+            "submit": "Obtenir une recommandation"
+        },
+        "features": {
+            "offline": "Mode hors ligne",
+            "offlineDesc": "Continuez à travailler même sans internet. Les données se synchronisent automatiquement.",
+            "adaptable": "Adaptable",
+            "adaptableDesc": "Modules personnalisés pour votre industrie spécifique.",
+            "premium": "Design Premium",
+            "premiumDesc": "Une interface belle et intuitive."
+        },
+        "footer": {
+            "rights": "© 2025 Adminegocios. Tous droits réservés."
+        }
+    },
+    "dashboard": {
+        "sidebar": {
+            "home": "Accueil",
+            "inventory": "Inventaire",
+            "sales": "Ventes",
+            "employees": "Employés",
+            "accounting": "Comptabilité",
+            "restaurant": "Restaurant",
+            "students": "Étudiants",
+            "courses": "Cours",
+            "reports": "Rapports",
+            "settings": "Paramètres",
+            "logout": "Déconnexion"
+        },
+        "home": {
+            "title": "Tableau de bord",
+            "monthlySales": "Ventes mensuelles",
+            "currentMonth": "Mois en cours",
+            "totalProducts": "Produits",
+            "catalogTotal": "Total catalogue",
+            "stockAlerts": "Alertes de stock",
+            "lowStock": "Produits en stock faible",
+            "lowStockTitle": "Alertes de stock faible",
+            "allGood": "Tout va bien.",
+            "loading": "Chargement du tableau de bord..."
+        }
+    },
+    "businessTypes": {
+        "retail": "Commerce de détail",
+        "restaurant": "Restaurant",
+        "school": "École",
+        "service": "Entreprise de services"
+    },
+    "settings": {
+        "title": "Paramètres",
+        "businessInfo": "Informations sur l'entreprise",
+        "businessName": "Nom de l'entreprise",
+        "businessType": "Type d'entreprise",
+        "save": "Enregistrer les modifications",
+        "manageBranches": "Gérer les succursales"
+    },
+    "branches": {
+        "title": "Succursales",
+        "add": "Ajouter une succursale",
+        "name": "Nom de la succursale",
+        "address": "Adresse",
+        "create": "Créer",
+        "cancel": "Annuler",
+        "loading": "Chargement..."
+    }
+}

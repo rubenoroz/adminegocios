@@ -1,0 +1,205 @@
+/* Dashboard Executive Styles */
+.dashboard-executive {
+    min-height: 100vh;
+}
+
+.widget-container {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.widget-container:hover {
+    z-index: 10;
+}
+
+/* Recharts Custom Styles */
+.recharts-wrapper {
+    font-family: inherit;
+}
+
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+    stroke: var(--border);
+}
+
+.recharts-tooltip-wrapper {
+    outline: none;
+}
+
+.recharts-default-tooltip {
+    background: white !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-md) !important;
+    box-shadow: var(--shadow-lg) !important;
+    padding: 12px !important;
+}
+
+.recharts-tooltip-label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text);
+}
+
+.recharts-tooltip-item {
+    color: var(--text) !important;
+    font-size: 14px;
+}
+
+/* Widget Edit Mode */
+.widget-edit-mode {
+    position: relative;
+}
+
+.widget-edit-mode::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 2px dashed var(--primary-400);
+    border-radius: var(--radius-lg);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.widget-edit-mode:hover::after {
+    opacity: 1;
+}
+
+/* Color Picker Custom */
+input[type="color"] {
+    border: 2px solid var(--border);
+    transition: all 0.2s;
+}
+
+input[type="color"]:hover {
+    border-color: var(--primary-600);
+    transform: scale(1.05);
+}
+
+/* Metric Card */
+.metric-card-mini {
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card-mini::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: currentColor;
+    opacity: 0.5;
+}
+
+/* Chart Container */
+.chart-container {
+    position: relative;
+    padding: var(--spacing-md);
+    background: var(--bg);
+    border-radius: var(--radius-md);
+}
+
+/* Drag Handle */
+.drag-handle {
+    cursor: grab;
+    transition: all 0.2s;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.drag-handle:hover {
+    color: var(--primary-600);
+}
+
+/* Widget Controls */
+.widget-controls {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.widget-controls button {
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: white;
+    transition: all 0.2s;
+}
+
+.widget-controls button:hover {
+    border-color: var(--primary-600);
+    background: var(--primary-50);
+}
+
+/* Chart Type Selector */
+.chart-type-selector {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+}
+
+.chart-type-selector button {
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.chart-type-selector button.active {
+    background: white;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Empty State for Dashboard */
+.dashboard-empty-state {
+    text-align: center;
+    padding: var(--spacing-2xl);
+}
+
+.dashboard-empty-state-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted-text);
+}
+
+/* Responsive Charts */
+@media (max-width: 768px) {
+    .recharts-wrapper {
+        font-size: 12px;
+    }
+
+    .recharts-default-tooltip {
+        font-size: 12px !important;
+    }
+}
+
+/* Animation for widget reorder */
+@keyframes widgetSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.widget-slide-in {
+    animation: widgetSlideIn 0.3s ease-out;
+}

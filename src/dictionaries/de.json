@@ -1,0 +1,85 @@
+{
+    "landing": {
+        "nav": {
+            "login": "Anmelden",
+            "register": "Registrieren"
+        },
+        "hero": {
+            "title": "Verwalten Sie Ihr Unternehmen mit Intelligenz",
+            "subtitle": "Die All-in-One-Plattform für Einzelhandel, Restaurants und Schulen. Offline-first, mehrsprachig und anpassungsfähig.",
+            "cta": "Kostenlos starten",
+            "secondaryCta": "Diagnose durchführen"
+        },
+        "diagnosis": {
+            "title": "Unternehmensdiagnose",
+            "description": "Erzählen Sie uns von Ihrem Unternehmen, um den besten Plan zu empfehlen.",
+            "businessType": "Unternehmenstyp",
+            "store": "Geschäft",
+            "restaurant": "Restaurant",
+            "school": "Schule",
+            "service": "Dienstleistung",
+            "submit": "Empfehlung erhalten"
+        },
+        "features": {
+            "offline": "Offline-Modus",
+            "offlineDesc": "Arbeiten Sie auch ohne Internet weiter. Daten werden automatisch synchronisiert.",
+            "adaptable": "Anpassungsfähig",
+            "adaptableDesc": "Benutzerdefinierte Module für Ihre spezifische Branche.",
+            "premium": "Premium-Design",
+            "premiumDesc": "Eine schöne und intuitive Benutzeroberfläche."
+        },
+        "footer": {
+            "rights": "© 2025 Adminegocios. Alle Rechte vorbehalten."
+        }
+    },
+    "dashboard": {
+        "sidebar": {
+            "home": "Startseite",
+            "inventory": "Inventar",
+            "sales": "Verkauf",
+            "employees": "Mitarbeiter",
+            "accounting": "Buchhaltung",
+            "restaurant": "Restaurant",
+            "students": "Studenten",
+            "courses": "Kurse",
+            "reports": "Berichte",
+            "settings": "Einstellungen",
+            "logout": "Abmelden"
+        },
+        "home": {
+            "title": "Dashboard",
+            "monthlySales": "Monatsumsatz",
+            "currentMonth": "Aktueller Monat",
+            "totalProducts": "Produkte",
+            "catalogTotal": "Gesamt im Katalog",
+            "stockAlerts": "Lagerwarnungen",
+            "lowStock": "Produkte mit geringem Bestand",
+            "lowStockTitle": "Warnungen zu geringem Bestand",
+            "allGood": "Alles sieht gut aus.",
+            "loading": "Dashboard wird geladen..."
+        }
+    },
+    "businessTypes": {
+        "retail": "Einzelhandel",
+        "restaurant": "Restaurant",
+        "school": "Schule",
+        "service": "Dienstleistungsunternehmen"
+    },
+    "settings": {
+        "title": "Einstellungen",
+        "businessInfo": "Geschäftsinformationen",
+        "businessName": "Geschäftsname",
+        "businessType": "Geschäftstyp",
+        "save": "Änderungen speichern",
+        "manageBranches": "Filialen verwalten"
+    },
+    "branches": {
+        "title": "Filialen",
+        "add": "Filiale hinzufügen",
+        "name": "Filialname",
+        "address": "Adresse",
+        "create": "Erstellen",
+        "cancel": "Abbrechen",
+        "loading": "Laden..."
+    }
+}

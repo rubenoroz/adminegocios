@@ -1,0 +1,85 @@
+{
+    "landing": {
+        "nav": {
+            "login": "Entrar",
+            "register": "Registro"
+        },
+        "hero": {
+            "title": "Administra tu Negocio con Inteligencia",
+            "subtitle": "La plataforma todo en uno para Tiendas, Restaurantes y Escuelas. Offline-first, multi-idioma y adaptable.",
+            "cta": "Comenzar Gratis",
+            "secondaryCta": "Hacer Diagnóstico"
+        },
+        "diagnosis": {
+            "title": "Diagnóstico Empresarial",
+            "description": "Cuéntanos sobre tu negocio para recomendarte el mejor plan.",
+            "businessType": "Tipo de Negocio",
+            "store": "Tienda Minorista",
+            "restaurant": "Restaurante",
+            "school": "Escuela",
+            "service": "Servicio",
+            "submit": "Obtener Recomendación"
+        },
+        "features": {
+            "offline": "Modo Offline",
+            "offlineDesc": "Sigue trabajando sin internet. Los datos se sincronizan automáticamente.",
+            "adaptable": "Adaptable",
+            "adaptableDesc": "Módulos personalizados para tu industria específica.",
+            "premium": "Diseño Premium",
+            "premiumDesc": "Una interfaz hermosa e intuitiva."
+        },
+        "footer": {
+            "rights": "© 2025 Adminegocios. Todos los derechos reservados."
+        }
+    },
+    "dashboard": {
+        "sidebar": {
+            "home": "Inicio",
+            "inventory": "Inventario",
+            "sales": "Ventas",
+            "employees": "Empleados",
+            "accounting": "Contabilidad",
+            "restaurant": "Restaurante",
+            "students": "Alumnos",
+            "courses": "Cursos",
+            "reports": "Reportes",
+            "settings": "Configuración",
+            "logout": "Cerrar Sesión"
+        },
+        "home": {
+            "title": "Dashboard",
+            "monthlySales": "Ventas del Mes",
+            "currentMonth": "Mes actual",
+            "totalProducts": "Productos",
+            "catalogTotal": "Total en catálogo",
+            "stockAlerts": "Alertas de Stock",
+            "lowStock": "Productos con bajo stock",
+            "lowStockTitle": "Alertas de Stock Bajo",
+            "allGood": "Todo en orden.",
+            "loading": "Cargando dashboard..."
+        }
+    },
+    "businessTypes": {
+        "retail": "Tienda Minorista",
+        "restaurant": "Restaurante",
+        "school": "Escuela",
+        "service": "Negocio de Servicios"
+    },
+    "settings": {
+        "title": "Configuración",
+        "businessInfo": "Información del Negocio",
+        "businessName": "Nombre del Negocio",
+        "businessType": "Tipo de Negocio",
+        "save": "Guardar Cambios",
+        "manageBranches": "Gestionar Sucursales"
+    },
+    "branches": {
+        "title": "Sucursales",
+        "add": "Agregar Sucursal",
+        "name": "Nombre de la Sucursal",
+        "address": "Dirección",
+        "create": "Crear",
+        "cancel": "Cancelar",
+        "loading": "Cargando..."
+    }
+}

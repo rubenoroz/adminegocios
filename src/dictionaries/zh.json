@@ -1,0 +1,85 @@
+{
+    "landing": {
+        "nav": {
+            "login": "登录",
+            "register": "注册"
+        },
+        "hero": {
+            "title": "智能管理您的业务",
+            "subtitle": "适用于零售、餐饮和学校的一体化平台。离线优先，多语言，适应性强。",
+            "cta": "免费开始",
+            "secondaryCta": "进行诊断"
+        },
+        "diagnosis": {
+            "title": "业务诊断",
+            "description": "告诉我们关于您的业务，以便推荐最佳方案。",
+            "businessType": "业务类型",
+            "store": "商店",
+            "restaurant": "餐厅",
+            "school": "学校",
+            "service": "服务",
+            "submit": "获取推荐"
+        },
+        "features": {
+            "offline": "离线模式",
+            "offlineDesc": "即使没有网络也能继续工作。数据自动同步。",
+            "adaptable": "适应性强",
+            "adaptableDesc": "针对您行业的定制模块。",
+            "premium": "高级设计",
+            "premiumDesc": "美观直观的界面。"
+        },
+        "footer": {
+            "rights": "© 2025 Adminegocios. 版权所有。"
+        }
+    },
+    "dashboard": {
+        "sidebar": {
+            "home": "首页",
+            "inventory": "库存",
+            "sales": "销售",
+            "employees": "员工",
+            "accounting": "会计",
+            "restaurant": "餐厅",
+            "students": "学生",
+            "courses": "课程",
+            "reports": "报告",
+            "settings": "设置",
+            "logout": "登出"
+        },
+        "home": {
+            "title": "仪表板",
+            "monthlySales": "月销售额",
+            "currentMonth": "本月",
+            "totalProducts": "产品总数",
+            "catalogTotal": "目录总数",
+            "stockAlerts": "库存警报",
+            "lowStock": "低库存产品",
+            "lowStockTitle": "低库存警报",
+            "allGood": "一切正常。",
+            "loading": "正在加载仪表板..."
+        }
+    },
+    "businessTypes": {
+        "retail": "零售店",
+        "restaurant": "餐厅",
+        "school": "学校",
+        "service": "服务型企业"
+    },
+    "settings": {
+        "title": "设置",
+        "businessInfo": "商家信息",
+        "businessName": "商家名称",
+        "businessType": "商家类型",
+        "save": "保存更改",
+        "manageBranches": "管理分店"
+    },
+    "branches": {
+        "title": "分店",
+        "add": "添加分店",
+        "name": "分店名称",
+        "address": "地址",
+        "create": "创建",
+        "cancel": "取消",
+        "loading": "加载中..."
+    }
+}

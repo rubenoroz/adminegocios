@@ -1,0 +1,169 @@
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+export async function POST(req: Request) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.email) {
+            return NextResponse.json({ error: "UNAUTHORIZED", message: "No autorizado" }, { status: 401 });
+        }
+
+        const body = await req.json();
+        const { name, description, teacherId, schedules, classroomId } = body;
+
+        if (!name) {
+            return NextResponse.json({
+                error: "MISSING_FIELDS",
+                message: "El nombre del curso es requerido"
+            }, { status: 400 });
+        }
+
+        // Create course with schedules in a transaction
+        const course = await prisma.$transaction(async (tx) => {
+            const newCourse = await tx.course.create({
+                data: {
+                    name,
+                    description: description || null,
+                    teacherId: teacherId || null,
+                    classroomId: classroomId || null,
+                    businessId: session.user.businessId!,
+                },
+                include: {
+                    teacher: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                        },
+                    },
+                },
+            });
+
+            // Create ClassSchedule entries if schedules provided
+            if (schedules && schedules.length > 0) {
+                for (const schedule of schedules) {
+                    for (const dayOfWeek of schedule.days) {
+                        await tx.classSchedule.create({
+                            data: {
+                                courseId: newCourse.id,
+                                dayOfWeek,
+                                startTime: schedule.startTime,
+                                endTime: schedule.endTime,
+                                classroomId: classroomId || null,
+                                teacherId: teacherId || null,
+                                businessId: session.user.businessId!,
+                            },
+                        });
+                    }
+                }
+            }
+
+            return newCourse;
+        });
+
+        return NextResponse.json(course);
+    } catch (error) {
+        console.error("[COURSES_POST]", error);
+        return NextResponse.json({
+            error: "INTERNAL_ERROR",
+            message: "Error al crear el curso"
+        }, { status: 500 });
+    }
+}
+
+export async function GET(req: Request) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.email) {
+            return new NextResponse("Unauthorized", { status: 401 });
+        }
+
+        // Optimized query with select instead of include
+        const courses = await prisma.course.findMany({
+            where: {
+                businessId: session.user.businessId,
+            },
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                gradeLevel: true,
+                schedule: true,
+                room: true,
+                teacher: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+                _count: {
+                    select: {
+                        enrollments: true,
+                    },
+                },
+            },
+            orderBy: {
+                name: "asc",
+            },
+        });
+
+        return NextResponse.json(courses);
+    } catch (error) {
+        console.error("[COURSES_GET]", error);
+        return NextResponse.json({ error: "INTERNAL_ERROR", message: "Error al obtener cursos" }, { status: 500 });
+    }
+}
+export async function DELETE(req: Request) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.email) {
+            return new NextResponse("Unauthorized", { status: 401 });
+        }
+
+        const body = await req.json();
+        const { ids } = body;
+
+        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+            return NextResponse.json({
+                error: "INVALID_INPUT",
+                message: "Se requiere un array de IDs"
+            }, { status: 400 });
+        }
+
+        // Delete courses in a transaction to ensure all associated schedules are also handled
+        // and only for the current business
+        const result = await prisma.$transaction(async (tx) => {
+            // ClassSchedule has a relation to Course, so we need to make sure they are deleted
+            // If the schema has onDelete: Cascade, it's easier.
+            // Let's force it just in case.
+            await tx.classSchedule.deleteMany({
+                where: {
+                    courseId: {
+                        in: ids
+                    },
+                    businessId: session.user.businessId!
+                }
+            });
+
+            const deleted = await tx.course.deleteMany({
+                where: {
+                    id: {
+                        in: ids
+                    },
+                    businessId: session.user.businessId!
+                }
+            });
+            return deleted;
+        });
+
+        return NextResponse.json({ success: true, count: result.count });
+    } catch (error) {
+        console.error("[COURSES_DELETE_BULK]", error);
+        return NextResponse.json({
+            error: "INTERNAL_ERROR",
+            message: "Error al eliminar cursos"
+        }, { status: 500 });
+    }
+}

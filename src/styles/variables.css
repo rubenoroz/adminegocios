@@ -1,0 +1,199 @@
+:root {
+  /* Paleta de colores primarios */
+  --primary-50: #eff6ff;
+  --primary-100: #dbeafe;
+  --primary-200: #bfdbfe;
+  --primary-300: #93c5fd;
+  --primary-400: #60a5fa;
+  --primary-500: #3b82f6;
+  --primary-600: #2563eb;
+  --primary-700: #1d4ed8;
+  --primary-800: #1e40af;
+  --primary-900: #1e3a8a;
+
+  /* Colores semánticos */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
+
+  /* Colores de fondo y superficie */
+  --bg: #ffffff;
+  --surface: #f9fafb;
+  --muted: #f1f5f9;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --muted-text: #64748b;
+
+  /* Colores por módulo */
+  --module-dashboard: #3b82f6;
+  --module-students: #7c3aed;
+  --module-courses: #4f46e5;
+  --module-finance: #10b981;
+  --module-reports: #0ea5a4;
+  --module-employees: #f97316;
+  --module-communication: #ec4899;
+  --module-attendance: #8b5cf6;
+
+  /* Sistema de espaciado */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+
+  /* Tipografía */
+  --h1: 48px;
+  --h2: 36px;
+  --h3: 28px;
+  --h4: 20px;
+  --body: 16px;
+  --small: 14px;
+  --tiny: 12px;
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* Sombras Modernas (Soft Slate) */
+  --shadow-sm: 0 1px 2px 0 rgba(148, 163, 184, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(148, 163, 184, 0.1), 0 2px 4px -1px rgba(148, 163, 184, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(148, 163, 184, 0.1), 0 4px 6px -2px rgba(148, 163, 184, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(148, 163, 184, 0.1), 0 10px 10px -5px rgba(148, 163, 184, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(148, 163, 184, 0.25);
+
+  /* Transiciones */
+  --transition-fast: 150ms ease-in-out;
+  --transition-base: 300ms ease-in-out;
+  --transition-slow: 500ms ease-in-out;
+
+  /* Z-index */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 217.2 91.2% 59.8%;
+  --primary-foreground: 222.2 47.4% 11.2%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 224.3 76.3% 48%;
+}
+
+/* ========================================
+   GRADIENTES VIBRANTES
+   ======================================== */
+
+/* Purple Gradient */
+.bg-gradient-to-br.from-purple-600.to-purple-400,
+.bg-gradient-to-r.from-purple-600.to-purple-400 {
+  background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%) !important;
+}
+
+/* Blue Gradient */
+.bg-gradient-to-br.from-blue-600.to-blue-400,
+.bg-gradient-to-r.from-blue-600.to-blue-400 {
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%) !important;
+}
+
+/* Orange Gradient */
+.bg-gradient-to-br.from-orange-600.to-orange-400,
+.bg-gradient-to-r.from-orange-600.to-orange-400,
+.bg-gradient-to-r.from-orange-600.to-orange-500 {
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%) !important;
+}
+
+/* Teal Gradient */
+.bg-gradient-to-br.from-teal-600.to-teal-400,
+.bg-gradient-to-r.from-teal-600.to-teal-400,
+.bg-gradient-to-r.from-teal-600.to-teal-500 {
+  background: linear-gradient(135deg, #14b8a6 0%, #2dd4bf 100%) !important;
+}
+
+/* Green Gradient */
+.bg-gradient-to-br.from-green-600.to-green-400,
+.bg-gradient-to-r.from-green-600.to-green-400 {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%) !important;
+}
+
+/* Pink Gradient */
+.bg-gradient-to-br.from-pink-600.to-pink-400,
+.bg-gradient-to-r.from-pink-600.to-pink-400 {
+  background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%) !important;
+}
+
+/* Red Gradient */
+.bg-gradient-to-br.from-red-600.to-red-400,
+.bg-gradient-to-r.from-red-600.to-red-400 {
+  background: linear-gradient(135deg, #ef4444 0%, #f87171 100%) !important;
+}
+
+/* Yellow Gradient */
+.bg-gradient-to-br.from-yellow-600.to-yellow-400,
+.bg-gradient-to-r.from-yellow-600.to-yellow-400 {
+  background: linear-gradient(135deg, #eab308 0%, #facc15 100%) !important;
+}
+
+/* Primary to Purple (Dashboard) */
+.bg-gradient-to-r.from-primary-600.to-purple-600 {
+  background: linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%) !important;
+}
+
+/* Text Gradients */
+.bg-clip-text {
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+
+.text-transparent {
+  color: transparent !important;
+}
+
+/* Utility Classes for Gradients */
+.gradient-purple {
+  background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+}
+
+.gradient-blue {
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+}
+
+.gradient-orange {
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+}
+
+.gradient-teal {
+  background: linear-gradient(135deg, #14b8a6 0%, #2dd4bf 100%);
+}
+
+.gradient-green {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+}
+
+.gradient-pink {
+  background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+}

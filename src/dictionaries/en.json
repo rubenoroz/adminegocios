@@ -1,0 +1,85 @@
+{
+    "landing": {
+        "nav": {
+            "login": "Login",
+            "register": "Register"
+        },
+        "hero": {
+            "title": "Manage your Business with Intelligence",
+            "subtitle": "The all-in-one platform for Retail, Restaurants, and Schools. Offline-first, multi-language, and adaptable.",
+            "cta": "Start for Free",
+            "secondaryCta": "Take Diagnosis"
+        },
+        "diagnosis": {
+            "title": "Business Diagnosis",
+            "description": "Tell us about your business to recommend the best plan.",
+            "businessType": "Business Type",
+            "store": "Retail Store",
+            "restaurant": "Restaurant",
+            "school": "School",
+            "service": "Service",
+            "submit": "Get Recommendation"
+        },
+        "features": {
+            "offline": "Offline Mode",
+            "offlineDesc": "Keep working even without internet. Data syncs automatically.",
+            "adaptable": "Adaptable",
+            "adaptableDesc": "Custom modules for your specific industry.",
+            "premium": "Premium Design",
+            "premiumDesc": "A beautiful and intuitive interface."
+        },
+        "footer": {
+            "rights": "© 2025 Adminegocios. All rights reserved."
+        }
+    },
+    "dashboard": {
+        "sidebar": {
+            "home": "Home",
+            "inventory": "Inventory",
+            "sales": "Sales",
+            "employees": "Employees",
+            "accounting": "Accounting",
+            "restaurant": "Restaurant",
+            "students": "Students",
+            "courses": "Courses",
+            "reports": "Reports",
+            "settings": "Settings",
+            "logout": "Logout"
+        },
+        "home": {
+            "title": "Dashboard",
+            "monthlySales": "Monthly Sales",
+            "currentMonth": "Current Month",
+            "totalProducts": "Total Products",
+            "catalogTotal": "Total in catalog",
+            "stockAlerts": "Stock Alerts",
+            "lowStock": "Low stock products",
+            "lowStockTitle": "Low Stock Alerts",
+            "allGood": "Everything looks good.",
+            "loading": "Loading dashboard..."
+        }
+    },
+    "businessTypes": {
+        "retail": "Retail Store",
+        "restaurant": "Restaurant",
+        "school": "School",
+        "service": "Service Business"
+    },
+    "settings": {
+        "title": "Settings",
+        "businessInfo": "Business Information",
+        "businessName": "Business Name",
+        "businessType": "Business Type",
+        "save": "Save Changes",
+        "manageBranches": "Manage Branches"
+    },
+    "branches": {
+        "title": "Branches",
+        "add": "Add Branch",
+        "name": "Branch Name",
+        "address": "Address",
+        "create": "Create",
+        "cancel": "Cancel",
+        "loading": "Loading..."
+    }
+}

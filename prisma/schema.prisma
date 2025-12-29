@@ -1,0 +1,830 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// NextAuth.js Models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  accounts      Account[]
+  sessions      Session[]
+  
+  // Custom fields
+  businessId    String?
+  business      Business? @relation(fields: [businessId], references: [id])
+  role          String    @default("OWNER") // OWNER, ADMIN, MANAGER, CASHIER, WAITER, TEACHER
+  branchId      String?
+  branch        Branch?   @relation(fields: [branchId], references: [id])
+  
+  // Teaching relation
+  courses       Course[]  @relation("CourseTeacher")
+  writtenNotes  StudentNote[]
+  
+  // Payroll
+  hourlyRate    Float?    @default(0)
+  paymentModel  String?   @default("HOURLY") // HOURLY, COMMISSION
+  commissionPercentage Float? @default(0)
+  schedules     ClassSchedule[]
+  
+  // Communication
+  authoredAnnouncements Announcement[]
+  notifications Notification[]
+  
+  status        String    @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
+}
+
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  used      Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([email])
+  @@index([token])
+}
+
+// Business Core Models
+
+model Business {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // RETAIL, RESTAURANT, SCHOOL, SERVICE
+  
+  // Branding
+  logoUrl          String?
+  logoOrientation  String?  @default("SQUARE") // HORIZONTAL, VERTICAL, SQUARE
+  primaryColor     String?  @default("#3b82f6") // blue-500
+  sidebarColor     String?  @default("#0f172a") // slate-900
+  logoHeight       Int?     @default(64)
+  gradingConfig    String?  // JSON string: { periods: [], passingGrade: 70 }
+  
+  // Financial reserves
+  expenseReservePercentage  Float?   @default(0) // % for unexpected expenses
+  benefitsReservePercentage Float?   @default(0) // % for benefits/aguinaldo
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  branches    Branch[]
+  products    Product[]
+  customers   Customer[]
+  students    Student[]
+  courses     Course[]
+  employees   Employee[]
+  expenses    Expense[]
+  transactions Transaction[]
+  tables      Table[]
+  orders      Order[]
+  
+  // School specific
+  feeTemplates SchoolFeeTemplate[]
+  scheduledPayments ScheduledPayment[]
+  parentAccounts ParentAccount[]
+  schedules   ClassSchedule[]
+  announcements Announcement[]
+  events      SchoolEvent[]
+  classrooms  Classroom[]
+  commissionSettlements CommissionSettlement[]
+}
+
+model Branch {
+  id          String   @id @default(cuid())
+  name        String
+  address     String?
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  users       User[]
+  sales       Sale[]
+  inventory   InventoryItem[]
+  students    Student[]
+  courses     Course[]
+  employees   Employee[]
+  tables      Table[]
+  orders      Order[]
+  schedules   ClassSchedule[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  sku         String?
+  barcode     String?
+  price       Float
+  cost        Float?
+  category    String?
+  image       String?
+  
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  inventory   InventoryItem[]
+  saleItems   SaleItem[]
+  orderItems  OrderItem[]
+}
+
+model InventoryItem {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  branchId    String
+  branch      Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  quantity    Int      @default(0)
+  minStock    Int      @default(5)
+  
+  @@unique([productId, branchId])
+}
+
+model Customer {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  
+  // Specific for schools
+  studentId   String?  // Matricula
+  
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  sales       Sale[]
+}
+
+model Sale {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  total       Float
+  status      String   @default("COMPLETED") // COMPLETED, PENDING, CANCELLED
+  paymentMethod String? // CASH, CARD, TRANSFER
+  
+  branchId    String
+  branch      Branch   @relation(fields: [branchId], references: [id])
+  customerId  String?
+  customer    Customer? @relation(fields: [customerId], references: [id])
+  
+  items       SaleItem[]
+  transactions Transaction[]
+}
+
+model SaleItem {
+  id          String   @id @default(cuid())
+  saleId      String
+  sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  quantity    Int
+  price       Float    // Price at the moment of sale
+}
+
+
+model Employee {
+  id          String   @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String?
+  phone       String?
+  role        String   @default("STAFF") // MANAGER, ADMIN, TEACHER, STAFF
+  
+  // Payment configuration
+  paymentModel String  @default("FIXED") // FIXED, HOURLY, COMMISSION, MIXED
+  salary      Float?   // For FIXED and MIXED models
+  hourlyRate  Float?   // For HOURLY model
+  commissionPercentage Float? // For COMMISSION and MIXED models (e.g., 60 = 60% for employee, 40% for school)
+  reservePercentage Float? // % to reserve for bonuses, vacation, etc. (optional, deducted from employee's share)
+  
+  paymentFrequency String @default("MONTHLY") // WEEKLY, BIWEEKLY, MONTHLY, CUSTOM
+  paymentDay  Int?     // Day of week (1-7) or Day of month (1-31)
+  lastPaymentDate DateTime?
+  hireDate    DateTime @default(now())
+  
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  
+  scheduledPayments ScheduledPayment[]
+  classPayments     StudentPayment[]  // Payments where this employee was the teacher
+  commissionSettlements CommissionSettlement[]  // Liquidaciones de comisiones
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  description String
+  amount      Float
+  category    String   // RENT, UTILITIES, SUPPLIES, SALARY, OTHER
+  date        DateTime @default(now())
+  
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  type        String   // INCOME, EXPENSE
+  amount      Float
+  description String?
+  date        DateTime @default(now())
+  
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  // Optional relations for traceability
+  saleId      String?
+  sale        Sale?    @relation(fields: [saleId], references: [id])
+  expenseId   String?
+  expense     Expense? @relation(fields: [expenseId], references: [id])
+
+  // School specific
+  studentPayment StudentPayment?
+}
+
+// Restaurant Module Models
+
+model Table {
+  id          String   @id @default(cuid())
+  name        String
+  capacity    Int
+  status      String   @default("AVAILABLE") // AVAILABLE, OCCUPIED, RESERVED
+  x           Int      @default(0)
+  y           Int      @default(0)
+  
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  
+  orders      Order[]
+}
+
+model Order {
+  id          String   @id @default(cuid())
+  status      String   @default("PENDING") // PENDING, PREPARING, READY, SERVED, COMPLETED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  tableId     String?
+  table       Table?   @relation(fields: [tableId], references: [id])
+  
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  
+  items       OrderItem[]
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  quantity    Int
+  notes       String?
+}
+
+// School Module Models
+
+model Student {
+  id          String   @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String?  @unique
+  phone       String?
+  address     String?
+  dateOfBirth DateTime?
+  matricula   String?  @unique
+  status      String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
+  
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  
+  enrollments Enrollment[]
+  attendance  Attendance[]
+  grades      Grade[]
+  notes       StudentNote[]
+  fees        StudentFee[]
+  scholarships Scholarship[]
+  scheduledPayments ScheduledPayment[]
+  parents     StudentParent[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([businessId])
+  @@index([matricula])
+  @@index([lastName, firstName])
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  gradeLevel  String?  // e.g., "1st Grade", "High School"
+  schedule    String?  // e.g., "Mon/Wed 8:00-10:00"
+  room        String?  // e.g., "Room 101" (deprecated, use classroomId)
+  status      String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
+  
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  
+  teacherId   String?
+  teacher     User?    @relation("CourseTeacher", fields: [teacherId], references: [id])
+  
+  classroomId String?
+  classroom   Classroom? @relation(fields: [classroomId], references: [id])
+  
+  enrollments Enrollment[]
+  attendance  Attendance[]
+  grades      Grade[]
+  modules     CourseModule[]
+  notes       StudentNote[]
+  schedules   ClassSchedule[]
+  fees        StudentFee[]
+  
+  @@index([businessId])
+  @@index([teacherId])
+}
+
+model CourseModule {
+  id          String   @id @default(cuid())
+  title       String
+  order       Int      @default(0)
+  
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  lessons     Lesson[]
+  quizzes     Quiz[]
+  assignments Assignment[]
+  resources   Resource[]
+}
+
+model Lesson {
+  id          String   @id @default(cuid())
+  title       String
+  content     String   // Markdown or HTML
+  order       Int      @default(0)
+  
+  moduleId    String
+  module      CourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+}
+
+model Quiz {
+  id          String   @id @default(cuid())
+  title       String
+  order       Int      @default(0)
+  
+  moduleId    String
+  module      CourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  
+  questions   Question[]
+}
+
+model Question {
+  id            String   @id @default(cuid())
+  text          String
+  options       String   // JSON string of options ["A", "B", "C", "D"]
+  correctAnswer String
+  points        Int      @default(1)
+  
+  quizId        String
+  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+}
+
+model Assignment {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  dueDate     DateTime?
+  order       Int      @default(0)
+  
+  moduleId    String
+  module      CourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+}
+
+model Resource {
+  id          String   @id @default(cuid())
+  title       String
+  url         String
+  type        String   // PDF, VIDEO, LINK
+  order       Int      @default(0)
+  
+  moduleId    String
+  module      CourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+}
+
+model Enrollment {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  status      String   @default("ACTIVE") // ACTIVE, DROPPED, COMPLETED
+  enrolledAt  DateTime @default(now())
+  
+  @@unique([studentId, courseId])
+}
+
+model Attendance {
+  id          String   @id @default(cuid())
+  date        DateTime
+  status      String   // PRESENT, ABSENT, LATE, EXCUSED
+  
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  @@unique([studentId, courseId, date])
+  @@index([courseId, date])
+  @@index([studentId, date])
+}
+
+model Grade {
+  id          String   @id @default(cuid())
+  name        String   // e.g., "Midterm Exam", "Homework 1"
+  value       Float    // The actual score
+  maxValue    Float    @default(100) // Maximum possible score
+  weight      Float?   // Weight percentage (e.g., 40 for 40%)
+  period      String   // PARTIAL_1, PARTIAL_2, PARTIAL_3, FINAL
+  type        String   // EXAM, HOMEWORK, PROJECT, PARTICIPATION
+  
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([studentId, courseId, period, type])
+  @@index([courseId, period])
+  @@index([studentId, courseId])
+}
+
+model StudentNote {
+  id          String   @id @default(cuid())
+  content     String
+  type        String   @default("OBSERVATION") // OBSERVATION, BEHAVIOR, ACADEMIC, POSITIVE
+  
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  courseId    String?
+  course      Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SchoolFeeTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  category    String   // TUITION, REGISTRATION, EVENT, MATERIAL, TRANSPORT, OTHER
+  amount      Float
+  recurrence  String   // MONTHLY, ONE_TIME, ANNUAL
+  
+  dayDue      Int?     // e.g., 5th of the month
+  lateFee     Float?   // Amount to add if late
+  
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  fees        StudentFee[]
+  scheduledPayments ScheduledPayment[]
+}
+
+model Scholarship {
+  id          String   @id @default(cuid())
+  name        String   // "Beca Excelencia", "Descuento Hermano"
+  percentage  Float?   // e.g., 20%
+  amount      Float?   // e.g., $500 off
+  
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  active      Boolean  @default(true)
+}
+
+model StudentFee {
+  id          String   @id @default(cuid())
+  title       String
+  amount      Float    // Final amount to pay
+  dueDate     DateTime
+  status      String   @default("PENDING") // PENDING, PARTIAL, PAID, OVERDUE
+  
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  templateId  String?
+  template    SchoolFeeTemplate? @relation(fields: [templateId], references: [id])
+  
+  courseId    String?
+  course      Course?  @relation(fields: [courseId], references: [id])
+  
+  originalAmount  Float? // Before discount
+  discountApplied Float  @default(0)
+  
+  payments    StudentPayment[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([studentId, status])
+  @@index([dueDate])
+}
+
+model StudentPayment {
+  id          String   @id @default(cuid())
+  amount      Float
+  date        DateTime @default(now())
+  method      String   // CASH, CARD, TRANSFER
+  
+  studentFeeId String
+  studentFee   StudentFee @relation(fields: [studentFeeId], references: [id], onDelete: Cascade)
+  
+  // Teacher commission tracking
+  teacherId         String?
+  teacher           Employee? @relation(fields: [teacherId], references: [id])
+  teacherCommission Float?    // Calculated amount for teacher
+  reserveAmount     Float?    // Amount reserved for bonuses
+  schoolAmount      Float?    // Amount kept by school
+  
+  // Settlement tracking
+  settlementId      String?
+  settlement        CommissionSettlement? @relation(fields: [settlementId], references: [id])
+  isSettled         Boolean   @default(false)
+  
+  // Link to core accounting
+  transactionId String? @unique
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+}
+
+model ScheduledPayment {
+  id              String   @id @default(cuid())
+  type            String   // STUDENT_FEE, EMPLOYEE_SALARY
+  
+  // For students
+  studentId       String?
+  student         Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  feeTemplateId   String?
+  feeTemplate     SchoolFeeTemplate? @relation(fields: [feeTemplateId], references: [id], onDelete: Cascade)
+  
+  // For employees
+  employeeId      String?
+  employee        Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  // Scheduling
+  recurrence      String   // DAILY, WEEKLY, BIWEEKLY, MONTHLY, YEARLY, CUSTOM
+  startDate       DateTime
+  endDate         DateTime?
+  nextRunDate     DateTime
+  dayOfMonth      Int?     // 1-31 for monthly
+  dayOfWeek       Int?     // 1-7 for weekly
+  customDays      String?  // JSON array for custom schedules
+  
+  // Status
+  active          Boolean  @default(true)
+  lastRun         DateTime?
+  
+  businessId      String
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([businessId, active])
+  @@index([nextRunDate])
+}
+
+model ParentAccount {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  password    String
+  firstName   String
+  lastName    String
+  phone       String?
+  
+  // Security
+  mustChangePassword Boolean @default(true)
+  lastLogin   DateTime?
+  status      String    @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
+  
+  students    StudentParent[]
+  
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([businessId])
+  @@index([email])
+}
+
+model StudentParent {
+  id          String   @id @default(cuid())
+  
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  parentId    String
+  parent      ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  
+  relationship String  // FATHER, MOTHER, GUARDIAN, OTHER
+  isPrimary   Boolean @default(false)
+  
+  createdAt   DateTime @default(now())
+  
+  @@unique([studentId, parentId])
+  @@index([studentId])
+  @@index([parentId])
+}
+
+model ClassSchedule {
+  id          String   @id @default(cuid())
+  dayOfWeek   Int      // 0=Sunday, 1=Monday, etc.
+  startTime   String   // HH:mm format
+  endTime     String   // HH:mm format
+  room        String?  // Deprecated, use classroomId
+  
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  // Optional: Override default teacher for this specific class time
+  teacherId   String?
+  teacher     User?    @relation(fields: [teacherId], references: [id])
+  
+  classroomId String?
+  classroom   Classroom? @relation(fields: [classroomId], references: [id])
+  
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([courseId])
+  @@index([businessId])
+}
+
+model Classroom {
+  id          String   @id @default(cuid())
+  name        String   // "Aula 101", "Laboratorio A"
+  capacity    Int?     // Capacidad de estudiantes
+  building    String?  // Edificio o piso
+  
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  courses     Course[]
+  schedules   ClassSchedule[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([businessId])
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  content     String   // HTML content
+  type        String   @default("GENERAL") // GENERAL, URGENT, ACADEMIC
+  priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH
+  
+  // Targeting
+  targetType  String   @default("ALL") // ALL, COURSE, STUDENT, TEACHER
+  targetId    String?  // ID of course, student, etc.
+  
+  attachments String?  // JSON array of URLs
+  
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([businessId])
+}
+
+model SchoolEvent {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  location    String?
+  type        String   @default("ACTIVITY") // HOLIDAY, MEETING, EXAM, ACTIVITY
+  
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([businessId])
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  title       String
+  message     String
+  read        Boolean  @default(false)
+  link        String?
+  type        String   // PAYMENT, ACADEMIC, SYSTEM
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+}
+
+model CommissionSettlement {
+  id          String   @id @default(cuid())
+  amount      Float    // Total amount settled
+  date        DateTime @default(now())
+  method      String   // CASH, TRANSFER, CHECK
+  note        String?  // Optional notes
+  
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  // Payments included in this settlement
+  payments    StudentPayment[]
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([employeeId])
+  @@index([businessId])
+}
