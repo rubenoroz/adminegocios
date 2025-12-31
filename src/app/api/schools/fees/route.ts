@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
@@ -11,24 +11,25 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { name, description, amount } = body;
+        const { name, category, amount, recurrence } = body;
 
         if (!name || !amount) {
             return new NextResponse("Missing required fields", { status: 400 });
         }
 
-        const feeType = await prisma.schoolFeeType.create({
+        const feeTemplate = await prisma.schoolFeeTemplate.create({
             data: {
                 name,
-                description,
+                category: category || "OTHER",
                 amount: parseFloat(amount),
+                recurrence: recurrence || "MONTHLY",
                 businessId: session.user.businessId!,
             },
         });
 
-        return NextResponse.json(feeType);
+        return NextResponse.json(feeTemplate);
     } catch (error) {
-        console.error("[FEE_TYPES_POST]", error);
+        console.error("[FEE_TEMPLATES_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -40,7 +41,7 @@ export async function GET(req: Request) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const feeTypes = await prisma.schoolFeeType.findMany({
+        const feeTemplates = await prisma.schoolFeeTemplate.findMany({
             where: {
                 businessId: session.user.businessId!,
             },
@@ -49,9 +50,9 @@ export async function GET(req: Request) {
             },
         });
 
-        return NextResponse.json(feeTypes);
+        return NextResponse.json(feeTemplates);
     } catch (error) {
-        console.error("[FEE_TYPES_GET]", error);
+        console.error("[FEE_TEMPLATES_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

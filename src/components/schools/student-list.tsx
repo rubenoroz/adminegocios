@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, GraduationCap, CreditCard, Award, Ban, Trash2, PlayCircle, Users, UserCheck, DollarSign, AlertCircle } from "lucide-react";
+import { Plus, GraduationCap, CreditCard, Award, Ban, Trash2, PlayCircle, Users, UserCheck, DollarSign, AlertCircle, X, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { StudentPaymentModal } from "@/components/schools/student-payment-modal";
 import { useBranchData, useBranchCreate } from "@/hooks/use-branch-data";
@@ -35,6 +35,11 @@ export function StudentList() {
     // Payment Modal State
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
     const [selectedStudentForPayment, setSelectedStudentForPayment] = useState<{ id: string, name: string } | null>(null);
+
+    // Estados para selección múltiple
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [isDeletingBulk, setIsDeletingBulk] = useState(false);
 
     const handleOpenPayment = (student: any) => {
         setSelectedStudentForPayment({
@@ -86,6 +91,38 @@ export function StudentList() {
             refetch();
         } catch (error) {
             console.error("Failed to delete student", error);
+        }
+    };
+
+    // Funciones para selección múltiple
+    const toggleSelectionMode = () => {
+        const nextMode = !isSelectionMode;
+        setIsSelectionMode(nextMode);
+        if (!nextMode) setSelectedIds([]);
+    };
+
+    const toggleSelection = (id: string) => {
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedIds.length === 0) return;
+        if (!confirm(`¿Eliminar ${selectedIds.length} alumnos permanentemente?`)) return;
+
+        setIsDeletingBulk(true);
+        try {
+            for (const id of selectedIds) {
+                await fetch(`/api/students/${id}`, { method: "DELETE" });
+            }
+            setSelectedIds([]);
+            setIsSelectionMode(false);
+            refetch();
+        } catch (error) {
+            console.error("Error al eliminar alumnos", error);
+        } finally {
+            setIsDeletingBulk(false);
         }
     };
 
@@ -292,26 +329,133 @@ export function StudentList() {
                 </div>
             </motion.div>
 
-            {/* FILTROS */}
-            <div style={{ padding: '0 var(--spacing-lg)', marginBottom: '40px' }}>
-                <ModernFilterBar
-                    searchValue={searchValue}
-                    onSearchChange={setSearchValue}
-                    placeholder="Buscar por nombre o matrícula..."
-                    filters={[
-                        { label: "Activos", value: "ACTIVE", color: "green" },
-                        { label: "Inactivos", value: "INACTIVE", color: "gray" }
-                    ]}
-                    activeFilters={filterStatus}
-                    onFilterToggle={(value) => {
-                        setFilterStatus(prev =>
-                            prev.includes(value)
-                                ? prev.filter(v => v !== value)
-                                : [...prev, value]
-                        );
-                    }}
-                />
+            {/* FILTROS Y BOTONES DE ACCIÓN */}
+            <div style={{ padding: '0 var(--spacing-lg)', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+                    {/* BARRA DE BÚSQUEDA */}
+                    <div style={{ flex: 1, minWidth: '300px' }}>
+                        <ModernFilterBar
+                            searchValue={searchValue}
+                            onSearchChange={setSearchValue}
+                            placeholder="Buscar por nombre o matrícula..."
+                            filters={[
+                                { label: "Activos", value: "ACTIVE", color: "green" },
+                                { label: "Inactivos", value: "INACTIVE", color: "gray" }
+                            ]}
+                            activeFilters={filterStatus}
+                            onFilterToggle={(value) => {
+                                setFilterStatus(prev =>
+                                    prev.includes(value)
+                                        ? prev.filter(v => v !== value)
+                                        : [...prev, value]
+                                );
+                            }}
+                        />
+                    </div>
+
+                    {/* BOTONES DE ACCIÓN */}
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <button
+                            onClick={toggleSelectionMode}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '12px 20px',
+                                borderRadius: '12px',
+                                border: isSelectionMode ? 'none' : '1px solid #e2e8f0',
+                                backgroundColor: isSelectionMode ? '#1e293b' : 'white',
+                                color: isSelectionMode ? 'white' : '#475569',
+                                fontSize: '14px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
+                            }}
+                        >
+                            {isSelectionMode ? <X size={18} /> : <Trash2 size={18} />}
+                            {isSelectionMode ? 'Cancelar' : 'Gestionar'}
+                        </button>
+                    </div>
+                </div>
             </div>
+
+            {/* BARRA DE ACCIONES DE GESTIÓN */}
+            {isSelectionMode && (
+                <div style={{
+                    padding: '0 var(--spacing-lg)',
+                    marginBottom: '24px'
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '16px 24px',
+                        backgroundColor: '#f8fafc',
+                        borderRadius: '16px',
+                        border: '2px dashed #cbd5e1'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '10px',
+                                backgroundColor: '#7c3aed',
+                                color: 'white',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 'bold',
+                                fontSize: '16px'
+                            }}>
+                                {selectedIds.length}
+                            </div>
+                            <span style={{ fontSize: '14px', fontWeight: 600, color: '#475569' }}>
+                                {selectedIds.length === 0 ? 'Haz clic en los alumnos para seleccionarlos' : 'alumnos seleccionados'}
+                            </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={() => setSelectedIds(filteredStudents.map(s => s.id))}
+                                style={{
+                                    padding: '10px 20px',
+                                    borderRadius: '10px',
+                                    border: '1px solid #e2e8f0',
+                                    backgroundColor: 'white',
+                                    color: '#475569',
+                                    fontSize: '14px',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Seleccionar todos
+                            </button>
+                            {selectedIds.length > 0 && (
+                                <button
+                                    onClick={handleBulkDelete}
+                                    disabled={isDeletingBulk}
+                                    style={{
+                                        padding: '10px 20px',
+                                        borderRadius: '10px',
+                                        border: 'none',
+                                        backgroundColor: '#ef4444',
+                                        color: 'white',
+                                        fontSize: '14px',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        opacity: isDeletingBulk ? 0.7 : 1
+                                    }}
+                                >
+                                    <Trash2 size={16} />
+                                    Eliminar seleccionados
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Student Cards Grid */}
             <section style={{ padding: '0 var(--spacing-lg)', minHeight: '400px' }} className="pb-8">
@@ -337,21 +481,48 @@ export function StudentList() {
                                 5: { bg: '#CCFBF1', accent: '#0D9488' },
                             };
                             const colors = studentColors[index % 6];
+                            const isSelected = selectedIds.includes(student.id);
 
                             return (
                                 <div
                                     key={student.id}
-                                    className="student-card"
+                                    className={`student-card ${isSelectionMode ? 'cursor-pointer' : ''}`}
+                                    onClick={() => isSelectionMode && toggleSelection(student.id)}
                                     style={{
                                         backgroundColor: colors.bg,
                                         borderRadius: '20px',
                                         padding: '28px',
                                         minHeight: '280px',
-                                        boxShadow: '0 10px 40px rgba(0,0,0,0.12)',
+                                        boxShadow: isSelected ? '0 0 0 3px #7c3aed' : '0 10px 40px rgba(0,0,0,0.12)',
                                         display: 'flex',
-                                        flexDirection: 'column' as const
+                                        flexDirection: 'column' as const,
+                                        position: 'relative' as const
                                     }}
                                 >
+                                    {/* CHECKBOX DE SELECCIÓN */}
+                                    {isSelectionMode && (
+                                        <div
+                                            style={{
+                                                position: 'absolute',
+                                                top: '16px',
+                                                right: '16px',
+                                                width: '28px',
+                                                height: '28px',
+                                                borderRadius: '8px',
+                                                backgroundColor: isSelected ? '#7c3aed' : 'white',
+                                                border: isSelected ? 'none' : '2px solid #E2E8F0',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: 'pointer',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                            }}
+                                            onClick={(e) => { e.stopPropagation(); toggleSelection(student.id); }}
+                                        >
+                                            {isSelected && <Check size={16} color="white" strokeWidth={3} />}
+                                        </div>
+                                    )}
+
                                     {/* AVATAR */}
                                     <div
                                         style={{
@@ -420,7 +591,7 @@ export function StudentList() {
                                             }}>
                                                 ${(student.balance || 0).toLocaleString()}
                                             </div>
-                                            <div style={{ fontSize: '10px', fontWeight: 'bold', color: colors.accent, textTransform: 'uppercase', tracking: 'wide' }}>
+                                            <div style={{ fontSize: '10px', fontWeight: 'bold', color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                                                 Saldo
                                             </div>
                                         </div>

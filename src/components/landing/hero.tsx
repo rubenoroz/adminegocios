@@ -34,7 +34,7 @@ export function Hero({ dict }: { dict: any }) {
                     color: '#475569',
                     maxWidth: '480px'
                 }}>
-                    Adminegocios centraliza la gestión de <strong style={{ color: '#0f172a' }}>escuelas, academias, tiendas y restaurantes</strong> en una sola plataforma clara y poderosa.
+                    Admnegocios centraliza la gestión de <strong style={{ color: '#0f172a' }}>escuelas, academias, tiendas y restaurantes</strong> en una sola plataforma clara y poderosa.
                 </p>
 
                 {/* Botones en fila */}

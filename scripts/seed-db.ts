@@ -20,7 +20,6 @@ async function main() {
                 data: {
                     name: "Escuela Demo",
                     type: "SCHOOL",
-                    slug: "escuela-demo-" + Math.floor(Math.random() * 1000),
                 }
             });
         }

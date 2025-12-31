@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Users, DollarSign, UserPlus, Edit, Trash2, Mail, Phone, Briefcase, TrendingUp, Key, ShieldCheck } from "lucide-react";
+import { Plus, Users, DollarSign, UserPlus, Edit, Trash2, Mail, Phone, Briefcase, TrendingUp, Key, ShieldCheck, X, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useBranchData, useBranchCreate } from "@/hooks/use-branch-data";
@@ -38,6 +38,11 @@ export function EmployeeList() {
 
     const [createUserOpen, setCreateUserOpen] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+
+    // Estados para selección múltiple
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [isDeletingBulk, setIsDeletingBulk] = useState(false);
 
     const handleCreate = async () => {
         try {
@@ -152,6 +157,40 @@ export function EmployeeList() {
         } catch (error) {
             console.error("Error deleting employee:", error);
             toast({ title: "Error al eliminar empleado", variant: "destructive" });
+        }
+    };
+
+    // Funciones para selección múltiple
+    const toggleSelectionMode = () => {
+        const nextMode = !isSelectionMode;
+        setIsSelectionMode(nextMode);
+        if (!nextMode) setSelectedIds([]);
+    };
+
+    const toggleSelection = (id: string) => {
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedIds.length === 0) return;
+        if (!confirm(`¿Eliminar ${selectedIds.length} empleados permanentemente?`)) return;
+
+        setIsDeletingBulk(true);
+        try {
+            // Eliminar uno por uno
+            for (const id of selectedIds) {
+                await fetch(`/api/employees/${id}`, { method: "DELETE" });
+            }
+            toast({ title: `${selectedIds.length} empleados eliminados exitosamente` });
+            setSelectedIds([]);
+            setIsSelectionMode(false);
+            refetch();
+        } catch (error) {
+            toast({ title: "Error al eliminar empleados", variant: "destructive" });
+        } finally {
+            setIsDeletingBulk(false);
         }
     };
 
@@ -409,28 +448,135 @@ export function EmployeeList() {
                 </div>
             </motion.div>
 
-            {/* FILTROS */}
-            <div style={{ padding: '0 var(--spacing-lg)', marginBottom: '40px' }}>
-                <ModernFilterBar
-                    searchValue={searchValue}
-                    onSearchChange={setSearchValue}
-                    placeholder="Buscar empleados..."
-                    filters={[
-                        { label: "Gerentes", value: "MANAGER", color: "purple" },
-                        { label: "Administradores", value: "ADMIN", color: "blue" },
-                        { label: "Maestros", value: "TEACHER", color: "green" },
-                        { label: "Encargados", value: "STAFF", color: "orange" }
-                    ]}
-                    activeFilters={filterRole}
-                    onFilterToggle={(value) => {
-                        setFilterRole(prev =>
-                            prev.includes(value)
-                                ? prev.filter(v => v !== value)
-                                : [...prev, value]
-                        );
-                    }}
-                />
+            {/* FILTROS Y BOTONES DE ACCIÓN */}
+            <div style={{ padding: '0 var(--spacing-lg)', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+                    {/* BARRA DE BÚSQUEDA */}
+                    <div style={{ flex: 1, minWidth: '300px' }}>
+                        <ModernFilterBar
+                            searchValue={searchValue}
+                            onSearchChange={setSearchValue}
+                            placeholder="Buscar empleados..."
+                            filters={[
+                                { label: "Gerentes", value: "MANAGER", color: "purple" },
+                                { label: "Administradores", value: "ADMIN", color: "blue" },
+                                { label: "Maestros", value: "TEACHER", color: "green" },
+                                { label: "Encargados", value: "STAFF", color: "orange" }
+                            ]}
+                            activeFilters={filterRole}
+                            onFilterToggle={(value) => {
+                                setFilterRole(prev =>
+                                    prev.includes(value)
+                                        ? prev.filter(v => v !== value)
+                                        : [...prev, value]
+                                );
+                            }}
+                        />
+                    </div>
+
+                    {/* BOTONES DE ACCIÓN */}
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <button
+                            onClick={toggleSelectionMode}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '12px 20px',
+                                borderRadius: '12px',
+                                border: isSelectionMode ? 'none' : '1px solid #e2e8f0',
+                                backgroundColor: isSelectionMode ? '#1e293b' : 'white',
+                                color: isSelectionMode ? 'white' : '#475569',
+                                fontSize: '14px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
+                            }}
+                        >
+                            {isSelectionMode ? <X size={18} /> : <Trash2 size={18} />}
+                            {isSelectionMode ? 'Cancelar' : 'Gestionar'}
+                        </button>
+                    </div>
+                </div>
             </div>
+
+            {/* BARRA DE ACCIONES DE GESTIÓN */}
+            {isSelectionMode && (
+                <div style={{
+                    padding: '0 var(--spacing-lg)',
+                    marginBottom: '24px'
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '16px 24px',
+                        backgroundColor: '#f8fafc',
+                        borderRadius: '16px',
+                        border: '2px dashed #cbd5e1'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '10px',
+                                backgroundColor: '#0d9488',
+                                color: 'white',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 'bold',
+                                fontSize: '16px'
+                            }}>
+                                {selectedIds.length}
+                            </div>
+                            <span style={{ fontSize: '14px', fontWeight: 600, color: '#475569' }}>
+                                {selectedIds.length === 0 ? 'Haz clic en los empleados para seleccionarlos' : 'empleados seleccionados'}
+                            </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={() => setSelectedIds(filteredEmployees.map(e => e.id))}
+                                style={{
+                                    padding: '10px 20px',
+                                    borderRadius: '10px',
+                                    border: '1px solid #e2e8f0',
+                                    backgroundColor: 'white',
+                                    color: '#475569',
+                                    fontSize: '14px',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Seleccionar todos
+                            </button>
+                            {selectedIds.length > 0 && (
+                                <button
+                                    onClick={handleBulkDelete}
+                                    disabled={isDeletingBulk}
+                                    style={{
+                                        padding: '10px 20px',
+                                        borderRadius: '10px',
+                                        border: 'none',
+                                        backgroundColor: '#ef4444',
+                                        color: 'white',
+                                        fontSize: '14px',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        opacity: isDeletingBulk ? 0.7 : 1
+                                    }}
+                                >
+                                    <Trash2 size={16} />
+                                    Eliminar seleccionados
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* SECCIÓN EMPLEADOS */}
             <section style={{ padding: '0 var(--spacing-lg)', minHeight: '500px' }} className="pb-8">
@@ -456,21 +602,48 @@ export function EmployeeList() {
                                 5: { bg: '#CCFBF1', accent: '#0D9488' },
                             };
                             const colors = employeeColors[index % 6];
+                            const isSelected = selectedIds.includes(employee.id);
 
                             return (
                                 <div
                                     key={employee.id}
-                                    className="employee-card"
+                                    className={`employee-card ${isSelectionMode ? 'cursor-pointer' : ''}`}
+                                    onClick={() => isSelectionMode && toggleSelection(employee.id)}
                                     style={{
                                         backgroundColor: colors.bg,
                                         borderRadius: '20px',
                                         padding: '28px',
                                         minHeight: '280px',
-                                        boxShadow: '0 10px 40px rgba(0,0,0,0.12)',
+                                        boxShadow: isSelected ? '0 0 0 3px #0d9488' : '0 10px 40px rgba(0,0,0,0.12)',
                                         display: 'flex',
-                                        flexDirection: 'column' as const
+                                        flexDirection: 'column' as const,
+                                        position: 'relative' as const
                                     }}
                                 >
+                                    {/* CHECKBOX DE SELECCIÓN */}
+                                    {isSelectionMode && (
+                                        <div
+                                            style={{
+                                                position: 'absolute',
+                                                top: '16px',
+                                                right: '16px',
+                                                width: '28px',
+                                                height: '28px',
+                                                borderRadius: '8px',
+                                                backgroundColor: isSelected ? '#0d9488' : 'white',
+                                                border: isSelected ? 'none' : '2px solid #E2E8F0',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: 'pointer',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                            }}
+                                            onClick={(e) => { e.stopPropagation(); toggleSelection(employee.id); }}
+                                        >
+                                            {isSelected && <Check size={16} color="white" strokeWidth={3} />}
+                                        </div>
+                                    )}
+
                                     {/* AVATAR */}
                                     <div
                                         style={{

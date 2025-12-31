@@ -19,7 +19,7 @@ export async function GET(
 
         // Get course with students
         const course = await prisma.course.findUnique({
-            where: { id: params.courseId },
+            where: { id: courseId },
             include: {
                 teacher: {
                     select: {

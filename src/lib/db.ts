@@ -22,7 +22,7 @@ export class AppDatabase extends Dexie {
     sales!: Table<LocalSale>;
 
     constructor() {
-        super('AdminegociosDB');
+        super('AdmnegociosDB');
         this.version(1).stores({
             products: 'id, name, sku, syncStatus',
             sales: '++id, createdAt, syncStatus'

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { checkLimit, incrementResourceCount } from "@/lib/plan-limits";
 
 export async function GET(req: Request) {
     try {
@@ -60,6 +61,19 @@ export async function POST(req: Request) {
             return new NextResponse("Missing required fields", { status: 400 });
         }
 
+        // VALIDAR LÍMITE DE PLAN
+        const limitCheck = await checkLimit(businessId, "students");
+
+        if (!limitCheck.allowed) {
+            return NextResponse.json({
+                error: "LIMIT_REACHED",
+                message: limitCheck.message,
+                limit: limitCheck.limit,
+                current: limitCheck.current,
+                planName: limitCheck.planName
+            }, { status: 403 });
+        }
+
         const student = await prisma.student.create({
             data: {
                 firstName,
@@ -70,6 +84,9 @@ export async function POST(req: Request) {
                 businessId,
             },
         });
+
+        // Incrementar contador
+        await incrementResourceCount(businessId, "students");
 
         return NextResponse.json(student);
     } catch (error) {

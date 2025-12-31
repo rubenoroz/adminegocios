@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
@@ -11,7 +11,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { studentIds, feeTypeId, title, amount, dueDate } = body;
+        const { studentIds, templateId, title, amount, dueDate } = body;
 
         if (!studentIds || !studentIds.length || !title || !amount || !dueDate) {
             return new NextResponse("Missing required fields", { status: 400 });
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
                 prisma.studentFee.create({
                     data: {
                         studentId,
-                        feeTypeId,
+                        templateId,
                         title,
                         amount: parseFloat(amount),
                         dueDate: new Date(dueDate),

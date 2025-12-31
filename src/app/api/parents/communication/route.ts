@@ -10,20 +10,16 @@ export async function GET(req: Request) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        // 1. Get Parent User
-        const user = await prisma.user.findUnique({
+        // 1. Get Parent Account directly by email
+        const parentAccount = await prisma.parentAccount.findUnique({
             where: { email: session.user.email },
             include: {
-                parentAccounts: {
+                students: {
                     include: {
-                        students: {
+                        student: {
                             include: {
-                                student: {
-                                    include: {
-                                        enrollments: {
-                                            where: { status: "ACTIVE" }
-                                        }
-                                    }
+                                enrollments: {
+                                    where: { status: "ACTIVE" }
                                 }
                             }
                         }
@@ -32,11 +28,10 @@ export async function GET(req: Request) {
             }
         });
 
-        if (!user || user.parentAccounts.length === 0) {
+        if (!parentAccount) {
             return new NextResponse("Parent account not found", { status: 404 });
         }
 
-        const parentAccount = user.parentAccounts[0];
         const businessId = parentAccount.businessId;
 
         // 2. Collect Student IDs and Course IDs

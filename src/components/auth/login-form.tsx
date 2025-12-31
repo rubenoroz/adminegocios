@@ -74,7 +74,7 @@ export function LoginForm() {
                     }}>
                         <span style={{ color: 'white', fontWeight: 700, fontSize: '14px' }}>A</span>
                     </div>
-                    <span style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>Adminegocios</span>
+                    <span style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>Admnegocios</span>
                 </Link>
 
                 <h3 style={{

@@ -94,6 +94,27 @@ model PasswordResetToken {
   @@index([token])
 }
 
+// Subscription Plans Model
+model Plan {
+  id          String   @id @default(cuid())
+  name        String   @unique // "Free", "Básico", "Premium"
+  price       Float    @default(0)
+  interval    String   @default("monthly") // monthly, yearly
+  
+  // Límites (null = ilimitado)
+  maxCourses  Int?     @default(2)
+  maxTeachers Int?     @default(2)
+  maxStudents Int?     @default(3)
+  maxBranches Int?     @default(1)
+  maxInventoryItems Int? @default(10)
+  
+  isActive    Boolean  @default(true)
+  
+  businesses  Business[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 // Business Core Models
 
 model Business {
@@ -108,6 +129,16 @@ model Business {
   sidebarColor     String?  @default("#0f172a") // slate-900
   logoHeight       Int?     @default(64)
   gradingConfig    String?  // JSON string: { periods: [], passingGrade: 70 }
+  
+  // Plan and Limits
+  planId      String?  @default("free")
+  plan        Plan?    @relation(fields: [planId], references: [id])
+  
+  // Usage counters (para tracking de límites)
+  coursesCount    Int @default(0)
+  teachersCount   Int @default(0)
+  studentsCount   Int @default(0)
+  inventoryCount  Int @default(0)
   
   // Financial reserves
   expenseReservePercentage  Float?   @default(0) // % for unexpected expenses
@@ -127,6 +158,7 @@ model Business {
   transactions Transaction[]
   tables      Table[]
   orders      Order[]
+  reservations Reservation[]
   
   // School specific
   feeTemplates SchoolFeeTemplate[]
@@ -137,6 +169,7 @@ model Business {
   events      SchoolEvent[]
   classrooms  Classroom[]
   commissionSettlements CommissionSettlement[]
+  ownerRecoveryRequests OwnerRecoveryRequest[]
 }
 
 model Branch {
@@ -154,6 +187,7 @@ model Branch {
   employees   Employee[]
   tables      Table[]
   orders      Order[]
+  reservations Reservation[]
   schedules   ClassSchedule[]
 }
 
@@ -297,9 +331,13 @@ model Table {
   id          String   @id @default(cuid())
   name        String
   capacity    Int
-  status      String   @default("AVAILABLE") // AVAILABLE, OCCUPIED, RESERVED
+  status      String   @default("AVAILABLE") // AVAILABLE, OCCUPIED, WAITING_FOOD, SERVING, PAYING, DIRTY, RESERVED
   x           Int      @default(0)
   y           Int      @default(0)
+  
+  // PAX - Número de comensales actualmente en la mesa
+  currentPax  Int?
+  currentOrderId String? // Orden activa vinculada
   
   businessId  String
   business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
@@ -307,13 +345,20 @@ model Table {
   branch      Branch?  @relation(fields: [branchId], references: [id])
   
   orders      Order[]
+  reservations Reservation[]
 }
 
 model Order {
   id          String   @id @default(cuid())
-  status      String   @default("PENDING") // PENDING, PREPARING, READY, SERVED, COMPLETED
+  status      String   @default("PENDING") // PENDING, CONFIRMED, PREPARING, READY, SERVED, COMPLETED, CANCELLED
+  type        String   @default("DINE_IN") // DINE_IN, TAKE_AWAY, DELIVERY
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  
+  // Totales y pagos
+  total           Float    @default(0)
+  remainingAmount Float    @default(0) // Monto pendiente por pagar
+  customerName    String?  // Para delivery/takeaway
   
   tableId     String?
   table       Table?   @relation(fields: [tableId], references: [id])
@@ -324,6 +369,7 @@ model Order {
   branch      Branch?  @relation(fields: [branchId], references: [id])
   
   items       OrderItem[]
+  payments    Payment[]
 }
 
 model OrderItem {
@@ -334,6 +380,54 @@ model OrderItem {
   product     Product  @relation(fields: [productId], references: [id])
   quantity    Int
   notes       String?
+  
+  // Nuevo: precio al momento y asignación por comensal
+  price       Float?   // Precio al momento de la orden
+  guestName   String?  // "Yo", "Juan", "Niño"
+  status      String   @default("PENDING") // PENDING, PREPARING, READY, SERVED
+}
+
+// Modelo de Pagos para restaurante
+model Payment {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount      Float
+  tip         Float?   @default(0)
+  method      String   // CASH, CARD, TRANSFER
+  status      String   @default("COMPLETED") // PENDING, COMPLETED
+  guestName   String?  // Si pagó por una persona específica
+  timestamp   DateTime @default(now())
+  
+  @@index([orderId])
+}
+
+// Modelo de Reservaciones para restaurante
+model Reservation {
+  id          String   @id @default(cuid())
+  customerName String
+  phone       String?
+  email       String?
+  partySize   Int      // Número de personas
+  date        DateTime // Fecha y hora de la reservación
+  duration    Int      @default(90) // Duración en minutos
+  status      String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED, NO_SHOW, COMPLETED
+  notes       String?
+  
+  tableId     String?
+  table       Table?   @relation(fields: [tableId], references: [id])
+  
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([businessId, date])
+  @@index([tableId, date])
+  @@index([status])
 }
 
 // School Module Models
@@ -827,4 +921,34 @@ model CommissionSettlement {
   
   @@index([employeeId])
   @@index([businessId])
+}
+
+// Owner Recovery and Transfer Requests
+model OwnerRecoveryRequest {
+  id            String   @id @default(cuid())
+  type          String   // RECOVERY (reset password), TRANSFER (change owner)
+  status        String   @default("PENDING") // PENDING, VERIFIED, COMPLETED, REJECTED
+  
+  businessId    String
+  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  currentOwnerId String?  // Current owner user ID (for audit)
+  newOwnerId     String?  // Target user ID (for transfer)
+  newOwnerEmail  String?  // Email of new owner (if creating new user)
+  
+  // Manual verification tracking
+  verificationMethod String?  // EMAIL, PHONE, IN_PERSON
+  verifiedBy    String?       // SUPERADMIN who verified
+  verifiedAt    DateTime?
+  
+  // Audit trail
+  requestedBy   String        // SUPERADMIN who initiated
+  reason        String?       // Documented reason
+  notes         String?       // Additional notes from verification
+  
+  createdAt     DateTime @default(now())
+  completedAt   DateTime?
+  
+  @@index([businessId])
+  @@index([status])
 }

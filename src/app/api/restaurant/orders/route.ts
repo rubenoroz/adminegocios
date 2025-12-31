@@ -22,13 +22,14 @@ export async function GET(req: Request) {
         const { searchParams } = new URL(req.url);
         const status = searchParams.get('status');
         const branchId = searchParams.get('branchId');
+        const includeCompleted = searchParams.get('includeCompleted') === 'true';
 
         const whereClause: any = { businessId: user.businessId };
         if (status) {
             whereClause.status = status;
-        } else {
+        } else if (!includeCompleted) {
             // Default to active orders
-            whereClause.status = { not: 'COMPLETED' };
+            whereClause.status = { notIn: ['COMPLETED', 'CANCELLED'] };
         }
         if (branchId) {
             whereClause.branchId = branchId;
@@ -41,9 +42,10 @@ export async function GET(req: Request) {
                 items: {
                     include: { product: true }
                 },
+                payments: true,
                 branch: true
             },
-            orderBy: { createdAt: 'asc' }
+            orderBy: { createdAt: 'desc' }
         });
 
         return NextResponse.json(orders);
@@ -62,7 +64,8 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
-        const { tableId, items, branchId } = body; // items: [{ productId, quantity, notes }]
+        const { tableId, items, branchId, type = 'DINE_IN', customerName } = body;
+        // items: [{ productId, quantity, notes, guestName }]
 
         const user = await prisma.user.findUnique({
             where: { email: session.user.email }
@@ -82,6 +85,31 @@ export async function POST(req: Request) {
             }
         }
 
+        // Obtener precios de productos
+        const productIds = items.map((item: any) => item.productId);
+        const products = await prisma.product.findMany({
+            where: { id: { in: productIds } }
+        });
+        const priceMap = products.reduce((acc: any, p) => {
+            acc[p.id] = p.price;
+            return acc;
+        }, {});
+
+        // Calcular total
+        let total = 0;
+        const itemsWithPrice = items.map((item: any) => {
+            const price = priceMap[item.productId] || 0;
+            total += price * item.quantity;
+            return {
+                productId: item.productId,
+                quantity: item.quantity,
+                notes: item.notes || null,
+                guestName: item.guestName || 'Sin asignar',
+                price: price,
+                status: 'PENDING'
+            };
+        });
+
         // Create Order
         const order = await prisma.order.create({
             data: {
@@ -89,24 +117,28 @@ export async function POST(req: Request) {
                 businessId: user.businessId,
                 branchId: branchId || null,
                 status: "PENDING",
+                type: type,
+                customerName: customerName || null,
+                total: total,
+                remainingAmount: total,
                 items: {
-                    create: items.map((item: any) => ({
-                        productId: item.productId,
-                        quantity: item.quantity,
-                        notes: item.notes
-                    }))
+                    create: itemsWithPrice
                 }
             },
             include: {
-                items: true
+                items: { include: { product: true } },
+                payments: true
             }
         });
 
-        // Update Table status
+        // Update Table status and link order
         if (tableId) {
             await prisma.table.update({
                 where: { id: tableId },
-                data: { status: "OCCUPIED" }
+                data: {
+                    status: "OCCUPIED",
+                    currentOrderId: order.id
+                }
             });
         }
 
@@ -128,16 +160,49 @@ export async function PUT(req: Request) {
         const body = await req.json();
         const { orderId, status } = body;
 
-        const order = await prisma.order.update({
+        const validStatuses = ['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'SERVED', 'COMPLETED', 'CANCELLED'];
+        if (status && !validStatuses.includes(status)) {
+            return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+        }
+
+        // Obtener la orden actual para verificar la mesa
+        const currentOrder = await prisma.order.findUnique({
             where: { id: orderId },
-            data: { status }
+            include: { table: true }
         });
 
-        // If completed, free the table
-        if (status === 'COMPLETED' && order.tableId) {
+        if (!currentOrder) {
+            return NextResponse.json({ error: "Order not found" }, { status: 404 });
+        }
+
+        const order = await prisma.order.update({
+            where: { id: orderId },
+            data: { status },
+            include: {
+                items: { include: { product: true } },
+                payments: true,
+                table: true
+            }
+        });
+
+        // Actualizar estado de la mesa según el estado de la orden
+        if (order.tableId) {
+            let tableStatus = 'OCCUPIED';
+
+            if (status === 'PREPARING') {
+                tableStatus = 'WAITING_FOOD';
+            } else if (status === 'READY' || status === 'SERVED') {
+                tableStatus = 'SERVING';
+            } else if (status === 'COMPLETED' || status === 'CANCELLED') {
+                tableStatus = 'DIRTY'; // Mesa por limpiar después de completar
+            }
+
             await prisma.table.update({
                 where: { id: order.tableId },
-                data: { status: "AVAILABLE" }
+                data: {
+                    status: tableStatus,
+                    ...(status === 'COMPLETED' || status === 'CANCELLED' ? { currentOrderId: null, currentPax: null } : {})
+                }
             });
         }
 

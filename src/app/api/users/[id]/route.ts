@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function DELETE(
-    req: Request,
-    { params }: { params: { id: string } }
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await getServerSession(authOptions);
@@ -18,8 +18,10 @@ export async function DELETE(
             return new NextResponse("Forbidden", { status: 403 });
         }
 
+        const { id } = await params;
+
         // Don't allow deleting yourself
-        if (params.id === session.user.id) {
+        if (id === session.user.id) {
             return NextResponse.json(
                 { message: "No puedes eliminar tu propio usuario" },
                 { status: 400 }
@@ -27,7 +29,7 @@ export async function DELETE(
         }
 
         await prisma.user.delete({
-            where: { id: params.id },
+            where: { id },
         });
 
         return NextResponse.json({ success: true });

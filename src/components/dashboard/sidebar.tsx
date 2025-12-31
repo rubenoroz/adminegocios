@@ -21,7 +21,9 @@ import {
     Upload,
     Megaphone,
     TrendingUp,
-    Loader2
+    Loader2,
+    Building2,
+    CreditCard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
@@ -56,8 +58,10 @@ export function Sidebar({
     const isLoading = status === "loading" && !serverBusinessType;
 
     // Debug: Monitor session state
-    if (session?.user) {
+    if (status === "authenticated") {
         console.log("Sidebar: Session Loaded", { role, businessType, status });
+        console.log("🔍 DEBUG - Role normalizado:", role?.toUpperCase().trim());
+        console.log("🔍 DEBUG - ¿Es SUPERADMIN?", role?.toUpperCase().trim() === "SUPERADMIN");
     }
 
     // Definir rutas con grupos y colores del nuevo sistema de diseño
@@ -91,71 +95,48 @@ export function Sidebar({
             allowedRoles: ["OWNER", "ADMIN", "MANAGER"]
         },
 
-        // Personas
+        // Personas - Solo para tipos de negocio sin módulo propio de personal
         {
             label: t.employees,
             icon: Users,
             href: "/dashboard/employees",
             moduleColor: "var(--module-employees)",
             group: "Personas",
-            allowedTypes: ["RETAIL", "RESTAURANT", "SCHOOL", "SERVICE"],
+            allowedTypes: ["RETAIL", "SERVICE"], // SCHOOL y RESTAURANT tienen personal en sus pestañas
             allowedRoles: ["OWNER", "ADMIN", "HR"]
         },
+
+        // Escuela - Un solo enlace con pestañas internas (incluye Cursos, Alumnos, Padres, Calificaciones, Asistencia, Personal, Comunicación)
         {
-            label: t.students,
+            label: "Escuela",
             icon: GraduationCap,
-            href: "/dashboard/students",
-            moduleColor: "var(--module-students)",
-            group: "Personas",
+            href: "/dashboard/school",
+            moduleColor: "var(--module-courses)",
+            group: "Escuela",
             allowedTypes: ["SCHOOL"],
             allowedRoles: ["OWNER", "ADMIN", "TEACHER", "RECEPTIONIST"]
         },
+
+        // Restaurante - Un solo enlace con pestañas internas (incluye Mesas, Cocina, Órdenes, Reservaciones, Staff)
         {
-            label: "Padres",
-            icon: Users,
-            href: "/dashboard/parents",
-            moduleColor: "var(--module-students)",
-            group: "Personas",
-            allowedTypes: ["SCHOOL"],
-            allowedRoles: ["OWNER", "ADMIN", "RECEPTIONIST"]
+            label: "Restaurante",
+            icon: Utensils,
+            href: "/dashboard/restaurant",
+            moduleColor: "var(--module-restaurant)",
+            group: "Restaurante",
+            allowedTypes: ["RESTAURANT"],
+            allowedRoles: ["OWNER", "ADMIN", "WAITER", "MANAGER"]
         },
 
-        // Escuela
+        // Tienda - Un solo enlace con pestañas internas (incluye POS, Inventario, Clientes, Proveedores, Historial, Caja, Staff)
         {
-            label: t.courses,
-            icon: BookOpen,
-            href: "/dashboard/courses",
-            moduleColor: "var(--module-courses)",
-            group: "Escuela",
-            allowedTypes: ["SCHOOL"],
-            allowedRoles: ["OWNER", "ADMIN", "TEACHER"]
-        },
-        {
-            label: "Calificaciones",
-            icon: FileText,
-            href: "/dashboard/grades",
-            moduleColor: "var(--module-courses)",
-            group: "Escuela",
-            allowedTypes: ["SCHOOL"],
-            allowedRoles: ["OWNER", "ADMIN", "TEACHER"]
-        },
-        {
-            label: "Asistencia",
-            icon: FileText,
-            href: "/dashboard/attendance",
-            moduleColor: "var(--module-attendance)",
-            group: "Escuela",
-            allowedTypes: ["SCHOOL"],
-            allowedRoles: ["OWNER", "ADMIN", "TEACHER"]
-        },
-        {
-            label: "Comunicación",
-            icon: Megaphone,
-            href: "/dashboard/communication",
-            moduleColor: "var(--module-communication)",
-            group: "Escuela",
-            allowedTypes: ["SCHOOL"],
-            allowedRoles: ["OWNER", "ADMIN", "TEACHER"]
+            label: "Tienda",
+            icon: ShoppingCart,
+            href: "/dashboard/store",
+            moduleColor: "var(--module-sales)",
+            group: "Tienda",
+            allowedTypes: ["RETAIL"],
+            allowedRoles: ["OWNER", "ADMIN", "CASHIER", "MANAGER"]
         },
 
         {
@@ -182,7 +163,7 @@ export function Sidebar({
             href: "/dashboard/sales",
             moduleColor: "var(--module-sales)",
             group: "Finanzas",
-            allowedTypes: ["RETAIL", "RESTAURANT", "SCHOOL", "SERVICE"],
+            allowedTypes: ["RETAIL", "RESTAURANT", "SERVICE"],
             allowedRoles: ["OWNER", "ADMIN", "CASHIER"]
         },
         {
@@ -224,13 +205,31 @@ export function Sidebar({
             allowedRoles: ["OWNER", "ADMIN"]
         },
         {
-            label: "Restaurante",
-            icon: Utensils,
-            href: "/dashboard/restaurant",
-            moduleColor: "var(--module-restaurant)",
-            group: "Restaurante",
-            allowedTypes: ["RESTAURANT"],
-            allowedRoles: ["OWNER", "ADMIN", "WAITER", "MANAGER"]
+            label: "Panel de Admin",
+            icon: Settings,
+            href: "/dashboard/admin",
+            moduleColor: "var(--muted-text)",
+            group: "Super Admin",
+            allowedTypes: ["RETAIL", "RESTAURANT", "SCHOOL", "SERVICE"],
+            allowedRoles: ["SUPERADMIN"]
+        },
+        {
+            label: "Gestión de Negocios",
+            icon: Building2,
+            href: "/dashboard/admin/businesses",
+            moduleColor: "var(--muted-text)",
+            group: "Super Admin",
+            allowedTypes: ["RETAIL", "RESTAURANT", "SCHOOL", "SERVICE"],
+            allowedRoles: ["SUPERADMIN"]
+        },
+        {
+            label: "Gestión de Planes",
+            icon: CreditCard,
+            href: "/dashboard/admin/plans",
+            moduleColor: "var(--muted-text)",
+            group: "Super Admin",
+            allowedTypes: ["RETAIL", "RESTAURANT", "SCHOOL", "SERVICE"],
+            allowedRoles: ["SUPERADMIN"]
         },
     ];
 
@@ -242,6 +241,11 @@ export function Sidebar({
     const routes = allRoutes.filter(route => {
         // En estado de carga, mostramos todo por petición del usuario (menú azul)
         if (isLoading) return true;
+
+        // SUPERADMIN ve TODO sin restricciones
+        if (currentRole === "SUPERADMIN") {
+            return true;
+        }
 
         // Validar tipo de negocio (siempre obligatorio si está definido en la ruta)
         const typeMatch = !currentType || route.allowedTypes.includes(currentType as any);
@@ -256,6 +260,9 @@ export function Sidebar({
         return typeMatch && roleMatch;
     });
 
+    console.log("🔍 DEBUG - Total rutas filtradas:", routes.length);
+    console.log("🔍 DEBUG - Rutas de Super Admin:", routes.filter(r => r.group === "Super Admin").map(r => r.label));
+
     // Agrupar rutas
     const groupedRoutes = routes.reduce((acc, route) => {
         const group = route.group || "Otros";
@@ -264,14 +271,14 @@ export function Sidebar({
         return acc;
     }, {} as Record<string, typeof routes>);
 
-    const groupOrder = ["Dashboard", "Personas", "Escuela", "Finanzas", "Inventario", "Restaurante", "Administración"];
+    const groupOrder = ["Super Admin", "Dashboard", "Personas", "Escuela", "Restaurante", "Tienda", "Finanzas", "Inventario", "Administración"];
 
     const branding = useBranding();
 
-    // Usar valores del servidor como fallback mientras carga el branding
-    const logoUrl = branding.logoUrl || serverLogoUrl;
-    const logoOrientation = branding.logoUrl ? branding.logoOrientation : serverLogoOrientation;
-    const logoHeight = branding.logoUrl ? branding.logoHeight : serverLogoHeight;
+    // Usar valores del contexto cuando ya cargó, de lo contrario usar valores del servidor
+    const logoUrl = branding.loading ? serverLogoUrl : (branding.logoUrl || serverLogoUrl);
+    const logoOrientation = branding.loading ? serverLogoOrientation : branding.logoOrientation;
+    const logoHeight = branding.loading ? serverLogoHeight : branding.logoHeight;
 
     // Debug logo
     if (logoUrl) {
@@ -284,28 +291,28 @@ export function Sidebar({
                 <Link href={`/${locale}/dashboard`} className={cn("sidebar-brand block", logoUrl && "px-4 py-4 h-auto")}>
                     {logoUrl ? (
                         <div
-                            className={cn(
-                                "relative flex items-center justify-center w-full",
-                                // Default classes as fallback
-                                logoOrientation === "HORIZONTAL" ? "h-16" :
-                                    logoOrientation === "VERTICAL" ? "h-24" : "h-16"
-                            )}
+                            className="relative flex items-center justify-center w-full overflow-hidden"
                             style={{
-                                height: logoHeight ? `${logoHeight}px` : (logoOrientation === "VERTICAL" ? "96px" : "64px")
+                                height: logoHeight ? `${logoHeight}px` : (logoOrientation === "VERTICAL" ? "96px" : "64px"),
+                                maxWidth: '100%'
                             }}
                         >
                             <Image
                                 src={logoUrl}
                                 alt="Logo"
                                 fill
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                sizes="(max-width: 768px) 200px, 250px"
                                 className="object-contain"
+                                style={{
+                                    objectFit: 'contain',
+                                    objectPosition: 'center'
+                                }}
                                 priority
                                 unoptimized={logoUrl.endsWith('.svg')}
                             />
                         </div>
                     ) : (
-                        "Adminegocios"
+                        "Admnegocios"
                     )}
                 </Link>
             </div>

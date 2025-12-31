@@ -20,7 +20,7 @@ export function Navbar({ dict }: { dict: any }) {
                 letterSpacing: '-0.025em',
                 color: '#0f172a'
             }}>
-                Adminegocios
+                Admnegocios
             </div>
 
             {/* Actions */}

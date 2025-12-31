@@ -35,6 +35,7 @@ export async function POST(req: Request) {
                         weight: gradeData.weight ? parseFloat(gradeData.weight) : null,
                     },
                     create: {
+                        name: gradeData.name || gradeData.type,
                         studentId: gradeData.studentId,
                         courseId,
                         period,

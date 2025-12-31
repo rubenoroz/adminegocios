@@ -32,7 +32,13 @@ export async function GET(req: Request) {
             include: {
                 orders: {
                     where: { status: { not: 'COMPLETED' } },
-                    take: 1
+                    take: 1,
+                    include: {
+                        items: {
+                            include: { product: true }
+                        },
+                        payments: true
+                    }
                 },
                 branch: true
             }
@@ -86,6 +92,98 @@ export async function POST(req: Request) {
         });
 
         return NextResponse.json(table);
+    } catch (error) {
+        console.error(error);
+        return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    }
+}
+
+// Actualizar mesa (estado, PAX, etc.)
+export async function PUT(req: Request) {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user?.email) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    try {
+        const body = await req.json();
+        const { tableId, status, currentPax, currentOrderId, name, capacity } = body;
+
+        if (!tableId) {
+            return NextResponse.json({ error: "tableId is required" }, { status: 400 });
+        }
+
+        // Validar que el status sea válido si se proporciona
+        const validStatuses = ['AVAILABLE', 'OCCUPIED', 'WAITING_FOOD', 'SERVING', 'PAYING', 'DIRTY', 'RESERVED'];
+        if (status && !validStatuses.includes(status)) {
+            return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+        }
+
+        const updateData: any = {};
+        if (status !== undefined) updateData.status = status;
+        if (currentPax !== undefined) updateData.currentPax = currentPax;
+        if (currentOrderId !== undefined) updateData.currentOrderId = currentOrderId;
+        if (name !== undefined) updateData.name = name;
+        if (capacity !== undefined) updateData.capacity = parseInt(capacity);
+
+        // Si se libera la mesa, limpiar PAX y orden
+        if (status === 'AVAILABLE') {
+            updateData.currentPax = null;
+            updateData.currentOrderId = null;
+        }
+
+        const table = await prisma.table.update({
+            where: { id: tableId },
+            data: updateData,
+            include: {
+                orders: {
+                    where: { status: { not: 'COMPLETED' } },
+                    take: 1
+                }
+            }
+        });
+
+        return NextResponse.json(table);
+    } catch (error) {
+        console.error(error);
+        return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    }
+}
+
+// Eliminar mesas (individual o múltiples)
+export async function DELETE(req: Request) {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user?.email) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    try {
+        const body = await req.json();
+        const { ids } = body; // Array de IDs para eliminar
+
+        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+            return NextResponse.json({ error: "ids array is required" }, { status: 400 });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { email: session.user.email }
+        });
+
+        if (!user?.businessId) {
+            return NextResponse.json({ error: "Business not found" }, { status: 404 });
+        }
+
+        // Eliminar solo mesas del negocio del usuario
+        await prisma.table.deleteMany({
+            where: {
+                id: { in: ids },
+                businessId: user.businessId
+            }
+        });
+
+        return NextResponse.json({ success: true, deleted: ids.length });
     } catch (error) {
         console.error(error);
         return NextResponse.json({ error: "Internal Error" }, { status: 500 });

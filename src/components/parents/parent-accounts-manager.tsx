@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Plus, Users, Mail, Phone, MoreHorizontal, Ban, Trash2, PlayCircle, Edit } from "lucide-react";
+import { Plus, Users, Mail, Phone, MoreHorizontal, Ban, Trash2, PlayCircle, Edit, X, Check } from "lucide-react";
 import { useBranch } from "@/context/branch-context";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +54,11 @@ export function ParentAccountsManager() {
         studentIds: [] as string[],
         relationships: [] as string[]
     });
+
+    // Estados para selección múltiple
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [isDeletingBulk, setIsDeletingBulk] = useState(false);
 
     const fetchParents = async () => {
         if (!selectedBranch?.businessId) return;
@@ -187,6 +192,38 @@ export function ParentAccountsManager() {
 
     // Filter out ARCHIVED parents
     const activeParents = parents.filter(p => p.status !== "ARCHIVED");
+
+    // Funciones para selección múltiple
+    const toggleSelectionMode = () => {
+        const nextMode = !isSelectionMode;
+        setIsSelectionMode(nextMode);
+        if (!nextMode) setSelectedIds([]);
+    };
+
+    const toggleSelection = (id: string) => {
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedIds.length === 0) return;
+        if (!confirm(`¿Eliminar ${selectedIds.length} cuentas de padres permanentemente?`)) return;
+
+        setIsDeletingBulk(true);
+        try {
+            for (const id of selectedIds) {
+                await fetch(`/api/parents/${id}`, { method: "DELETE" });
+            }
+            setSelectedIds([]);
+            setIsSelectionMode(false);
+            fetchParents();
+        } catch (error) {
+            console.error("Error al eliminar padres", error);
+        } finally {
+            setIsDeletingBulk(false);
+        }
+    };
 
     return (
         <div className="bg-slate-100 pb-16">
@@ -358,6 +395,113 @@ export function ParentAccountsManager() {
                 </div>
             </div>
 
+            {/* BARRA DE GESTIÓN */}
+            <div style={{ padding: '0 var(--spacing-lg)', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1 }}></div>
+
+                    {/* BOTÓN GESTIONAR */}
+                    <button
+                        onClick={toggleSelectionMode}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '12px 20px',
+                            borderRadius: '12px',
+                            border: isSelectionMode ? 'none' : '1px solid #e2e8f0',
+                            backgroundColor: isSelectionMode ? '#1e293b' : 'white',
+                            color: isSelectionMode ? 'white' : '#475569',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
+                        }}
+                    >
+                        {isSelectionMode ? <X size={18} /> : <Trash2 size={18} />}
+                        {isSelectionMode ? 'Cancelar' : 'Gestionar'}
+                    </button>
+                </div>
+            </div>
+
+            {/* BARRA DE ACCIONES DE GESTIÓN */}
+            {isSelectionMode && (
+                <div style={{
+                    padding: '0 var(--spacing-lg)',
+                    marginBottom: '24px'
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '16px 24px',
+                        backgroundColor: '#f8fafc',
+                        borderRadius: '16px',
+                        border: '2px dashed #cbd5e1'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '10px',
+                                backgroundColor: '#ea580c',
+                                color: 'white',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 'bold',
+                                fontSize: '16px'
+                            }}>
+                                {selectedIds.length}
+                            </div>
+                            <span style={{ fontSize: '14px', fontWeight: 600, color: '#475569' }}>
+                                {selectedIds.length === 0 ? 'Selecciona los padres a eliminar' : 'padres seleccionados'}
+                            </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={() => setSelectedIds(activeParents.map(p => p.id))}
+                                style={{
+                                    padding: '10px 20px',
+                                    borderRadius: '10px',
+                                    border: '1px solid #e2e8f0',
+                                    backgroundColor: 'white',
+                                    color: '#475569',
+                                    fontSize: '14px',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Seleccionar todos
+                            </button>
+                            {selectedIds.length > 0 && (
+                                <button
+                                    onClick={handleBulkDelete}
+                                    disabled={isDeletingBulk}
+                                    style={{
+                                        padding: '10px 20px',
+                                        borderRadius: '10px',
+                                        border: 'none',
+                                        backgroundColor: '#ef4444',
+                                        color: 'white',
+                                        fontSize: '14px',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        opacity: isDeletingBulk ? 0.7 : 1
+                                    }}
+                                >
+                                    <Trash2 size={16} />
+                                    Eliminar seleccionados
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* TABLA DE PADRES */}
             <section style={{ padding: '0 var(--spacing-lg)' }} className="pb-8">
                 <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -375,6 +519,9 @@ export function ParentAccountsManager() {
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-slate-100">
+                                    {isSelectionMode && (
+                                        <th className="w-12 px-4 py-4"></th>
+                                    )}
                                     <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Padre/Tutor</th>
                                     <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Estado</th>
                                     <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Contacto</th>
@@ -383,113 +530,137 @@ export function ParentAccountsManager() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {activeParents.map((parent, index) => (
-                                    <tr
-                                        key={parent.id}
-                                        className="border-b border-gray-100 transition-colors hover:bg-slate-50"
-                                        style={{
-                                            backgroundColor: index % 2 === 1 ? '#F8FAFC' : '#FFFFFF'
-                                        }}
-                                    >
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-4">
-                                                <div
-                                                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm"
-                                                    style={{ backgroundColor: '#EA580C' }}
-                                                >
-                                                    {parent.firstName[0]}{parent.lastName[0]}
-                                                </div>
-                                                <div>
-                                                    <div className="font-semibold text-slate-900">
-                                                        {parent.firstName} {parent.lastName}
+                                {activeParents.map((parent, index) => {
+                                    const isSelected = selectedIds.includes(parent.id);
+                                    return (
+                                        <tr
+                                            key={parent.id}
+                                            className={`border-b border-gray-100 transition-colors hover:bg-slate-50 ${isSelectionMode ? 'cursor-pointer' : ''}`}
+                                            onClick={() => isSelectionMode && toggleSelection(parent.id)}
+                                            style={{
+                                                backgroundColor: isSelected ? '#fff7ed' : (index % 2 === 1 ? '#F8FAFC' : '#FFFFFF')
+                                            }}
+                                        >
+                                            {isSelectionMode && (
+                                                <td className="px-4 py-4">
+                                                    <div
+                                                        style={{
+                                                            width: '24px',
+                                                            height: '24px',
+                                                            borderRadius: '6px',
+                                                            backgroundColor: isSelected ? '#ea580c' : 'white',
+                                                            border: isSelected ? 'none' : '2px solid #E2E8F0',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                        onClick={(e) => { e.stopPropagation(); toggleSelection(parent.id); }}
+                                                    >
+                                                        {isSelected && <Check size={14} color="white" strokeWidth={3} />}
+                                                    </div>
+                                                </td>
+                                            )}
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div
+                                                        className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm"
+                                                        style={{ backgroundColor: '#EA580C' }}
+                                                    >
+                                                        {parent.firstName[0]}{parent.lastName[0]}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-semibold text-slate-900">
+                                                            {parent.firstName} {parent.lastName}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span
-                                                className="inline-block px-3 py-1 rounded-full text-xs font-semibold"
-                                                style={{
-                                                    backgroundColor: parent.status === 'ACTIVE' ? '#D1FAE5' : '#E2E8F0',
-                                                    color: parent.status === 'ACTIVE' ? '#047857' : '#475569'
-                                                }}
-                                            >
-                                                {parent.status === "ACTIVE" ? "Activo" : "Inactivo"}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm text-slate-600">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <Mail size={14} className="text-slate-400" />
-                                                    {parent.email}
-                                                </div>
-                                                {parent.phone && (
-                                                    <div className="flex items-center gap-2 text-slate-400">
-                                                        <Phone size={14} />
-                                                        {parent.phone}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span
+                                                    className="inline-block px-3 py-1 rounded-full text-xs font-semibold"
+                                                    style={{
+                                                        backgroundColor: parent.status === 'ACTIVE' ? '#D1FAE5' : '#E2E8F0',
+                                                        color: parent.status === 'ACTIVE' ? '#047857' : '#475569'
+                                                    }}
+                                                >
+                                                    {parent.status === "ACTIVE" ? "Activo" : "Inactivo"}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm text-slate-600">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <Mail size={14} className="text-slate-400" />
+                                                        {parent.email}
                                                     </div>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {parent.students.map((sp, idx) => (
-                                                <div key={idx} className="text-sm text-slate-700">
-                                                    {sp.student.firstName} {sp.student.lastName}
-                                                    <span className="text-slate-400 ml-1">
-                                                        ({getRelationshipLabel(sp.relationship)})
-                                                    </span>
+                                                    {parent.phone && (
+                                                        <div className="flex items-center gap-2 text-slate-400">
+                                                            <Phone size={14} />
+                                                            {parent.phone}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            ))}
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <button
-                                                    onClick={() => parent.status === "ACTIVE"
-                                                        ? handleStatusChange(parent.id, "INACTIVE")
-                                                        : handleStatusChange(parent.id, "ACTIVE")
-                                                    }
-                                                    style={{
-                                                        width: '36px',
-                                                        height: '36px',
-                                                        borderRadius: '10px',
-                                                        backgroundColor: 'white',
-                                                        border: '1px solid #E2E8F0',
-                                                        cursor: 'pointer',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center'
-                                                    }}
-                                                >
-                                                    {parent.status === "ACTIVE"
-                                                        ? <Ban size={16} color="#64748B" />
-                                                        : <PlayCircle size={16} color="#059669" />
-                                                    }
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(parent.id)}
-                                                    style={{
-                                                        width: '36px',
-                                                        height: '36px',
-                                                        borderRadius: '10px',
-                                                        backgroundColor: 'white',
-                                                        border: '1px solid #E2E8F0',
-                                                        cursor: 'pointer',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center'
-                                                    }}
-                                                >
-                                                    <Trash2 size={16} color="#EF4444" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {parent.students.map((sp, idx) => (
+                                                    <div key={idx} className="text-sm text-slate-700">
+                                                        {sp.student.firstName} {sp.student.lastName}
+                                                        <span className="text-slate-400 ml-1">
+                                                            ({getRelationshipLabel(sp.relationship)})
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <button
+                                                        onClick={() => parent.status === "ACTIVE"
+                                                            ? handleStatusChange(parent.id, "INACTIVE")
+                                                            : handleStatusChange(parent.id, "ACTIVE")
+                                                        }
+                                                        style={{
+                                                            width: '36px',
+                                                            height: '36px',
+                                                            borderRadius: '10px',
+                                                            backgroundColor: 'white',
+                                                            border: '1px solid #E2E8F0',
+                                                            cursor: 'pointer',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center'
+                                                        }}
+                                                    >
+                                                        {parent.status === "ACTIVE"
+                                                            ? <Ban size={16} color="#64748B" />
+                                                            : <PlayCircle size={16} color="#059669" />
+                                                        }
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(parent.id)}
+                                                        style={{
+                                                            width: '36px',
+                                                            height: '36px',
+                                                            borderRadius: '10px',
+                                                            backgroundColor: 'white',
+                                                            border: '1px solid #E2E8F0',
+                                                            cursor: 'pointer',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center'
+                                                        }}
+                                                    >
+                                                        <Trash2 size={16} color="#EF4444" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     )}
                 </div>
-            </section >
-        </div >
+            </section>
+        </div>
     );
 }

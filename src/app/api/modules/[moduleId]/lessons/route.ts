@@ -81,3 +81,38 @@ export async function DELETE(
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
+
+export async function PATCH(
+    req: Request,
+    { params }: { params: Promise<{ moduleId: string }> }
+) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.email) {
+            return new NextResponse("Unauthorized", { status: 401 });
+        }
+
+        const { searchParams } = new URL(req.url);
+        const lessonId = searchParams.get("lessonId");
+
+        if (!lessonId) {
+            return new NextResponse("Lesson ID required", { status: 400 });
+        }
+
+        const { title, content } = await req.json();
+
+        const lesson = await prisma.lesson.update({
+            where: { id: lessonId },
+            data: {
+                ...(title !== undefined && { title }),
+                ...(content !== undefined && { content }),
+            }
+        });
+
+        return NextResponse.json(lesson);
+    } catch (error) {
+        console.error("[LESSON_PATCH]", error);
+        return new NextResponse("Internal Error", { status: 500 });
+    }
+}
+

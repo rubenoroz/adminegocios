@@ -17,7 +17,7 @@ async function main() {
             const fees = await prisma.studentFee.count({ where: { student: { businessId: business?.id } } });
             console.log(`Fees: ${fees}`);
 
-            const attendance = await prisma.attendance.count({ where: { businessId: business?.id } });
+            const attendance = await prisma.attendance.count({ where: { student: { businessId: business?.id } } });
             console.log(`Attendance: ${attendance}`);
         } else {
             console.log("No businesses found! Seeding script would fail.");

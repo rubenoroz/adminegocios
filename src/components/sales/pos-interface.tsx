@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useCart } from "@/context/cart-context";
 import { useSync } from "@/hooks/use-sync";
 import { Input } from "@/components/ui/input";
-import { Search, ShoppingCart, Trash2, Plus, Minus, Package, DollarSign, CreditCard, Banknote, X, Filter } from "lucide-react";
+import { Search, ShoppingCart, Trash2, Plus, Minus, Package, DollarSign, CreditCard, Banknote, X, Filter, Camera, ScanLine } from "lucide-react";
+import dynamic from "next/dynamic";
+
+const BarcodeScanner = dynamic(() => import("@/components/inventory/barcode-scanner").then(mod => mod.BarcodeScanner), { ssr: false });
 
 export function POSInterface() {
     const { items, addItem, removeItem, updateQuantity, total, clearCart } = useCart();
@@ -14,6 +17,12 @@ export function POSInterface() {
     const [loading, setLoading] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
+    const [scannerOpen, setScannerOpen] = useState(false);
+    const [scanFeedback, setScanFeedback] = useState<string | null>(null);
+
+    // USB Scanner listener - detects rapid keystrokes
+    const barcodeBuffer = useRef("");
+    const lastKeyTime = useRef(0);
 
     useEffect(() => {
         fetchProducts();
@@ -28,6 +37,66 @@ export function POSInterface() {
             console.error(error);
         }
     };
+
+    // Handle barcode scan (from USB or camera)
+    const handleBarcodeScanned = useCallback((code: string) => {
+        const product = products.find(p =>
+            p.sku?.toLowerCase() === code.toLowerCase() ||
+            p.barcode?.toLowerCase() === code.toLowerCase() ||
+            p.sku?.includes(code) ||
+            p.barcode?.includes(code)
+        );
+
+        if (product) {
+            addItem(product);
+            setScanFeedback(`✓ ${product.name} agregado`);
+            // Play success sound (beep)
+            try {
+                const audio = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQAAfnqtjYx5Ynfb3KJ0RxwYXajq1IIaABBUjLa7iGx1fHJxk5SHeXh1iq7EvoNzVVpqgpOQfXaBjZqWj39sf4qMiYSDgIWHi4uEgYKEhoyMhoaGhoiKioqIhoaHiYqKiYmHh4iJiYmJiIiIiYmJiYmIiIiJiYmJiYiIiImJiYmJiIiIiYmJiYmIiIiJiYmJiYmIiA==");
+                audio.volume = 0.3;
+                audio.play().catch(() => { });
+            } catch { }
+        } else {
+            setScanFeedback(`✗ Producto no encontrado: ${code}`);
+        }
+
+        setTimeout(() => setScanFeedback(null), 2000);
+    }, [products, addItem]);
+
+    // USB Scanner keyboard listener
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const now = Date.now();
+
+            // If typing is slow (>50ms between keys), it's manual typing, not scanner
+            if (now - lastKeyTime.current > 100) {
+                barcodeBuffer.current = "";
+            }
+            lastKeyTime.current = now;
+
+            // Scanner typically sends Enter at end
+            if (e.key === "Enter" && barcodeBuffer.current.length > 3) {
+                e.preventDefault();
+                handleBarcodeScanned(barcodeBuffer.current);
+                barcodeBuffer.current = "";
+                return;
+            }
+
+            // Only capture printable characters
+            if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                // Don't capture if user is typing in an input
+                const activeElement = document.activeElement;
+                const isTypingInInput = activeElement?.tagName === "INPUT" || activeElement?.tagName === "TEXTAREA";
+
+                if (!isTypingInInput) {
+                    barcodeBuffer.current += e.key;
+                }
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [handleBarcodeScanned]);
 
     const handleCheckout = async () => {
         if (items.length === 0) return;
@@ -108,6 +177,20 @@ export function POSInterface() {
                         />
                     </div>
                     <button
+                        onClick={() => setScannerOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 font-semibold transition-all shrink-0"
+                        style={{
+                            borderRadius: '8px',
+                            background: 'linear-gradient(135deg, #3B82F6, #6366F1)',
+                            color: 'white',
+                            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4)'
+                        }}
+                        title="Escanear con cámara"
+                    >
+                        <Camera className="h-4 w-4" />
+                        <span className="hidden sm:inline">Escanear</span>
+                    </button>
+                    <button
                         onClick={() => setShowFilters(!showFilters)}
                         className={`flex items-center gap-2 px-4 py-2 font-semibold transition-all shrink-0 ${showFilters || activeCategory
                             ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
@@ -119,6 +202,27 @@ export function POSInterface() {
                         Categorías
                     </button>
                 </div>
+
+                {/* Scan Feedback Toast */}
+                {scanFeedback && (
+                    <div
+                        className={`fixed top-24 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-xl shadow-lg font-semibold text-white flex items-center gap-2 animate-pulse`}
+                        style={{
+                            backgroundColor: scanFeedback.startsWith("✓") ? "#059669" : "#DC2626",
+                            animation: "fadeInOut 2s ease-in-out"
+                        }}
+                    >
+                        <ScanLine size={20} />
+                        {scanFeedback}
+                    </div>
+                )}
+
+                {/* Camera Scanner Modal */}
+                <BarcodeScanner
+                    isOpen={scannerOpen}
+                    onClose={() => setScannerOpen(false)}
+                    onScan={handleBarcodeScanned}
+                />
 
                 {/* Category Filters */}
                 {showFilters && categories.length > 0 && (
@@ -319,7 +423,8 @@ export function POSInterface() {
                             style={{
                                 backgroundColor: '#FEE2E2',
                                 color: '#DC2626',
-                                border: '1px solid #FCA5A5'
+                                border: '1px solid #FCA5A5',
+                                borderRadius: '12px'
                             }}
                         >
                             <X className="h-4 w-4" />

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -6,8 +6,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 export async function GET(
-    req: Request,
-    { params }: { params: { studentId: string } }
+    req: NextRequest,
+    { params }: { params: Promise<{ studentId: string }> }
 ) {
     try {
         const session = await getServerSession(authOptions);
@@ -15,7 +15,7 @@ export async function GET(
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const { studentId } = params;
+        const { studentId } = await params;
 
         // Fetch student with courses and grades
         const student = await prisma.student.findUnique({

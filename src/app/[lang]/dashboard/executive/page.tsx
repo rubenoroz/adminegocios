@@ -527,7 +527,22 @@ export default function ExecutiveDashboard() {
                     </div>
                     <button
                         onClick={() => setEditMode(!editMode)}
-                        className="flex items-center gap-2 h-10 px-4 rounded-lg border border-slate-200 hover:bg-accent transition-all duration-300 shadow-sm font-medium"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            height: '44px',
+                            padding: '0 20px',
+                            borderRadius: '12px',
+                            border: editMode ? 'none' : '1px solid #e2e8f0',
+                            backgroundColor: editMode ? '#059669' : 'white',
+                            color: editMode ? 'white' : '#475569',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            boxShadow: editMode ? '0 4px 12px rgba(5, 150, 105, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.05)',
+                            transition: 'all 0.2s'
+                        }}
                     >
                         <Settings size={18} />
                         {editMode ? "Guardar" : "Personalizar"}

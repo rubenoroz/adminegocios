@@ -8,8 +8,6 @@ async function main() {
             data: {
                 name: "Escuela Demo",
                 type: "SCHOOL",
-                slug: "escuela-demo",
-                // Add any other required fields based on schema
             }
         });
 

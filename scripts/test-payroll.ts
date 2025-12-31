@@ -26,8 +26,7 @@ async function main() {
                 data: {
                     email: "profe.test@example.com",
                     password: "password",
-                    firstName: "Profe",
-                    lastName: "Test",
+                    name: "Profe Test",
                     role: "TEACHER",
                     businessId: business.id
                 }
@@ -41,7 +40,7 @@ async function main() {
                 commissionPercentage: 40 // 40% commission
             }
         });
-        console.log(`Updated Teacher ${teacher.firstName}: Commission 40%`);
+        console.log(`Updated Teacher ${teacher.name}: Commission 40%`);
 
         // 3. Ensure Teacher has a Course and Paid Fees
         const course = await prisma.course.findFirst({ where: { businessId: business.id } });

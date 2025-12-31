@@ -66,6 +66,7 @@ export default async function DashboardLayout({
                 }
             `}} />
             <div className="h-full relative" style={{ backgroundColor: '#f0fdf4' }}>
+                {/* Desktop Sidebar */}
                 <div
                     className="hidden h-full md:flex md:w-72 md:flex-col md:fixed md:inset-y-0 z-80"
                     style={{ backgroundColor: sidebarColor }}
@@ -79,9 +80,19 @@ export default async function DashboardLayout({
                         serverLogoHeight={logoHeight}
                     />
                 </div>
+
+                {/* Main content */}
                 <main className="md:pl-72 h-full">
-                    <Topbar dict={dict} />
-                    <div className="p-8">
+                    <Topbar
+                        dict={dict}
+                        serverBusinessType={businessType}
+                        serverRole={userRole}
+                        serverLogoUrl={logoUrl}
+                        serverLogoOrientation={logoOrientation as "HORIZONTAL" | "VERTICAL" | "SQUARE"}
+                        serverLogoHeight={logoHeight}
+                        sidebarColor={sidebarColor}
+                    />
+                    <div className="p-4 sm:p-6 lg:p-8">
                         {children}
                     </div>
                     <OfflineIndicator />

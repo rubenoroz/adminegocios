@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { decrementResourceCount } from "@/lib/plan-limits";
 
 export async function GET(
     req: Request,
@@ -146,6 +147,39 @@ export async function DELETE(
 
         if (!existingEmployee) {
             return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+        }
+
+        // PROTECCIÓN: No permitir eliminar empleados con rol OWNER
+        if (existingEmployee.role === "OWNER") {
+            // Solo Super Admin de la plataforma puede eliminar owners
+            if (user.role !== "SUPERADMIN") {
+                return NextResponse.json({
+                    error: "No puedes eliminar a un propietario del negocio. Solo un administrador de la plataforma puede hacerlo."
+                }, { status: 403 });
+            }
+        }
+
+        // PROTECCIÓN: No permitir que un usuario se elimine a sí mismo si tiene empleado vinculado
+        const linkedUser = await prisma.user.findFirst({
+            where: {
+                email: existingEmployee.email,
+                businessId: user.businessId
+            }
+        });
+
+        if (linkedUser && linkedUser.id === user.id) {
+            return NextResponse.json({
+                error: "No puedes eliminarte a ti mismo de la lista de empleados."
+            }, { status: 403 });
+        }
+
+        // PROTECCIÓN: No permitir eliminar admins a menos que seas owner o super admin
+        if (existingEmployee.role === "ADMIN" && linkedUser) {
+            if (user.role !== "OWNER" && user.role !== "SUPERADMIN") {
+                return NextResponse.json({
+                    error: "Solo el propietario del negocio puede eliminar administradores con cuenta de acceso."
+                }, { status: 403 });
+            }
         }
 
         await prisma.employee.delete({

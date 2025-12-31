@@ -35,7 +35,7 @@ export default async function Home({ params }: { params: Promise<{ lang: string 
           gap: '16px'
         }}>
           <div style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a' }}>
-            Adminegocios
+            Admnegocios
           </div>
           <div style={{ display: 'flex', gap: '24px', fontSize: '14px', color: '#64748b' }}>
             <Link href="#">Privacidad</Link>
@@ -43,7 +43,7 @@ export default async function Home({ params }: { params: Promise<{ lang: string 
             <Link href="#">Contacto</Link>
           </div>
           <p style={{ fontSize: '14px', color: '#94a3b8', margin: 0 }}>
-            © 2024 Adminegocios. Todos los derechos reservados.
+            © 2024 Admnegocios. Todos los derechos reservados.
           </p>
         </div>
       </footer>

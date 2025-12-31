@@ -258,36 +258,114 @@ export function CourseList() {
                 position: 'relative',
                 zIndex: 10
             }}>
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 mb-3">
-                            Cursos
-                        </h1>
-                        <p className="text-muted-foreground text-lg">
-                            Gestiona tus cursos y asignaturas
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        {isSelectionMode && selectedIds.length > 0 && (
-                            <button
-                                onClick={handleBulkDelete}
-                                disabled={isDeletingBulk}
-                                className="button-modern flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600"
-                            >
-                                <Trash2 size={18} />
-                                ELIMINAR ({selectedIds.length})
-                            </button>
-                        )}
+                <div>
+                    <h1 className="text-4xl font-bold tracking-tight text-gray-900 mb-3">
+                        Cursos
+                    </h1>
+                    <p className="text-muted-foreground text-lg">
+                        Gestiona tus cursos y asignaturas
+                    </p>
+                </div>
+            </div>
 
+            {/* KPIS - MISMO PATRÓN QUE EMPLEADOS */}
+            <motion.div
+                style={{ padding: '0 var(--spacing-lg)', marginBottom: '48px' }}
+                initial="hidden"
+                animate="show"
+                variants={{
+                    hidden: { opacity: 0 },
+                    show: {
+                        opacity: 1,
+                        transition: { staggerChildren: 0.1 }
+                    }
+                }}
+            >
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+                    <ModernKpiCard
+                        title="Total Cursos"
+                        value={totalCourses.toString()}
+                        icon={BookOpen}
+                        gradientClass="gradient-courses"
+                        subtitle="Cursos activos"
+                    />
+                    <ModernKpiCard
+                        title="Total Estudiantes"
+                        value={totalStudents.toString()}
+                        icon={Users}
+                        gradientClass="gradient-students"
+                        subtitle="Inscritos en cursos"
+                    />
+                    <ModernKpiCard
+                        title="Promedio"
+                        value={avgStudentsPerCourse.toString()}
+                        icon={TrendingUp}
+                        gradientClass="gradient-employees"
+                        subtitle="Alumnos por curso"
+                    />
+                    <ModernKpiCard
+                        title="Con Profesor"
+                        value={coursesWithTeacher.toString()}
+                        icon={User}
+                        gradientClass="gradient-finance"
+                        subtitle="Cursos asignados"
+                    />
+                </div>
+            </motion.div>
+
+            {/* SECCIÓN SALONES - BLOQUE INTERMEDIO */}
+            <section style={{ padding: '0 var(--spacing-lg)' }} className="mt-8 mb-8">
+                <div className="bg-white rounded-2xl shadow-sm px-6 py-5">
+                    <ClassroomManager />
+                </div>
+            </section>
+
+            {/* FILTROS Y BOTONES DE ACCIÓN */}
+            <div style={{ padding: '0 var(--spacing-lg)', marginBottom: '24px', marginTop: '32px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+                    {/* BARRA DE BÚSQUEDA */}
+                    <div style={{ flex: 1, minWidth: '300px' }}>
+                        <ModernFilterBar
+                            searchValue={searchValue}
+                            onSearchChange={setSearchValue}
+                            placeholder="Buscar cursos..."
+                            filters={[
+                                { label: "Con Profesor", value: "WITH_TEACHER", color: "green" },
+                                { label: "Sin Profesor", value: "NO_TEACHER", color: "orange" },
+                                { label: "Con Alumnos", value: "WITH_STUDENTS", color: "blue" }
+                            ]}
+                            activeFilters={filterCourse}
+                            onFilterToggle={(value) => {
+                                setFilterCourse(prev =>
+                                    prev.includes(value)
+                                        ? prev.filter(v => v !== value)
+                                        : [...prev, value]
+                                );
+                            }}
+                        />
+                    </div>
+
+                    {/* BOTONES DE ACCIÓN */}
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                         <button
                             onClick={toggleSelectionMode}
-                            className={`button-modern flex items-center gap-2 ${isSelectionMode
-                                ? "bg-slate-800 text-white"
-                                : "bg-gradient-to-r from-slate-600 to-slate-500 hover:from-slate-700 hover:to-slate-600"
-                                }`}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '12px 20px',
+                                borderRadius: '12px',
+                                border: isSelectionMode ? 'none' : '1px solid #e2e8f0',
+                                backgroundColor: isSelectionMode ? '#1e293b' : 'white',
+                                color: isSelectionMode ? 'white' : '#475569',
+                                fontSize: '14px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
+                            }}
                         >
                             {isSelectionMode ? <X size={18} /> : <Trash2 size={18} />}
-                            {isSelectionMode ? "CANCELAR" : "GESTIONAR"}
+                            {isSelectionMode ? 'Cancelar' : 'Gestionar'}
                         </button>
 
                         <Dialog open={isCreateOpen} onOpenChange={(open) => {
@@ -295,7 +373,20 @@ export function CourseList() {
                             if (open) fetchClassrooms();
                         }}>
                             <DialogTrigger asChild>
-                                <button className="button-modern flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600">
+                                <button style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    padding: '12px 20px',
+                                    borderRadius: '12px',
+                                    border: 'none',
+                                    backgroundColor: '#2563eb',
+                                    color: 'white',
+                                    fontSize: '14px',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
+                                }}>
                                     <Plus size={18} />
                                     Nuevo Curso
                                 </button>
@@ -357,7 +448,17 @@ export function CourseList() {
                                     <button
                                         onClick={handleCreate}
                                         disabled={!newName}
-                                        className="button-modern bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:opacity-50"
+                                        style={{
+                                            padding: '12px 24px',
+                                            borderRadius: '12px',
+                                            border: 'none',
+                                            backgroundColor: '#2563eb',
+                                            color: 'white',
+                                            fontSize: '14px',
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                            opacity: !newName ? 0.5 : 1
+                                        }}
                                     >
                                         Crear Curso
                                     </button>
@@ -366,81 +467,101 @@ export function CourseList() {
                         </Dialog>
                     </div>
                 </div>
-            </div>
+            </div >
 
-            {/* KPIS - MISMO PATRÓN QUE EMPLEADOS */}
-            <motion.div
-                style={{ padding: '0 var(--spacing-lg)', marginBottom: '48px' }}
-                initial="hidden"
-                animate="show"
-                variants={{
-                    hidden: { opacity: 0 },
-                    show: {
-                        opacity: 1,
-                        transition: { staggerChildren: 0.1 }
-                    }
-                }}
-            >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
-                    <ModernKpiCard
-                        title="Total Cursos"
-                        value={totalCourses.toString()}
-                        icon={BookOpen}
-                        gradientClass="gradient-courses"
-                        subtitle="Cursos activos"
-                    />
-                    <ModernKpiCard
-                        title="Total Estudiantes"
-                        value={totalStudents.toString()}
-                        icon={Users}
-                        gradientClass="gradient-students"
-                        subtitle="Inscritos en cursos"
-                    />
-                    <ModernKpiCard
-                        title="Promedio"
-                        value={avgStudentsPerCourse.toString()}
-                        icon={TrendingUp}
-                        gradientClass="gradient-employees"
-                        subtitle="Alumnos por curso"
-                    />
-                    <ModernKpiCard
-                        title="Con Profesor"
-                        value={coursesWithTeacher.toString()}
-                        icon={User}
-                        gradientClass="gradient-finance"
-                        subtitle="Cursos asignados"
-                    />
-                </div>
-            </motion.div>
-
-            {/* SECCIÓN SALONES - BLOQUE INTERMEDIO */}
-            <section style={{ padding: '0 var(--spacing-lg)' }} className="mt-8 mb-8">
-                <div className="bg-white rounded-2xl shadow-sm px-6 py-5">
-                    <ClassroomManager />
-                </div>
-            </section>
-
-            {/* FILTROS */}
-            <div style={{ padding: '0 var(--spacing-lg)', marginBottom: '40px', marginTop: '32px' }}>
-                <ModernFilterBar
-                    searchValue={searchValue}
-                    onSearchChange={setSearchValue}
-                    placeholder="Buscar cursos..."
-                    filters={[
-                        { label: "Con Profesor", value: "WITH_TEACHER", color: "green" },
-                        { label: "Sin Profesor", value: "NO_TEACHER", color: "orange" },
-                        { label: "Con Alumnos", value: "WITH_STUDENTS", color: "blue" }
-                    ]}
-                    activeFilters={filterCourse}
-                    onFilterToggle={(value) => {
-                        setFilterCourse(prev =>
-                            prev.includes(value)
-                                ? prev.filter(v => v !== value)
-                                : [...prev, value]
-                        );
-                    }}
-                />
-            </div>
+            {/* BARRA DE ACCIONES DE GESTIÓN - ARRIBA DE LAS CARDS */}
+            {
+                isSelectionMode && (
+                    <div style={{
+                        padding: '0 var(--spacing-lg)',
+                        marginBottom: '24px'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '16px 24px',
+                            backgroundColor: '#f8fafc',
+                            borderRadius: '16px',
+                            border: '2px dashed #cbd5e1'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div style={{
+                                    width: '40px',
+                                    height: '40px',
+                                    borderRadius: '10px',
+                                    backgroundColor: '#2563eb',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontWeight: 'bold',
+                                    fontSize: '16px'
+                                }}>
+                                    {selectedIds.length}
+                                </div>
+                                <span style={{ fontSize: '14px', fontWeight: 600, color: '#475569' }}>
+                                    {selectedIds.length === 0 ? 'Haz clic en los cursos para seleccionarlos' : 'cursos seleccionados'}
+                                </span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <button
+                                    onClick={() => setSelectedIds(filteredCourses.map(c => c.id))}
+                                    style={{
+                                        padding: '10px 20px',
+                                        borderRadius: '10px',
+                                        border: '1px solid #e2e8f0',
+                                        backgroundColor: 'white',
+                                        color: '#475569',
+                                        fontSize: '14px',
+                                        fontWeight: 600,
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Seleccionar todos
+                                </button>
+                                {selectedIds.length > 0 && (
+                                    <button
+                                        onClick={handleBulkDelete}
+                                        disabled={isDeletingBulk}
+                                        style={{
+                                            padding: '10px 20px',
+                                            borderRadius: '10px',
+                                            border: 'none',
+                                            backgroundColor: '#ef4444',
+                                            color: 'white',
+                                            fontSize: '14px',
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px'
+                                        }}
+                                    >
+                                        <Trash2 size={16} />
+                                        Eliminar seleccionados
+                                    </button>
+                                )}
+                                <button
+                                    onClick={toggleSelectionMode}
+                                    style={{
+                                        padding: '10px 20px',
+                                        borderRadius: '10px',
+                                        border: '1px solid #e2e8f0',
+                                        backgroundColor: 'white',
+                                        color: '#64748b',
+                                        fontSize: '14px',
+                                        fontWeight: 600,
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
 
             {/* COURSE CARDS GRID */}
             <section style={{ padding: '0 var(--spacing-lg)', minHeight: '400px' }} className="pb-8">
@@ -482,7 +603,7 @@ export function CourseList() {
                                         flexDirection: 'column' as const,
                                         position: 'relative' as const
                                     }}
-                                    onClick={() => isSelectionMode && onToggleSelection?.(course.id)}
+                                    onClick={() => isSelectionMode && toggleSelection?.(course.id)}
                                 >
                                     {isSelectionMode && (
                                         <div
@@ -573,7 +694,7 @@ export function CourseList() {
                                                 <div style={{ fontSize: '28px', fontWeight: '900', color: '#0F172A' }}>
                                                     {course._count.enrollments}
                                                 </div>
-                                                <div style={{ fontSize: '10px', fontWeight: 'bold', color: colors.accent, textTransform: 'uppercase', tracking: 'wide' }}>
+                                                <div style={{ fontSize: '10px', fontWeight: 'bold', color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                                                     Alumnos
                                                 </div>
                                             </div>
@@ -660,6 +781,6 @@ export function CourseList() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </div >
     );
 }

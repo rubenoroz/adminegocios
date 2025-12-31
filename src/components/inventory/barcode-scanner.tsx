@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Html5QrcodeScanner } from "html5-qrcode";
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface BarcodeScannerProps {
@@ -13,51 +11,82 @@ interface BarcodeScannerProps {
 
 export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps) {
     const [error, setError] = useState<string | null>(null);
-    const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+    const [isInitialized, setIsInitialized] = useState(false);
+    const scannerRef = useRef<any>(null);
 
     useEffect(() => {
-        if (isOpen && !scannerRef.current) {
-            // Initialize scanner when dialog opens
-            const scanner = new Html5QrcodeScanner(
-                "reader",
-                {
-                    fps: 10,
-                    qrbox: { width: 250, height: 250 },
-                    aspectRatio: 1.0
-                },
-        /* verbose= */ false
-            );
+        let mounted = true;
 
-            scanner.render(
-                (decodedText) => {
-                    onScan(decodedText);
-                    handleClose();
-                },
-                (errorMessage) => {
-                    // Ignore parse errors, they happen constantly when no code is in view
-                    // console.warn(errorMessage);
+        const initScanner = async () => {
+            if (!isOpen || scannerRef.current) return;
+
+            try {
+                // Small delay to ensure DOM is ready
+                await new Promise(resolve => setTimeout(resolve, 200));
+
+                if (!mounted) return;
+
+                // Dynamic import to avoid SSR issues
+                const { Html5QrcodeScanner } = await import("html5-qrcode");
+
+                if (!mounted) return;
+
+                const readerElement = document.getElementById("pos-reader");
+                if (!readerElement) {
+                    console.error("Reader element not found");
+                    return;
                 }
-            );
 
-            scannerRef.current = scanner;
+                const scanner = new Html5QrcodeScanner(
+                    "pos-reader",
+                    {
+                        fps: 10,
+                        qrbox: { width: 250, height: 150 },
+                        aspectRatio: 1.5,
+                        rememberLastUsedCamera: true,
+                        showTorchButtonIfSupported: true
+                    },
+                    false
+                );
+
+                scanner.render(
+                    (decodedText: string) => {
+                        onScan(decodedText);
+                        cleanupAndClose();
+                    },
+                    (errorMessage: string) => {
+                        // Ignore parse errors - they happen constantly
+                    }
+                );
+
+                scannerRef.current = scanner;
+                setIsInitialized(true);
+                setError(null);
+            } catch (err) {
+                console.error("Error initializing scanner:", err);
+                setError("No se pudo iniciar la cámara. Verifica los permisos.");
+            }
+        };
+
+        if (isOpen) {
+            initScanner();
         }
 
         return () => {
-            // Cleanup is handled in handleClose or when component unmounts if open
-            if (!isOpen && scannerRef.current) {
-                scannerRef.current.clear().catch(console.error);
-                scannerRef.current = null;
-            }
+            mounted = false;
         };
-    }, [isOpen]);
+    }, [isOpen, onScan]);
 
-    const handleClose = () => {
+    const cleanupAndClose = () => {
         if (scannerRef.current) {
             scannerRef.current.clear().then(() => {
                 scannerRef.current = null;
+                setIsInitialized(false);
                 onClose();
-            }).catch((err) => {
+            }).catch((err: any) => {
                 console.error("Failed to clear scanner", err);
+                scannerRef.current = null;
+                setIsInitialized(false);
                 onClose();
             });
         } else {
@@ -66,13 +95,13 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && cleanupAndClose()}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>Escanear Código</DialogTitle>
                 </DialogHeader>
                 <div className="flex flex-col items-center justify-center p-4">
-                    <div id="reader" className="w-full max-w-sm overflow-hidden rounded-lg"></div>
+                    <div id="pos-reader" className="w-full max-w-sm overflow-hidden rounded-lg"></div>
                     {error && <p className="text-red-500 mt-2">{error}</p>}
                     <p className="text-sm text-muted-foreground mt-4 text-center">
                         Apunta la cámara al código de barras o QR del producto.

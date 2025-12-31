@@ -104,12 +104,13 @@ export function AbsenteeismAlerts() {
 
                                 <div className="flex items-center gap-2">
                                     {alert.student.email && (
-                                        <Button variant="outline" size="sm" asChild>
-                                            <a href={`mailto:${alert.student.email}`}>
-                                                <Mail className="h-4 w-4 mr-2" />
-                                                Contactar
-                                            </a>
-                                        </Button>
+                                        <a
+                                            href={`mailto:${alert.student.email}`}
+                                            className="inline-flex items-center justify-center h-9 px-3 text-sm font-medium border rounded-md hover:bg-accent"
+                                        >
+                                            <Mail className="h-4 w-4 mr-2" />
+                                            Contactar
+                                        </a>
                                     )}
                                     <Link href={`/dashboard/students/${alert.student.id}/notes`}>
                                         <Button variant="ghost" size="sm">

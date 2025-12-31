@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "Adminegocios",
+  title: "Admnegocios",
   description: "Sistema de administración de negocios adaptable",
 };
 

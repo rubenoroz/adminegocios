@@ -81,3 +81,37 @@ export async function DELETE(
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
+
+export async function PATCH(
+    req: Request,
+    { params }: { params: Promise<{ moduleId: string }> }
+) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.email) {
+            return new NextResponse("Unauthorized", { status: 401 });
+        }
+
+        const { searchParams } = new URL(req.url);
+        const quizId = searchParams.get("quizId");
+
+        if (!quizId) {
+            return new NextResponse("Quiz ID required", { status: 400 });
+        }
+
+        const { title } = await req.json();
+
+        const quiz = await prisma.quiz.update({
+            where: { id: quizId },
+            data: {
+                ...(title !== undefined && { title }),
+            }
+        });
+
+        return NextResponse.json(quiz);
+    } catch (error) {
+        console.error("[QUIZ_PATCH]", error);
+        return new NextResponse("Internal Error", { status: 500 });
+    }
+}
+

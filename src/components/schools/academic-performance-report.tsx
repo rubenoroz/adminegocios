@@ -232,8 +232,7 @@ export function AcademicPerformanceReport() {
                                             </div>
                                             <Progress
                                                 value={student.average}
-                                                className="h-2"
-                                                indicatorClassName={getGradeBarColor(student.average)}
+                                                className={`h-2 ${getGradeBarColor(student.average)}`}
                                             />
                                         </div>
                                     </div>

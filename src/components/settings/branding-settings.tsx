@@ -146,18 +146,23 @@ export function BrandingSettings() {
                     {logoUrl ? (
                         <div
                             style={{
-                                position: 'relative',
-                                height: `${Math.max(tempLogoHeight, 80)}px`,
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'center'
+                                justifyContent: 'center',
+                                minHeight: '100px'
                             }}
                         >
                             <Image
                                 src={logoUrl}
                                 alt="Logo Preview"
-                                fill
-                                className="object-contain"
+                                width={200}
+                                height={tempLogoHeight}
+                                style={{
+                                    width: 'auto',
+                                    height: `${tempLogoHeight}px`,
+                                    maxWidth: '100%',
+                                    objectFit: 'contain'
+                                }}
                                 unoptimized={logoUrl.endsWith('.svg')}
                             />
                         </div>
@@ -174,23 +179,43 @@ export function BrandingSettings() {
                     <div style={{ marginBottom: '20px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                             <span style={{ fontSize: '14px', fontWeight: 500, color: '#475569' }}>Tamaño del logo</span>
-                            <span style={{ fontSize: '14px', color: '#64748B' }}>{tempLogoHeight}px</span>
+                            <span style={{
+                                fontSize: '14px',
+                                color: '#2563EB',
+                                fontWeight: 600,
+                                backgroundColor: '#EFF6FF',
+                                padding: '2px 8px',
+                                borderRadius: '4px'
+                            }}>{tempLogoHeight}px</span>
                         </div>
                         <input
                             type="range"
-                            min="32"
-                            max="150"
-                            step="4"
+                            min={32}
+                            max={250}
+                            step={4}
                             value={tempLogoHeight}
-                            onChange={(e) => setTempLogoHeight(parseInt(e.target.value))}
+                            onChange={(e) => {
+                                const newValue = Number(e.target.value);
+                                console.log("Slider changed to:", newValue);
+                                setTempLogoHeight(newValue);
+                            }}
                             style={{
                                 width: '100%',
                                 height: '8px',
-                                borderRadius: '4px',
                                 cursor: 'pointer',
                                 accentColor: '#2563EB'
                             }}
                         />
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            marginTop: '4px',
+                            fontSize: '11px',
+                            color: '#94A3B8'
+                        }}>
+                            <span>32px</span>
+                            <span>250px</span>
+                        </div>
                     </div>
                 )}
 

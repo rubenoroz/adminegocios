@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { checkLimit, incrementResourceCount, decrementResourceCount } from "@/lib/plan-limits";
 
 export async function POST(req: Request) {
     try {
@@ -18,6 +19,20 @@ export async function POST(req: Request) {
                 error: "MISSING_FIELDS",
                 message: "El nombre del curso es requerido"
             }, { status: 400 });
+        }
+
+        // VALIDAR LÍMITE DE PLAN
+        const businessId = session.user.businessId!;
+        const limitCheck = await checkLimit(businessId, "courses");
+
+        if (!limitCheck.allowed) {
+            return NextResponse.json({
+                error: "LIMIT_REACHED",
+                message: limitCheck.message,
+                limit: limitCheck.limit,
+                current: limitCheck.current,
+                planName: limitCheck.planName
+            }, { status: 403 });
         }
 
         // Create course with schedules in a transaction
@@ -62,6 +77,9 @@ export async function POST(req: Request) {
 
             return newCourse;
         });
+
+        // Incrementar contador
+        await incrementResourceCount(businessId, "courses");
 
         return NextResponse.json(course);
     } catch (error) {
@@ -155,6 +173,12 @@ export async function DELETE(req: Request) {
                     businessId: session.user.businessId!
                 }
             });
+
+            // Decrementar contador por cada curso eliminado
+            for (let i = 0; i < result.count; i++) {
+                await decrementResourceCount(session.user.businessId!, "courses");
+            }
+
             return deleted;
         });
 

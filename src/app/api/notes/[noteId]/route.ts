@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function DELETE(
-    req: Request,
-    { params }: { params: { noteId: string } }
+    req: NextRequest,
+    { params }: { params: Promise<{ noteId: string }> }
 ) {
     try {
         const session = await getServerSession(authOptions);
@@ -13,7 +13,7 @@ export async function DELETE(
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const { noteId } = params;
+        const { noteId } = await params;
 
         const note = await prisma.studentNote.findUnique({
             where: { id: noteId },

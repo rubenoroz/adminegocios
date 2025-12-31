@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, BookOpen, FileQuestion, ClipboardList, Link as LinkIcon, ChevronDown, ChevronRight, Trash2 } from "lucide-react";
+import { Plus, BookOpen, FileQuestion, ClipboardList, Link as LinkIcon, ChevronDown, ChevronRight, Trash2, Pencil, GripVertical } from "lucide-react";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import {
     Dialog,
     DialogContent,
@@ -17,6 +18,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { LessonEditorModal } from "./lesson-editor-modal";
+import { QuizEditorModal } from "./quiz-editor-modal";
 
 interface CourseBuilderProps {
     courseId: string;
@@ -37,6 +40,15 @@ export function CourseBuilder({ courseId }: CourseBuilderProps) {
     const [itemDescription, setItemDescription] = useState(""); // For Assignment
     const [isAddItemOpen, setIsAddItemOpen] = useState(false);
 
+    // Lesson editing state
+    const [isLessonEditOpen, setIsLessonEditOpen] = useState(false);
+    const [editingLesson, setEditingLesson] = useState<{ id: string; title: string; content: string } | null>(null);
+    const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
+
+    // Quiz editing state
+    const [isQuizEditOpen, setIsQuizEditOpen] = useState(false);
+    const [editingQuiz, setEditingQuiz] = useState<{ id: string; title: string } | null>(null);
+
     useEffect(() => {
         fetchModules();
     }, [courseId]);
@@ -50,6 +62,42 @@ export function CourseBuilder({ courseId }: CourseBuilderProps) {
             console.error("Error fetching modules:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDragEnd = async (result: DropResult) => {
+        if (!result.destination) return;
+
+        const sourceIndex = result.source.index;
+        const destIndex = result.destination.index;
+
+        if (sourceIndex === destIndex) return;
+
+        // Reorder locally first for instant feedback
+        const reorderedModules = Array.from(modules);
+        const [movedModule] = reorderedModules.splice(sourceIndex, 1);
+        reorderedModules.splice(destIndex, 0, movedModule);
+
+        // Update order property in local state
+        const updatedModules = reorderedModules.map((mod, idx) => ({
+            ...mod,
+            order: idx
+        }));
+        setModules(updatedModules);
+
+        // Persist to server
+        try {
+            const orderedIds = updatedModules.map(m => m.id);
+            await fetch(`/api/courses/${courseId}/modules/reorder`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ orderedIds }),
+            });
+            toast({ title: "Orden actualizado" });
+        } catch (error) {
+            console.error("Error reordering:", error);
+            toast({ title: "Error al reordenar", variant: "destructive" });
+            fetchModules(); // Revert on error
         }
     };
 
@@ -210,142 +258,204 @@ export function CourseBuilder({ courseId }: CourseBuilderProps) {
                 </Dialog>
             </div>
 
-            <div className="space-y-6">
-                {modules.map((module) => (
-                    <div key={module.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                        <div className="bg-slate-50/50 py-4 px-6 flex items-center justify-between border-b border-slate-100">
-                            <div className="flex items-center gap-4">
-                                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm shadow-sm">
-                                    {module.order + 1}
+            <DragDropContext onDragEnd={handleDragEnd}>
+                <Droppable droppableId="modules">
+                    {(provided) => (
+                        <div
+                            className="space-y-6"
+                            ref={provided.innerRef}
+                            {...provided.droppableProps}
+                        >
+                            {modules.map((module, index) => (
+                                <Draggable key={module.id} draggableId={module.id} index={index}>
+                                    {(provided, snapshot) => (
+                                        <div
+                                            ref={provided.innerRef}
+                                            {...provided.draggableProps}
+                                            className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${snapshot.isDragging ? 'border-blue-300 shadow-lg' : 'border-slate-100'}`}
+                                        >
+                                            <div className="bg-slate-50/50 py-4 px-6 flex items-center justify-between border-b border-slate-100">
+                                                <div className="flex items-center gap-4">
+                                                    <div
+                                                        {...provided.dragHandleProps}
+                                                        className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center cursor-grab active:cursor-grabbing shadow-sm transition-colors"
+                                                    >
+                                                        <GripVertical className="h-4 w-4" />
+                                                    </div>
+                                                    <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm shadow-sm">
+                                                        {index + 1}
+                                                    </div>
+                                                    <h3 className="text-lg font-bold text-slate-800">{module.title}</h3>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => openAddItemModal(module.id)}
+                                                        className="h-9 px-4 bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 font-bold text-xs rounded-xl shadow-sm transition-all"
+                                                    >
+                                                        <Plus className="h-4 w-4 mr-2 inline-block" /> AGREGAR CONTENIDO
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteModule(module.id)}
+                                                        className="h-9 w-9 flex items-center justify-center bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200 rounded-xl shadow-sm transition-all"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="bg-white">
+                                                <div className="divide-y divide-slate-50">
+                                                    {/* Lessons */}
+                                                    {module.lessons?.map((lesson: any) => (
+                                                        <div key={lesson.id} className="group flex items-center p-4 hover:bg-slate-50 transition-colors pl-8 cursor-pointer"
+                                                            onClick={() => {
+                                                                setEditingLesson({ id: lesson.id, title: lesson.title, content: lesson.content || "" });
+                                                                setEditingModuleId(module.id);
+                                                                setIsLessonEditOpen(true);
+                                                            }}
+                                                        >
+                                                            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center mr-4 text-blue-500 border border-blue-100">
+                                                                <BookOpen size={16} />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <p className="font-bold text-sm text-slate-700">{lesson.title}</p>
+                                                                <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mt-0.5">Lección</p>
+                                                            </div>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setEditingLesson({ id: lesson.id, title: lesson.title, content: lesson.content || "" });
+                                                                    setEditingModuleId(module.id);
+                                                                    setIsLessonEditOpen(true);
+                                                                }}
+                                                                className="opacity-0 group-hover:opacity-100 h-8 w-8 flex items-center justify-center text-slate-400 hover:text-blue-500 transition-all"
+                                                            >
+                                                                <Pencil size={14} />
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDeleteItem(module.id, lesson.id, "LESSON");
+                                                                }}
+                                                                className="opacity-0 group-hover:opacity-100 h-8 w-8 flex items-center justify-center text-slate-300 hover:text-red-500 transition-all"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+
+                                                    {/* Quizzes */}
+                                                    {module.quizzes?.map((quiz: any) => (
+                                                        <div key={quiz.id} className="group flex items-center p-4 hover:bg-slate-50 transition-colors pl-8 cursor-pointer"
+                                                            onClick={() => {
+                                                                setEditingQuiz({ id: quiz.id, title: quiz.title });
+                                                                setEditingModuleId(module.id);
+                                                                setIsQuizEditOpen(true);
+                                                            }}
+                                                        >
+                                                            <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center mr-4 text-purple-500 border border-purple-100">
+                                                                <FileQuestion size={16} />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <p className="font-bold text-sm text-slate-700">{quiz.title}</p>
+                                                                <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mt-0.5">Cuestionario</p>
+                                                            </div>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setEditingQuiz({ id: quiz.id, title: quiz.title });
+                                                                    setEditingModuleId(module.id);
+                                                                    setIsQuizEditOpen(true);
+                                                                }}
+                                                                className="opacity-0 group-hover:opacity-100 h-8 w-8 flex items-center justify-center text-slate-400 hover:text-purple-500 transition-all"
+                                                            >
+                                                                <Pencil size={14} />
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDeleteItem(module.id, quiz.id, "QUIZ");
+                                                                }}
+                                                                className="opacity-0 group-hover:opacity-100 h-8 w-8 flex items-center justify-center text-slate-300 hover:text-red-500 transition-all"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+
+                                                    {/* Assignments */}
+                                                    {module.assignments?.map((assignment: any) => (
+                                                        <div key={assignment.id} className="group flex items-center p-4 hover:bg-slate-50 transition-colors pl-8">
+                                                            <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center mr-4 text-amber-500 border border-amber-100">
+                                                                <ClipboardList size={16} />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <p className="font-bold text-sm text-slate-700">{assignment.title}</p>
+                                                                <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mt-0.5">Tarea</p>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => handleDeleteItem(module.id, assignment.id, "ASSIGNMENT")}
+                                                                className="opacity-0 group-hover:opacity-100 h-8 w-8 flex items-center justify-center text-slate-300 hover:text-red-500 transition-all"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+
+                                                    {/* Resources */}
+                                                    {module.resources?.map((resource: any) => (
+                                                        <div key={resource.id} className="group flex items-center p-4 hover:bg-slate-50 transition-colors pl-8">
+                                                            <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center mr-4 text-emerald-500 border border-emerald-100">
+                                                                <LinkIcon size={16} />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <a href={resource.url} target="_blank" rel="noopener noreferrer" className="font-bold text-sm text-slate-700 hover:text-blue-600 transition-colors">
+                                                                    {resource.title}
+                                                                </a>
+                                                                <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mt-0.5">Recurso / Link</p>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => handleDeleteItem(module.id, resource.id, "RESOURCE")}
+                                                                className="opacity-0 group-hover:opacity-100 h-8 w-8 flex items-center justify-center text-slate-300 hover:text-red-500 transition-all"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+
+                                                    {(!module.lessons?.length && !module.quizzes?.length && !module.assignments?.length && !module.resources?.length) && (
+                                                        <div className="p-8 text-center text-sm text-slate-400 italic">
+                                                            Este módulo no tiene contenido aún.
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </Draggable>
+                            ))}
+                            {provided.placeholder}
+                            {modules.length === 0 && (
+                                <div className="text-center py-20 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                                    <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-blue-400">
+                                        <Plus size={36} strokeWidth={1.5} />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-slate-800 mb-2">No hay módulos</h3>
+                                    <p className="text-slate-500 mb-12 max-w-sm mx-auto text-sm">Comienza estructurando tu curso creando el primer módulo de enseñanza.</p>
+                                    <div className="flex justify-center py-4">
+                                        <button
+                                            onClick={() => setIsAddModuleOpen(true)}
+                                            className="button-modern gradient-blue flex items-center gap-2 py-3 px-8 rounded-xl text-white font-bold shadow-md hover:shadow-lg transition-all active:scale-95"
+                                        >
+                                            <Plus className="h-5 w-5" />
+                                            Crear primer módulo
+                                        </button>
+                                    </div>
                                 </div>
-                                <h3 className="text-lg font-bold text-slate-800">{module.title}</h3>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => openAddItemModal(module.id)}
-                                    className="h-9 px-4 bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 font-bold text-xs rounded-xl shadow-sm transition-all"
-                                >
-                                    <Plus className="h-4 w-4 mr-2 inline-block" /> AGREGAR CONTENIDO
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteModule(module.id)}
-                                    className="h-9 w-9 flex items-center justify-center bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200 rounded-xl shadow-sm transition-all"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </button>
-                            </div>
+                            )}
                         </div>
-                        <div className="bg-white">
-                            <div className="divide-y divide-slate-50">
-                                {/* Lessons */}
-                                {module.lessons?.map((lesson: any) => (
-                                    <div key={lesson.id} className="group flex items-center p-4 hover:bg-slate-50 transition-colors pl-8">
-                                        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center mr-4 text-blue-500 border border-blue-100">
-                                            <BookOpen size={16} />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-bold text-sm text-slate-700">{lesson.title}</p>
-                                            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mt-0.5">Lección</p>
-                                        </div>
-                                        <button
-                                            onClick={() => handleDeleteItem(module.id, lesson.id, "LESSON")}
-                                            className="opacity-0 group-hover:opacity-100 h-8 w-8 flex items-center justify-center text-slate-300 hover:text-red-500 transition-all"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                ))}
-
-                                {/* Quizzes */}
-                                {module.quizzes?.map((quiz: any) => (
-                                    <div key={quiz.id} className="group flex items-center p-4 hover:bg-slate-50 transition-colors pl-8">
-                                        <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center mr-4 text-purple-500 border border-purple-100">
-                                            <FileQuestion size={16} />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-bold text-sm text-slate-700">{quiz.title}</p>
-                                            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mt-0.5">Cuestionario</p>
-                                        </div>
-                                        <button
-                                            onClick={() => handleDeleteItem(module.id, quiz.id, "QUIZ")}
-                                            className="opacity-0 group-hover:opacity-100 h-8 w-8 flex items-center justify-center text-slate-300 hover:text-red-500 transition-all"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                ))}
-
-                                {/* Assignments */}
-                                {module.assignments?.map((assignment: any) => (
-                                    <div key={assignment.id} className="group flex items-center p-4 hover:bg-slate-50 transition-colors pl-8">
-                                        <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center mr-4 text-amber-500 border border-amber-100">
-                                            <ClipboardList size={16} />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-bold text-sm text-slate-700">{assignment.title}</p>
-                                            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mt-0.5">Tarea</p>
-                                        </div>
-                                        <button
-                                            onClick={() => handleDeleteItem(module.id, assignment.id, "ASSIGNMENT")}
-                                            className="opacity-0 group-hover:opacity-100 h-8 w-8 flex items-center justify-center text-slate-300 hover:text-red-500 transition-all"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                ))}
-
-                                {/* Resources */}
-                                {module.resources?.map((resource: any) => (
-                                    <div key={resource.id} className="group flex items-center p-4 hover:bg-slate-50 transition-colors pl-8">
-                                        <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center mr-4 text-emerald-500 border border-emerald-100">
-                                            <LinkIcon size={16} />
-                                        </div>
-                                        <div className="flex-1">
-                                            <a href={resource.url} target="_blank" rel="noopener noreferrer" className="font-bold text-sm text-slate-700 hover:text-blue-600 transition-colors">
-                                                {resource.title}
-                                            </a>
-                                            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mt-0.5">Recurso / Link</p>
-                                        </div>
-                                        <button
-                                            onClick={() => handleDeleteItem(module.id, resource.id, "RESOURCE")}
-                                            className="opacity-0 group-hover:opacity-100 h-8 w-8 flex items-center justify-center text-slate-300 hover:text-red-500 transition-all"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                ))}
-
-                                {(!module.lessons?.length && !module.quizzes?.length && !module.assignments?.length && !module.resources?.length) && (
-                                    <div className="p-8 text-center text-sm text-slate-400 italic">
-                                        Este módulo no tiene contenido aún.
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                ))}
-
-                {
-                    modules.length === 0 && (
-                        <div className="text-center py-20 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                            <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-blue-400">
-                                <Plus size={36} strokeWidth={1.5} />
-                            </div>
-                            <h3 className="text-xl font-bold text-slate-800 mb-2">No hay módulos</h3>
-                            <p className="text-slate-500 mb-12 max-w-sm mx-auto text-sm">Comienza estructurando tu curso creando el primer módulo de enseñanza.</p>
-                            <div className="flex justify-center py-4">
-                                <button
-                                    onClick={() => setIsAddModuleOpen(true)}
-                                    className="button-modern gradient-blue flex items-center gap-2 py-3 px-8 rounded-xl text-white font-bold shadow-md hover:shadow-lg transition-all active:scale-95"
-                                >
-                                    <Plus className="h-5 w-5" />
-                                    Crear primer módulo
-                                </button>
-                            </div>
-                        </div>
-                    )
-                }
-            </div>
+                    )}
+                </Droppable>
+            </DragDropContext>
 
             {/* Add Item Dialog */}
             <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
@@ -428,6 +538,22 @@ export function CourseBuilder({ courseId }: CourseBuilderProps) {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            {/* Lesson Editor Modal */}
+            <LessonEditorModal
+                open={isLessonEditOpen}
+                onOpenChange={setIsLessonEditOpen}
+                moduleId={editingModuleId || ""}
+                lesson={editingLesson}
+                onSaved={fetchModules}
+            />
+            {/* Quiz Editor Modal */}
+            <QuizEditorModal
+                open={isQuizEditOpen}
+                onOpenChange={setIsQuizEditOpen}
+                moduleId={editingModuleId || ""}
+                quiz={editingQuiz}
+                onSaved={fetchModules}
+            />
         </div>
     );
 }
