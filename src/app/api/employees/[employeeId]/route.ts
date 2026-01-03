@@ -30,7 +30,7 @@ export async function GET(
                 businessId: user.businessId
             },
             include: {
-                branch: true
+                branches: true
             }
         });
 
