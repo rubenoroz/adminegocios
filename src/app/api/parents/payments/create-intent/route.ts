@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import Stripe from "stripe";
 import { verify } from "jsonwebtoken";
 
+export const dynamic = 'force-dynamic';
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: "2025-11-17.clover", // Use latest API version
 });
