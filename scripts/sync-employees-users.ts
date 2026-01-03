@@ -14,7 +14,7 @@ async function syncEmployeesToUsers() {
             },
             include: {
                 business: true,
-                branch: true
+                branches: true
             }
         });
 
@@ -43,6 +43,7 @@ async function syncEmployeesToUsers() {
                 // Crear el usuario
                 try {
                     const hashedPassword = await bcrypt.hash('password123', 10);
+                    const firstBranchId = employee.branches?.[0]?.id || null;
 
                     const newUser = await prisma.user.create({
                         data: {
@@ -51,7 +52,7 @@ async function syncEmployeesToUsers() {
                             password: hashedPassword,
                             role: 'TEACHER',
                             businessId: employee.businessId,
-                            branchId: employee.branchId,
+                            branchId: firstBranchId,
                             status: 'ACTIVE'
                         }
                     });
