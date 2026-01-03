@@ -40,10 +40,18 @@ export async function POST(
         const { moduleId } = await params;
         const { title } = await req.json();
 
+        const lastQuiz = await prisma.quiz.findFirst({
+            where: { moduleId },
+            orderBy: { order: "desc" },
+        });
+
+        const newOrder = lastQuiz ? lastQuiz.order + 1 : 1;
+
         const quiz = await prisma.quiz.create({
             data: {
                 title,
-                moduleId
+                moduleId,
+                order: newOrder
             }
         });
 

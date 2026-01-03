@@ -12,7 +12,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     try {
         const { id } = await params;
         const body = await req.json();
-        const { name, capacity, building } = body;
+        const { name, capacity, building, branchId } = body;
 
         const classroom = await prisma.classroom.update({
             where: {
@@ -23,6 +23,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
                 name,
                 capacity: capacity ? parseInt(capacity) : null,
                 building: building || null,
+                branchId: branchId || null,
+            },
+            include: {
+                branch: true,
             },
         });
 

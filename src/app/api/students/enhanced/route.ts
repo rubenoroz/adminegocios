@@ -11,12 +11,23 @@ export async function GET(req: Request) {
         }
 
         const businessId = session.user.businessId!;
+        const { searchParams } = new URL(req.url);
+        const branchId = searchParams.get("branchId");
+
+        const where: any = {
+            businessId,
+        };
+
+        if (branchId) {
+            where.OR = [
+                { branches: { some: { id: branchId } } },
+                { branches: { none: {} } }
+            ];
+        }
 
         // Get all students with their scholarships and fees
         const students = await prisma.student.findMany({
-            where: {
-                businessId,
-            },
+            where,
             include: {
                 scholarships: {
                     where: { active: true },
@@ -26,6 +37,7 @@ export async function GET(req: Request) {
                         payments: true,
                     },
                 },
+                branches: true,
             },
             orderBy: [
                 { lastName: "asc" },
@@ -62,6 +74,7 @@ export async function GET(req: Request) {
                 hasScholarship: student.scholarships.length > 0,
                 scholarshipCount: student.scholarships.length,
                 totalDebt,
+                branches: student.branches,
                 overdueCount,
             };
         });

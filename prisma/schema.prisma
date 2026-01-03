@@ -202,6 +202,7 @@ model Branch {
   schedules   ClassSchedule[]
   supplierOrders SupplierOrder[]
   appointments Appointment[]
+  classrooms  Classroom[]
 }
 
 model Product {
@@ -391,8 +392,8 @@ model Employee {
   
   businessId  String
   business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  branchId    String?
-  branch      Branch?  @relation(fields: [branchId], references: [id])
+  // Multi-branch assignment
+  branches    Branch[]
   
   scheduledPayments ScheduledPayment[]
   classPayments     StudentPayment[]  // Payments where this employee was the teacher
@@ -552,8 +553,9 @@ model Student {
   
   businessId  String
   business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  branchId    String?
-  branch      Branch?  @relation(fields: [branchId], references: [id])
+
+  // Multi-branch assignment
+  branches    Branch[]
   
   enrollments Enrollment[]
   attendance  Attendance[]
@@ -583,8 +585,8 @@ model Course {
   
   businessId  String
   business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  branchId    String?
-  branch      Branch?  @relation(fields: [branchId], references: [id])
+  // Multi-branch assignment
+  branches    Branch[]
   
   teacherId   String?
   teacher     User?    @relation("CourseTeacher", fields: [teacherId], references: [id])
@@ -940,6 +942,9 @@ model Classroom {
   businessId  String
   business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  
   courses     Course[]
   schedules   ClassSchedule[]
   
@@ -947,6 +952,7 @@ model Classroom {
   updatedAt   DateTime @updatedAt
   
   @@index([businessId])
+  @@index([branchId])
 }
 
 model Announcement {

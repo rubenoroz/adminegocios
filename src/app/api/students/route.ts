@@ -11,18 +11,39 @@ export async function GET(req: Request) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
+        const user = await prisma.user.findUnique({
+            where: { email: session.user.email }
+        });
+
+        // Get branchId from query params
         const { searchParams } = new URL(req.url);
         const search = searchParams.get("search") || "";
+        const branchId = searchParams.get("branchId");
         const limit = parseInt(searchParams.get("limit") || "20");
         const offset = parseInt(searchParams.get("offset") || "0");
 
-        const where: any = {};
+        const where: any = {
+            businessId: user?.businessId // Ensure scoped to business
+        };
 
         if (search) {
             where.OR = [
                 { firstName: { contains: search } },
                 { lastName: { contains: search } },
                 { matricula: { contains: search } },
+                { email: { contains: search } }
+            ];
+        }
+
+        if (branchId) {
+            // Filter students who have THIS branch in their list OR have NO branches (global)
+            where.AND = [
+                {
+                    OR: [
+                        { branches: { some: { id: branchId } } },
+                        { branches: { none: {} } }
+                    ]
+                }
             ];
         }
 
@@ -36,7 +57,8 @@ export async function GET(req: Request) {
                     include: {
                         course: true
                     }
-                }
+                },
+                branches: true
             }
         });
 
@@ -55,7 +77,8 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { firstName, lastName, matricula, email, phone, businessId } = body;
+        // branchIds should be an array of strings
+        const { firstName, lastName, matricula, email, phone, businessId, branchIds } = body;
 
         if (!firstName || !lastName || !matricula || !businessId) {
             return new NextResponse("Missing required fields", { status: 400 });
@@ -74,6 +97,12 @@ export async function POST(req: Request) {
             }, { status: 403 });
         }
 
+        // Validate branches belong to business if provided
+        let connectedBranches: { id: string }[] = [];
+        if (branchIds && Array.isArray(branchIds) && branchIds.length > 0) {
+            connectedBranches = branchIds.map((id: string) => ({ id }));
+        }
+
         const student = await prisma.student.create({
             data: {
                 firstName,
@@ -82,7 +111,13 @@ export async function POST(req: Request) {
                 email,
                 phone,
                 businessId,
+                branches: {
+                    connect: connectedBranches
+                }
             },
+            include: {
+                branches: true
+            }
         });
 
         // Incrementar contador

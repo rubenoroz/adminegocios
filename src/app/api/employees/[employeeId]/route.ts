@@ -58,7 +58,7 @@ export async function PATCH(
 
     try {
         const body = await req.json();
-        const { firstName, lastName, email, phone, role, paymentModel, salary, hourlyRate, commissionPercentage, reservePercentage, branchId } = body;
+        const { firstName, lastName, email, phone, role, paymentModel, salary, hourlyRate, commissionPercentage, reservePercentage, branchId, branchIds } = body;
 
         const user = await prisma.user.findUnique({
             where: { email: session.user.email }
@@ -80,33 +80,36 @@ export async function PATCH(
             return NextResponse.json({ error: "Employee not found" }, { status: 404 });
         }
 
-        // Validate branch if provided
-        if (branchId) {
-            const branch = await prisma.branch.findFirst({
-                where: { id: branchId, businessId: user.businessId }
-            });
-            if (!branch) {
-                return NextResponse.json({ error: "Invalid branch" }, { status: 400 });
-            }
+        // Build update data
+        const updateData: any = {};
+        if (firstName !== undefined) updateData.firstName = firstName;
+        if (lastName !== undefined) updateData.lastName = lastName;
+        if (email !== undefined) updateData.email = email;
+        if (phone !== undefined) updateData.phone = phone;
+        if (role !== undefined) updateData.role = role;
+        if (paymentModel !== undefined) updateData.paymentModel = paymentModel;
+        if (salary !== undefined) updateData.salary = salary ? parseFloat(salary) : null;
+        if (hourlyRate !== undefined) updateData.hourlyRate = hourlyRate ? parseFloat(hourlyRate) : null;
+        if (commissionPercentage !== undefined) updateData.commissionPercentage = commissionPercentage ? parseFloat(commissionPercentage) : null;
+        if (reservePercentage !== undefined) updateData.reservePercentage = reservePercentage ? parseFloat(reservePercentage) : null;
+
+        // Handle legacy single branchId (backwards compatibility)
+        if (branchId !== undefined) {
+            updateData.branchId = branchId || null;
+        }
+
+        // Handle multi-branch (many-to-many)
+        if (branchIds !== undefined) {
+            updateData.branches = {
+                set: branchIds.map((id: string) => ({ id }))
+            };
         }
 
         const employee = await prisma.employee.update({
             where: { id: employeeId },
-            data: {
-                ...(firstName !== undefined && { firstName }),
-                ...(lastName !== undefined && { lastName }),
-                ...(email !== undefined && { email }),
-                ...(phone !== undefined && { phone }),
-                ...(role !== undefined && { role }),
-                ...(paymentModel !== undefined && { paymentModel }),
-                ...(salary !== undefined && { salary: salary ? parseFloat(salary) : null }),
-                ...(hourlyRate !== undefined && { hourlyRate: hourlyRate ? parseFloat(hourlyRate) : null }),
-                ...(commissionPercentage !== undefined && { commissionPercentage: commissionPercentage ? parseFloat(commissionPercentage) : null }),
-                ...(reservePercentage !== undefined && { reservePercentage: reservePercentage ? parseFloat(reservePercentage) : null }),
-                ...(branchId !== undefined && { branchId: branchId || null })
-            },
+            data: updateData,
             include: {
-                branch: true
+                branches: true
             }
         });
 

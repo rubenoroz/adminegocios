@@ -18,6 +18,9 @@ export async function GET(req: Request) {
             orderBy: {
                 name: "asc",
             },
+            include: {
+                branch: true,
+            },
         });
 
         return NextResponse.json(classrooms);
@@ -36,7 +39,7 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
-        const { name, capacity, building } = body;
+        const { name, capacity, building, branchId } = body;
 
         if (!name) {
             return NextResponse.json(
@@ -50,7 +53,11 @@ export async function POST(req: Request) {
                 name,
                 capacity: capacity ? parseInt(capacity) : null,
                 building: building || null,
+                branchId: branchId || null,
                 businessId: session.user.businessId!,
+            },
+            include: {
+                branch: true,
             },
         });
 

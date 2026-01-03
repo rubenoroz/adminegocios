@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, GraduationCap, CreditCard, Award, Ban, Trash2, PlayCircle, Users, UserCheck, DollarSign, AlertCircle, X, Check } from "lucide-react";
+import { Plus, GraduationCap, CreditCard, Award, Ban, Trash2, PlayCircle, Users, UserCheck, DollarSign, AlertCircle, X, Check, Edit } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { StudentPaymentModal } from "@/components/schools/student-payment-modal";
 import { useBranchData, useBranchCreate } from "@/hooks/use-branch-data";
@@ -14,6 +14,8 @@ import { ModernFilterBar } from "@/components/ui/modern-filter-bar";
 import { ModernTable } from "@/components/ui/modern-table";
 import { ModernInput } from "@/components/ui/modern-components";
 import { ModernKpiCard } from "@/components/ui/modern-kpi-card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { BranchMultiSelector } from "@/components/shared/branch-multi-selector";
 
 export function StudentList() {
     const { data: students, loading, refetch } = useBranchData<any[]>('/api/students/enhanced');
@@ -29,8 +31,12 @@ export function StudentList() {
         matricula: "",
         email: "",
         guardianName: "",
-        guardianPhone: ""
+        guardianPhone: "",
+        branchIds: [] as string[]
     });
+
+    // Need branches list for selection
+    const { branches } = useBranch();
 
     // Payment Modal State
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -40,6 +46,10 @@ export function StudentList() {
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isDeletingBulk, setIsDeletingBulk] = useState(false);
+
+    // Estados para editar
+    const [editOpen, setEditOpen] = useState(false);
+    const [editingStudent, setEditingStudent] = useState<any>(null);
 
     const handleOpenPayment = (student: any) => {
         setSelectedStudentForPayment({
@@ -59,11 +69,19 @@ export function StudentList() {
             await createStudent({
                 ...newStudent,
                 businessId: selectedBranch.businessId,
-                branchId: selectedBranch.id
+                branchIds: newStudent.branchIds
             });
             setOpen(false);
             refetch();
-            setNewStudent({ firstName: "", lastName: "", matricula: "", email: "", guardianName: "", guardianPhone: "" });
+            setNewStudent({
+                firstName: "",
+                lastName: "",
+                matricula: "",
+                email: "",
+                guardianName: "",
+                guardianPhone: "",
+                branchIds: []
+            });
         } catch (error) {
             console.error(error);
         }
@@ -100,6 +118,56 @@ export function StudentList() {
         } catch (error) {
             console.error("Failed to delete student", error);
         }
+    };
+
+    // EDIT FUNCTIONALITY
+    const handleEdit = (student: any) => {
+        setEditingStudent({
+            ...student,
+            branchIds: student.branches?.map((b: any) => b.id) || []
+        });
+        setEditOpen(true);
+    };
+
+    const handleUpdate = async () => {
+        if (!editingStudent) return;
+        try {
+            const res = await fetch(`/api/students/${editingStudent.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    firstName: editingStudent.firstName,
+                    lastName: editingStudent.lastName,
+                    email: editingStudent.email,
+                    matricula: editingStudent.matricula,
+                    guardianName: editingStudent.guardianName,
+                    guardianPhone: editingStudent.guardianPhone,
+                    branchIds: editingStudent.branchIds
+                })
+            });
+
+            if (res.ok) {
+                setEditOpen(false);
+                setEditingStudent(null);
+                refetch();
+            } else {
+                console.error("Failed to update student");
+            }
+        } catch (error) {
+            console.error("Error updating student:", error);
+        }
+    };
+
+    // Helper to toggle branch selection
+    const toggleBranch = (branchId: string) => {
+        setNewStudent(prev => {
+            const current = prev.branchIds || [];
+            if (current.includes(branchId)) {
+                return { ...prev, branchIds: current.filter(id => id !== branchId) };
+            } else {
+                return { ...prev, branchIds: [...current, branchId] };
+            }
+        });
     };
 
     // Funciones para selección múltiple
@@ -295,6 +363,15 @@ export function StudentList() {
                                     value={newStudent.guardianPhone}
                                     onChange={(val) => setNewStudent({ ...newStudent, guardianPhone: val })}
                                 />
+
+                                {/* SELECTOR DE SUCURSALES */}
+                                <div className="pt-4 border-t border-slate-100 col-span-2">
+                                    <BranchMultiSelector
+                                        selectedBranchIds={newStudent.branchIds || []}
+                                        onChange={(ids) => setNewStudent({ ...newStudent, branchIds: ids })}
+                                        helperText="Si no seleccionas ninguna, el alumno será global (visible en todas)."
+                                    />
+                                </div>
                             </div>
                             <DialogFooter>
                                 <button
@@ -629,6 +706,41 @@ export function StudentList() {
                                         {student.matricula || 'Sin matrícula'}
                                     </span>
 
+                                    {/* Indicador Global vs Sucursal */}
+                                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                                        {student.branches && student.branches.length > 0 ? (
+                                            student.branches.map((b: any) => (
+                                                <span key={b.id} style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px',
+                                                    padding: '4px 10px',
+                                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                                    borderRadius: '12px',
+                                                    fontSize: '10px',
+                                                    fontWeight: '600',
+                                                    color: '#3B82F6',
+                                                }}>
+                                                    📍 {b.name}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                                padding: '4px 10px',
+                                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                                borderRadius: '12px',
+                                                fontSize: '10px',
+                                                fontWeight: '600',
+                                                color: '#10B981',
+                                            }}>
+                                                🌐 Global
+                                            </span>
+                                        )}
+                                    </div>
+
                                     {/* CONTACTO */}
                                     <div style={{ flex: 1, fontSize: '14px', color: '#475569' }}>
                                         <div style={{ marginBottom: '8px' }}>📧 {student.email || 'Sin email'}</div>
@@ -701,6 +813,24 @@ export function StudentList() {
                                                 )}
                                             </button>
                                             <button
+                                                onClick={() => handleEdit(student)}
+                                                style={{
+                                                    width: '40px',
+                                                    height: '40px',
+                                                    borderRadius: '10px',
+                                                    backgroundColor: 'white',
+                                                    border: 'none',
+                                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                                title="Editar alumno"
+                                            >
+                                                <Edit size={18} color={colors.accent} />
+                                            </button>
+                                            <button
                                                 onClick={() => handleDelete(student.id)}
                                                 style={{
                                                     width: '40px',
@@ -736,6 +866,74 @@ export function StudentList() {
                     studentName={selectedStudentForPayment.name}
                 />
             )}
+
+            {/* Edit Student Dialog */}
+            <Dialog open={editOpen} onOpenChange={setEditOpen}>
+                <DialogContent className="max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                            <Edit size={20} className="text-purple-500" />
+                            Editar Alumno
+                        </DialogTitle>
+                        <DialogDescription className="sr-only">Formulario para editar alumno</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid grid-cols-2 gap-4 py-4">
+                        <ModernInput
+                            label="Nombre"
+                            value={editingStudent?.firstName || ""}
+                            onChange={(val) => setEditingStudent({ ...editingStudent, firstName: val })}
+                        />
+                        <ModernInput
+                            label="Apellido"
+                            value={editingStudent?.lastName || ""}
+                            onChange={(val) => setEditingStudent({ ...editingStudent, lastName: val })}
+                        />
+                        <ModernInput
+                            label="Matrícula"
+                            value={editingStudent?.matricula || ""}
+                            onChange={(val) => setEditingStudent({ ...editingStudent, matricula: val })}
+                        />
+                        <ModernInput
+                            label="Email"
+                            value={editingStudent?.email || ""}
+                            onChange={(val) => setEditingStudent({ ...editingStudent, email: val })}
+                        />
+                        <ModernInput
+                            label="Nombre del Tutor"
+                            value={editingStudent?.guardianName || ""}
+                            onChange={(val) => setEditingStudent({ ...editingStudent, guardianName: val })}
+                        />
+                        <ModernInput
+                            label="Teléfono del Tutor"
+                            value={editingStudent?.guardianPhone || ""}
+                            onChange={(val) => setEditingStudent({ ...editingStudent, guardianPhone: val })}
+                        />
+
+                        {/* BRANCH SELECTOR */}
+                        <div className="col-span-2 pt-4 border-t border-slate-100">
+                            <BranchMultiSelector
+                                selectedBranchIds={editingStudent?.branchIds || []}
+                                onChange={(ids) => setEditingStudent({ ...editingStudent, branchIds: ids })}
+                                helperText="Si no seleccionas ninguna, el alumno será global (visible en todas)."
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter className="gap-2">
+                        <button
+                            onClick={() => setEditOpen(false)}
+                            className="button-modern bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleUpdate}
+                            className="button-modern bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600"
+                        >
+                            Guardar Cambios
+                        </button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

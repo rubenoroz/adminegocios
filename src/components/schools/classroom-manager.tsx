@@ -9,12 +9,16 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useBranch } from "@/context/branch-context";
 
 interface Classroom {
     id: string;
     name: string;
     capacity?: number;
     building?: string;
+    branchId?: string;
+    branch?: { id: string; name: string };
 }
 
 export function ClassroomManager() {
@@ -23,7 +27,9 @@ export function ClassroomManager() {
     const [newName, setNewName] = useState("");
     const [newCapacity, setNewCapacity] = useState("");
     const [newBuilding, setNewBuilding] = useState("");
+    const [newBranchId, setNewBranchId] = useState("");
     const { toast } = useToast();
+    const { branches } = useBranch();
 
     const [editingId, setEditingId] = useState<string | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -50,6 +56,7 @@ export function ClassroomManager() {
         setNewName("");
         setNewCapacity("");
         setNewBuilding("");
+        setNewBranchId("");
         setIsCreateOpen(true);
     };
 
@@ -58,6 +65,7 @@ export function ClassroomManager() {
         setNewName(cls.name);
         setNewCapacity(cls.capacity?.toString() || "");
         setNewBuilding(cls.building || "");
+        setNewBranchId(cls.branchId || cls.branch?.id || "");
         setIsCreateOpen(true);
     };
 
@@ -78,6 +86,7 @@ export function ClassroomManager() {
                     name: newName,
                     capacity: newCapacity ? parseInt(newCapacity) : null,
                     building: newBuilding || null,
+                    branchId: newBranchId || null,
                 }),
             });
 
@@ -159,7 +168,7 @@ export function ClassroomManager() {
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-6" style={{ marginTop: '20px' }}>
-                                <div className="space-y-2.5">
+                                <div className="space-y-2.5 flex-1">
                                     <Label className="flex items-center gap-2 text-sm font-bold text-gray-700">
                                         <Users className="h-5 w-5 text-purple-600" /> Capacidad
                                     </Label>
@@ -168,21 +177,27 @@ export function ClassroomManager() {
                                         value={newCapacity}
                                         onChange={(e) => setNewCapacity(e.target.value)}
                                         placeholder="Ej. 30"
-                                        className="rounded-xl border-gray-200"
+                                        className="rounded-xl border-gray-200 w-full"
                                         style={{ height: '48px' }}
                                     />
                                 </div>
-                                <div className="space-y-2.5">
+                                <div className="space-y-2.5 flex-1" style={{ marginLeft: '40px' }}>
                                     <Label className="flex items-center gap-2 text-sm font-bold text-gray-700">
-                                        <MapPin className="h-5 w-5 text-orange-600" /> Edificio / Piso
+                                        <Building2 className="h-5 w-5 text-green-600" /> Sucursal
                                     </Label>
-                                    <Input
-                                        value={newBuilding}
-                                        onChange={(e) => setNewBuilding(e.target.value)}
-                                        placeholder="Ej. Edificio A, Piso 2"
-                                        className="rounded-xl border-gray-200"
-                                        style={{ height: '48px' }}
-                                    />
+                                    <Select value={newBranchId || "none"} onValueChange={(val) => setNewBranchId(val === "none" ? "" : val)}>
+                                        <SelectTrigger className="w-full rounded-xl border-gray-200" style={{ height: '48px' }}>
+                                            <SelectValue placeholder="Seleccionar sucursal..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">Sin asignar</SelectItem>
+                                            {branches.map((branch) => (
+                                                <SelectItem key={branch.id} value={branch.id}>
+                                                    {branch.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
                         </div>

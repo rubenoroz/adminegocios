@@ -17,8 +17,31 @@ export default async function SettingsPage({ params }: { params: Promise<{ lang:
     const dict = await getDictionary(lang as any);
     const session = await getServerSession(authOptions);
 
+    // SuperAdmin or users without a business get a different view
     if (!session?.user?.businessId) {
-        return <div>Error: No business found</div>;
+        const isSuperAdmin = session?.user?.isSuperAdmin;
+        return (
+            <div className="bg-slate-100 pb-16 min-h-screen">
+                <div style={{ padding: 'var(--spacing-lg)', marginBottom: '32px' }}>
+                    <h1 className="text-4xl font-bold tracking-tight text-gray-900 mb-3">
+                        {dict.settings.title}
+                    </h1>
+                    <p className="text-muted-foreground text-lg">
+                        {isSuperAdmin
+                            ? "Como SuperAdmin, puedes administrar negocios desde el panel de Admin"
+                            : "No tienes un negocio asignado. Contacta a tu administrador."}
+                    </p>
+                </div>
+                {isSuperAdmin && (
+                    <div style={{ padding: '0 var(--spacing-lg)' }}>
+                        <Link href={`/${lang}/dashboard/admin/businesses`} className="button-modern bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 inline-flex items-center gap-2" style={{ borderRadius: '8px' }}>
+                            <Building className="h-4 w-4" />
+                            Ir a Administrar Negocios
+                        </Link>
+                    </div>
+                )}
+            </div>
+        );
     }
 
     const business = await prisma.business.findUnique({

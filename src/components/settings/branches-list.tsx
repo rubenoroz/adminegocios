@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Plus, MapPin, Building2, Trash2 } from "lucide-react";
+import { MapPin, Plus, Building2, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { ModernInput } from "@/components/ui/modern-components";
 import { useToast } from "@/components/ui/use-toast";
+import { useBranch } from "@/context/branch-context";
 
 interface Branch {
     id: string;
@@ -14,28 +15,14 @@ interface Branch {
 }
 
 export function BranchesList({ dict }: { dict: any }) {
-    const [branches, setBranches] = useState<Branch[]>([]);
-    const [loading, setLoading] = useState(true);
+    // @ts-ignore
+    const { branches, loading, refreshBranches } = useBranch();
     const [open, setOpen] = useState(false);
     const [newBranch, setNewBranch] = useState({ name: "", address: "" });
     const { toast } = useToast();
     const t = dict.branches;
 
-    useEffect(() => {
-        fetchBranches();
-    }, []);
-
-    const fetchBranches = async () => {
-        try {
-            const res = await fetch("/api/branches");
-            const data = await res.json();
-            setBranches(data);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Remove local fetchBranches and useEffect since we use Context now
 
     const createBranch = async () => {
         if (!newBranch.name.trim()) {
@@ -53,7 +40,7 @@ export function BranchesList({ dict }: { dict: any }) {
             if (res.ok) {
                 setOpen(false);
                 setNewBranch({ name: "", address: "" });
-                fetchBranches();
+                await refreshBranches(); // Update global context!
                 toast({ title: "Sucursal creada exitosamente" });
             }
         } catch (error) {
@@ -71,7 +58,7 @@ export function BranchesList({ dict }: { dict: any }) {
             });
 
             if (res.ok) {
-                fetchBranches();
+                await refreshBranches(); // Update global context!
                 toast({ title: "Sucursal eliminada" });
             }
         } catch (error) {

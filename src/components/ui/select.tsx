@@ -19,15 +19,17 @@ const SelectTrigger = React.forwardRef<
     <SelectPrimitive.Trigger
         ref={ref}
         className={cn(
-            "flex h-10 w-full items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 hover:bg-accent hover:text-accent-foreground",
+            "flex h-12 w-full items-center justify-between gap-2 rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 ring-offset-background transition-all duration-200",
+            "placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400",
+            "hover:border-slate-300 hover:bg-slate-50",
+            "disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
             className
         )}
-        onClick={() => console.log('🖱️ SelectTrigger clicked')}
         {...props}
     >
         {children}
         <SelectPrimitive.Icon asChild>
-            <ChevronDown className="h-4 w-4 opacity-50 flex-shrink-0" />
+            <ChevronDown className="h-5 w-5 opacity-50 flex-shrink-0 transition-transform duration-200" />
         </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
 ))
@@ -140,15 +142,20 @@ const SelectItem = React.forwardRef<
         <SelectPrimitive.Item
             ref={ref}
             className={cn(
-                "relative flex w-full cursor-pointer select-none items-center rounded-lg py-3 px-4 text-sm outline-none transition-all",
-                "hover:bg-slate-100 focus:bg-slate-100",
-                "data-[state=checked]:bg-blue-50 data-[state=checked]:text-blue-700",
+                "relative flex w-full cursor-pointer select-none items-center gap-3 rounded-lg py-3 px-4 text-sm font-medium outline-none transition-all duration-150",
+                "hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 focus:bg-gradient-to-r focus:from-blue-50 focus:to-indigo-50",
+                "data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-blue-100 data-[state=checked]:to-indigo-100 data-[state=checked]:text-blue-700 data-[state=checked]:font-semibold",
                 "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
                 className
             )}
             {...props}
         >
-            <SelectPrimitive.ItemText>
+            <span className="absolute left-3 flex h-5 w-5 items-center justify-center">
+                <SelectPrimitive.ItemIndicator>
+                    <Check className="h-4 w-4 text-blue-600" />
+                </SelectPrimitive.ItemIndicator>
+            </span>
+            <SelectPrimitive.ItemText className="pl-6">
                 {children}
             </SelectPrimitive.ItemText>
         </SelectPrimitive.Item>

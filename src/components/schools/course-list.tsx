@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, BookOpen, Users, Trash2, Eye, Clock, MapPin, User, TrendingUp, Check, X } from "lucide-react";
+import { Plus, BookOpen, Users, Trash2, Eye, Clock, MapPin, User, TrendingUp, Check, X, Edit } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { ModernPageHeader } from "@/components/ui/modern-page-header";
@@ -12,6 +12,9 @@ import { ModernInput } from "@/components/ui/modern-components";
 import { ModernKpiCard } from "@/components/ui/modern-kpi-card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CourseScheduleSelector } from "@/components/schools/course-schedule-selector";
+import { useBranch } from "@/context/branch-context";
+import { Checkbox } from "@/components/ui/checkbox";
+import { BranchMultiSelector } from "@/components/shared/branch-multi-selector";
 import { ClassroomManager } from "@/components/schools/classroom-manager";
 import Link from "next/link";
 import { CourseCard } from "@/components/schools/course-card";
@@ -29,6 +32,7 @@ interface Course {
     _count: {
         enrollments: number;
     };
+    branches?: { id: string; name: string }[];
 }
 
 interface Teacher {
@@ -49,6 +53,7 @@ export function CourseList() {
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [filterCourse, setFilterCourse] = useState<string[]>([]);
     const { toast } = useToast();
+    const { branches, selectedBranch } = useBranch();
 
     // Form states
     const [newName, setNewName] = useState("");
@@ -56,16 +61,19 @@ export function CourseList() {
     const [newTeacherId, setNewTeacherId] = useState("");
     const [newSchedules, setNewSchedules] = useState<any[]>([]);
     const [newClassroomId, setNewClassroomId] = useState("");
+    const [newBranchIds, setNewBranchIds] = useState<string[]>([]);
 
-    useEffect(() => {
-        fetchCourses();
-        fetchTeachers();
-        fetchClassrooms();
-    }, []);
+    // Edit states
+    const [editOpen, setEditOpen] = useState(false);
+    const [editingCourse, setEditingCourse] = useState<any>(null);
 
     const fetchCourses = async () => {
         try {
-            const res = await fetch("/api/courses");
+            setLoading(true);
+            const url = selectedBranch
+                ? `/api/courses?branchId=${selectedBranch.id}`
+                : "/api/courses";
+            const res = await fetch(url);
             if (res.ok) {
                 const data = await res.json();
                 setCourses(data);
@@ -100,6 +108,15 @@ export function CourseList() {
             console.error("Error fetching classrooms:", error);
         }
     };
+
+    useEffect(() => {
+        fetchCourses();
+    }, [selectedBranch]);
+
+    useEffect(() => {
+        fetchTeachers();
+        fetchClassrooms();
+    }, []);
 
     const handleConflictCheck = async (schedule: any) => {
         if (!newClassroomId) return { hasConflict: false };
@@ -191,6 +208,7 @@ export function CourseList() {
                     teacherId: newTeacherId === "none" ? null : newTeacherId || null,
                     classroomId: newClassroomId === "none" ? null : newClassroomId || null,
                     schedules: newSchedules,
+                    branchIds: newBranchIds
                 }),
             });
 
@@ -203,6 +221,7 @@ export function CourseList() {
                 setNewTeacherId("");
                 setNewSchedules([]);
                 setNewClassroomId("");
+                setNewBranchIds([]);
             }
         } catch (error) {
             toast({ title: "Error al crear curso", variant: "destructive" });
@@ -219,6 +238,42 @@ export function CourseList() {
             }
         } catch (error) {
             toast({ title: "Error al eliminar", variant: "destructive" });
+        }
+    };
+
+    // EDIT FUNCTIONALITY
+    const handleEdit = (course: Course) => {
+        setEditingCourse({
+            ...course,
+            branchIds: course.branches?.map(b => b.id) || []
+        });
+        setEditOpen(true);
+    };
+
+    const handleUpdateCourse = async () => {
+        if (!editingCourse) return;
+        try {
+            const res = await fetch(`/api/courses/${editingCourse.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: editingCourse.name,
+                    description: editingCourse.description,
+                    teacherId: editingCourse.teacher?.id || null,
+                    classroomId: editingCourse.classroom?.id || null
+                })
+            });
+
+            if (res.ok) {
+                toast({ title: "Curso actualizado" });
+                setEditOpen(false);
+                setEditingCourse(null);
+                fetchCourses();
+            } else {
+                toast({ title: "Error al actualizar", variant: "destructive" });
+            }
+        } catch (error) {
+            toast({ title: "Error al actualizar", variant: "destructive" });
         }
     };
 
@@ -412,29 +467,35 @@ export function CourseList() {
                                             rows={3}
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Profesor</label>
-                                        <Select value={newTeacherId} onValueChange={setNewTeacherId}>
-                                            <SelectTrigger className="w-full bg-white border-2 border-border h-12 rounded-xl">
-                                                <SelectValue placeholder="Seleccionar profesor..." />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="none">Sin asignar</SelectItem>
-                                                {teachers.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Salón</label>
-                                        <Select value={newClassroomId} onValueChange={setNewClassroomId}>
-                                            <SelectTrigger className="w-full bg-white border-2 border-border h-12 rounded-xl">
-                                                <SelectValue placeholder="Seleccionar salón..." />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="none">Sin asignar</SelectItem>
-                                                {classrooms.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2">Profesor</label>
+                                            <Select value={newTeacherId} onValueChange={setNewTeacherId}>
+                                                <SelectTrigger className="w-full bg-white border-2 border-border h-12 rounded-xl">
+                                                    <SelectValue placeholder="Seleccionar profesor..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="none">Sin asignar</SelectItem>
+                                                    {teachers.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2">Salón</label>
+                                            <Select value={newClassroomId} onValueChange={setNewClassroomId}>
+                                                <SelectTrigger className="w-full bg-white border-2 border-border h-12 rounded-xl">
+                                                    <SelectValue placeholder="Seleccionar salón..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="none">Sin asignar</SelectItem>
+                                                    {classrooms.map((c) => (
+                                                        <SelectItem key={c.id} value={c.id}>
+                                                            {c.name} {c.branch ? `(${c.branch.name})` : ''}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
                                     </div>
                                     <CourseScheduleSelector
                                         value={newSchedules}
@@ -443,6 +504,7 @@ export function CourseList() {
                                         classroomName={classrooms.find(c => c.id === newClassroomId)?.name}
                                         onConflictCheck={handleConflictCheck}
                                     />
+
                                 </div>
                                 <DialogFooter>
                                     <button
@@ -657,19 +719,51 @@ export function CourseList() {
                                     </h3>
 
                                     {/* PROFESOR (como rol) */}
-                                    <span style={{
-                                        display: 'inline-block',
-                                        padding: '6px 14px',
-                                        backgroundColor: 'rgba(255,255,255,0.8)',
-                                        borderRadius: '20px',
-                                        fontSize: '12px',
-                                        fontWeight: 'bold',
-                                        color: colors.accent,
-                                        marginBottom: '16px',
-                                        width: 'fit-content'
-                                    }}>
-                                        {course.teacher?.name || 'Sin profesor'}
-                                    </span>
+                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                                        <span style={{
+                                            display: 'inline-block',
+                                            padding: '6px 14px',
+                                            backgroundColor: 'rgba(255,255,255,0.8)',
+                                            borderRadius: '20px',
+                                            fontSize: '12px',
+                                            fontWeight: 'bold',
+                                            color: colors.accent,
+                                        }}>
+                                            {course.teacher?.name || 'Sin profesor'}
+                                        </span>
+                                        {/* INDICADOR SUCURSAL */}
+                                        {course.branches && course.branches.length > 0 ? (
+                                            course.branches.map(b => (
+                                                <span key={b.id} style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px',
+                                                    padding: '6px 12px',
+                                                    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                                                    borderRadius: '20px',
+                                                    fontSize: '11px',
+                                                    fontWeight: '600',
+                                                    color: '#475569',
+                                                }}>
+                                                    📍 {b.name}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                                padding: '6px 12px',
+                                                backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                                                borderRadius: '20px',
+                                                fontSize: '11px',
+                                                fontWeight: '600',
+                                                color: '#475569',
+                                            }}>
+                                                🌐 Global
+                                            </span>
+                                        )}
+                                    </div>
 
                                     {/* INFO (flex-1 para empujar el footer) */}
                                     <div style={{ flex: 1, fontSize: '14px', color: '#475569' }}>
@@ -715,6 +809,24 @@ export function CourseList() {
                                                         <Eye size={18} color={colors.accent} />
                                                     </button>
                                                 </Link>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleEdit(course); }}
+                                                    style={{
+                                                        width: '40px',
+                                                        height: '40px',
+                                                        borderRadius: '10px',
+                                                        backgroundColor: 'white',
+                                                        border: 'none',
+                                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
+                                                    }}
+                                                    title="Editar curso"
+                                                >
+                                                    <Edit size={18} color={colors.accent} />
+                                                </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleDelete(course.id); }}
                                                     style={{
@@ -781,6 +893,92 @@ export function CourseList() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Edit Course Dialog */}
+            <Dialog open={editOpen} onOpenChange={setEditOpen}>
+                <DialogContent className="max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                            <Edit size={20} className="text-blue-500" />
+                            Editar Curso
+                        </DialogTitle>
+                        <DialogDescription className="sr-only">Formulario para editar curso</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <ModernInput
+                            label="Nombre del Curso"
+                            value={editingCourse?.name || ""}
+                            onChange={(val) => setEditingCourse({ ...editingCourse, name: val })}
+                        />
+                        <ModernInput
+                            label="Descripción"
+                            value={editingCourse?.description || ""}
+                            onChange={(val) => setEditingCourse({ ...editingCourse, description: val })}
+                        />
+
+                        {/* Teacher Selector */}
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium">Maestro</label>
+                            <Select
+                                value={editingCourse?.teacher?.id || ""}
+                                onValueChange={(val) => setEditingCourse({
+                                    ...editingCourse,
+                                    teacher: teachers.find(t => t.id === val) || null
+                                })}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Seleccionar maestro" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {teachers.map(teacher => (
+                                        <SelectItem key={teacher.id} value={teacher.id}>
+                                            {teacher.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* CLASSROOM SELECTOR (shows branch) */}
+                        <div className="pt-4 border-t border-slate-100">
+                            <label className="block text-sm font-medium mb-2">Salón (Sucursal)</label>
+                            <Select
+                                value={editingCourse?.classroom?.id || "none"}
+                                onValueChange={(val) => setEditingCourse({
+                                    ...editingCourse,
+                                    classroom: val === "none" ? null : classrooms.find(c => c.id === val) || null
+                                })}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Seleccionar salón" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">Sin asignar</SelectItem>
+                                    {classrooms.map((c) => (
+                                        <SelectItem key={c.id} value={c.id}>
+                                            {c.name} {c.branch ? `(${c.branch.name})` : ''}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter className="gap-2">
+                        <button
+                            onClick={() => setEditOpen(false)}
+                            className="button-modern bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleUpdateCourse}
+                            className="button-modern bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
+                        >
+                            Guardar Cambios
+                        </button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div >
     );
 }

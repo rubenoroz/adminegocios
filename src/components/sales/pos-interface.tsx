@@ -33,9 +33,11 @@ export function POSInterface() {
         try {
             const res = await fetch("/api/products");
             const data = await res.json();
-            setProducts(data);
+            // Ensure data is an array to prevent .map() errors
+            setProducts(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error(error);
+            setProducts([]);
         }
     };
 

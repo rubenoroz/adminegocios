@@ -11,6 +11,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { ModernKpiCard } from "@/components/ui/modern-kpi-card";
 import { ModernFilterBar } from "@/components/ui/modern-filter-bar";
 import { ModernInput } from "@/components/ui/modern-components";
+import { Checkbox } from "@/components/ui/checkbox";
+import { BranchMultiSelector } from "@/components/shared/branch-multi-selector";
 
 export function EmployeeList() {
     const { data: employees, loading, refetch } = useBranchData<any[]>('/api/employees');
@@ -33,8 +35,13 @@ export function EmployeeList() {
         commissionPercentage: "",
         reservePercentage: "",
         paymentFrequency: "MONTHLY",
-        paymentDay: ""
+        paymentFrequency: "MONTHLY",
+        paymentDay: "",
+        branchIds: [] as string[]
     });
+
+    // Need branches list for selection
+    const { branches } = useBranch();
 
     const [createUserOpen, setCreateUserOpen] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
@@ -49,7 +56,21 @@ export function EmployeeList() {
             await createEmployee(newEmployee);
             setOpen(false);
             refetch();
-            setNewEmployee({ firstName: "", lastName: "", email: "", phone: "", role: "STAFF", paymentModel: "FIXED", salary: "", hourlyRate: "", commissionPercentage: "", reservePercentage: "", paymentFrequency: "MONTHLY", paymentDay: "" });
+            setNewEmployee({
+                firstName: "",
+                lastName: "",
+                email: "",
+                phone: "",
+                role: "STAFF",
+                paymentModel: "FIXED",
+                salary: "",
+                hourlyRate: "",
+                commissionPercentage: "",
+                reservePercentage: "",
+                paymentFrequency: "MONTHLY",
+                paymentDay: "",
+                branchIds: []
+            });
         } catch (error) {
             console.error(error);
         }
@@ -96,7 +117,8 @@ export function EmployeeList() {
     const handleEdit = (employee: any) => {
         setEditingEmployee({
             ...employee,
-            salary: employee.salary?.toString() || ""
+            salary: employee.salary?.toString() || "",
+            branchIds: employee.branches?.map((b: any) => b.id) || []
         });
         setEditOpen(true);
     };
@@ -118,7 +140,8 @@ export function EmployeeList() {
                     salary: editingEmployee.salary ? parseFloat(editingEmployee.salary) : null,
                     hourlyRate: editingEmployee.hourlyRate ? parseFloat(editingEmployee.hourlyRate) : null,
                     commissionPercentage: editingEmployee.commissionPercentage ? parseFloat(editingEmployee.commissionPercentage) : null,
-                    reservePercentage: editingEmployee.reservePercentage ? parseFloat(editingEmployee.reservePercentage) : null
+                    reservePercentage: editingEmployee.reservePercentage ? parseFloat(editingEmployee.reservePercentage) : null,
+                    branchIds: editingEmployee.branchIds
                 })
             });
 
@@ -158,6 +181,18 @@ export function EmployeeList() {
             console.error("Error deleting employee:", error);
             toast({ title: "Error al eliminar empleado", variant: "destructive" });
         }
+    };
+
+    // Helper to toggle branch selection
+    const toggleBranch = (branchId: string) => {
+        setNewEmployee(prev => {
+            const current = prev.branchIds || [];
+            if (current.includes(branchId)) {
+                return { ...prev, branchIds: current.filter(id => id !== branchId) };
+            } else {
+                return { ...prev, branchIds: [...current, branchId] };
+            }
+        });
     };
 
     // Funciones para selección múltiple
@@ -384,6 +419,15 @@ export function EmployeeList() {
                                         value={newEmployee.paymentDay}
                                         onChange={(val) => setNewEmployee({ ...newEmployee, paymentDay: val })}
                                         placeholder={newEmployee.paymentFrequency === "MONTHLY" ? "1-31" : "1-7"}
+                                    />
+                                </div>
+
+                                {/* SELECTOR DE SUCURSALES */}
+                                <div className="pt-4 border-t border-slate-100">
+                                    <BranchMultiSelector
+                                        selectedBranchIds={newEmployee.branchIds || []}
+                                        onChange={(ids) => setNewEmployee({ ...newEmployee, branchIds: ids })}
+                                        helperText="Si no seleccionas ninguna, el empleado será global (visible en todas)."
                                     />
                                 </div>
                             </div>
@@ -688,20 +732,40 @@ export function EmployeeList() {
                                             {roleLabels[employee.role] || employee.role}
                                         </span>
                                         {/* Indicador Global vs Sucursal */}
-                                        <span style={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '4px',
-                                            padding: '6px 12px',
-                                            backgroundColor: employee.branchId ? 'rgba(59, 130, 246, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                                            borderRadius: '20px',
-                                            fontSize: '11px',
-                                            fontWeight: '600',
-                                            color: employee.branchId ? '#3B82F6' : '#10B981',
-                                        }}>
-                                            {employee.branchId ? '📍' : '🌐'}
-                                            {employee.branchId ? (employee.branch?.name || 'Sucursal') : 'Global'}
-                                        </span>
+                                        {/* Indicador Global vs Sucursal */}
+                                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                            {employee.branches && employee.branches.length > 0 ? (
+                                                employee.branches.map((b: any) => (
+                                                    <span key={b.id} style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px',
+                                                        padding: '6px 12px',
+                                                        backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                                                        borderRadius: '20px',
+                                                        fontSize: '11px',
+                                                        fontWeight: '600',
+                                                        color: '#3B82F6',
+                                                    }}>
+                                                        📍 {b.name}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px',
+                                                    padding: '6px 12px',
+                                                    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                                                    borderRadius: '20px',
+                                                    fontSize: '11px',
+                                                    fontWeight: '600',
+                                                    color: '#10B981',
+                                                }}>
+                                                    🌐 Global
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* CONTACTO */}
@@ -999,6 +1063,15 @@ export function EmployeeList() {
                                 </div>
                             </div>
                         )}
+
+                        {/* BRANCH SELECTOR FOR EDIT */}
+                        <div className="pt-4 border-t border-slate-100">
+                            <BranchMultiSelector
+                                selectedBranchIds={editingEmployee?.branchIds || []}
+                                onChange={(ids) => setEditingEmployee({ ...editingEmployee, branchIds: ids })}
+                                helperText="Si no seleccionas ninguna, el empleado será global (visible en todas)."
+                            />
+                        </div>
                     </div>
                     <DialogFooter className="gap-2">
                         <button

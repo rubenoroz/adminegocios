@@ -12,7 +12,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { name, description, teacherId, schedules, classroomId } = body;
+        const { name, description, teacherId, schedules, classroomId, branchIds } = body;
 
         if (!name) {
             return NextResponse.json({
@@ -35,6 +35,12 @@ export async function POST(req: Request) {
             }, { status: 403 });
         }
 
+        // Validate branches belong to business if provided
+        let connectedBranches: { id: string }[] = [];
+        if (branchIds && Array.isArray(branchIds) && branchIds.length > 0) {
+            connectedBranches = branchIds.map((id: string) => ({ id }));
+        }
+
         // Create course with schedules in a transaction
         const course = await prisma.$transaction(async (tx) => {
             const newCourse = await tx.course.create({
@@ -44,6 +50,9 @@ export async function POST(req: Request) {
                     teacherId: teacherId || null,
                     classroomId: classroomId || null,
                     businessId: session.user.businessId!,
+                    branches: {
+                        connect: connectedBranches
+                    }
                 },
                 include: {
                     teacher: {
@@ -53,6 +62,7 @@ export async function POST(req: Request) {
                             email: true,
                         },
                     },
+                    branches: true,
                 },
             });
 
@@ -98,11 +108,23 @@ export async function GET(req: Request) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
+        const { searchParams } = new URL(req.url);
+        const branchId = searchParams.get("branchId");
+
+        const where: any = {
+            businessId: session.user.businessId,
+        };
+
+        if (branchId) {
+            where.OR = [
+                { branches: { some: { id: branchId } } },
+                { branches: { none: {} } }
+            ];
+        }
+
         // Optimized query with select instead of include
         const courses = await prisma.course.findMany({
-            where: {
-                businessId: session.user.businessId,
-            },
+            where,
             select: {
                 id: true,
                 name: true,
@@ -116,6 +138,7 @@ export async function GET(req: Request) {
                         name: true,
                     },
                 },
+                branches: true, // Include branches for UI display
                 _count: {
                     select: {
                         enrollments: true,

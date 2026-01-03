@@ -114,17 +114,20 @@ export async function PATCH(
 
         const { courseId } = await params;
         const body = await req.json();
-        const { name, description, teacherId, schedule, room } = body;
+        const { name, description, teacherId, schedule, room, classroomId } = body;
+
+        // Build update data
+        const updateData: any = {};
+        if (name !== undefined) updateData.name = name;
+        if (description !== undefined) updateData.description = description;
+        if (teacherId !== undefined) updateData.teacherId = teacherId;
+        if (schedule !== undefined) updateData.schedule = schedule;
+        if (room !== undefined) updateData.room = room;
+        if (classroomId !== undefined) updateData.classroomId = classroomId || null;
 
         const course = await prisma.course.update({
             where: { id: courseId },
-            data: {
-                name,
-                description,
-                teacherId,
-                schedule,
-                room,
-            },
+            data: updateData,
             include: {
                 teacher: {
                     select: {
@@ -132,6 +135,11 @@ export async function PATCH(
                         name: true,
                         email: true,
                     },
+                },
+                classroom: {
+                    include: {
+                        branch: true
+                    }
                 },
             },
         });
