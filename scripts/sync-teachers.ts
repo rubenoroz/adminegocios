@@ -16,6 +16,9 @@ async function syncTeachersToUsers() {
         const teachers = await prisma.employee.findMany({
             where: {
                 role: 'TEACHER'
+            },
+            include: {
+                branches: true
             }
         });
 
@@ -50,6 +53,7 @@ async function syncTeachersToUsers() {
             } else {
                 // Crear usuario para el profesor
                 const hashedPassword = await bcrypt.hash('password123', 10);
+                const firstBranchId = teacher.branches?.[0]?.id || null;
 
                 await prisma.user.create({
                     data: {
@@ -58,7 +62,7 @@ async function syncTeachersToUsers() {
                         password: hashedPassword,
                         role: 'TEACHER',
                         businessId: teacher.businessId,
-                        branchId: teacher.branchId,
+                        branchId: firstBranchId,
                         status: 'ACTIVE'
                     }
                 });

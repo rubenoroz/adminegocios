@@ -37,7 +37,7 @@ async function main() {
                         email: user.email,
                         role: "TEACHER",
                         businessId: user.businessId!,
-                        branchId: user.branchId,
+                        branches: user.branchId ? { connect: { id: user.branchId } } : undefined,
                         salary: 0, // Default
                         paymentFrequency: "MONTHLY"
                     }
