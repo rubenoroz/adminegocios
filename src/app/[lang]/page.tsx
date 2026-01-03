@@ -12,20 +12,20 @@ export default async function Home({ params }: { params: Promise<{ lang: string 
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(to bottom right, #f8fafc, #ffffff, #f1f5f9)',
-      color: '#0f172a'
+      background: 'linear-gradient(to bottom, #0a0f0d, #0d1510, #0a0f0d)',
+      color: '#f1f5f9'
     }}>
       <Navbar dict={dict.landing.nav} />
       <Hero dict={dict.landing.hero} />
       <Features dict={dict.landing.features} />
       <DiagnosisForm dict={dict.landing.diagnosis} />
 
-      {/* Footer simple */}
+      {/* Footer */}
       <footer style={{
         maxWidth: '1280px',
         margin: '0 auto',
         padding: '40px',
-        borderTop: '1px solid #e2e8f0'
+        borderTop: '1px solid #1e3329'
       }}>
         <div style={{
           display: 'flex',
@@ -34,16 +34,14 @@ export default async function Home({ params }: { params: Promise<{ lang: string 
           flexWrap: 'wrap',
           gap: '16px'
         }}>
-          <div style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a' }}>
-            Admnegocios
-          </div>
-          <div style={{ display: 'flex', gap: '24px', fontSize: '14px', color: '#64748b' }}>
+          <img src="/logo.svg" alt="ADMNegocios" style={{ height: '32px' }} />
+          <div style={{ display: 'flex', gap: '24px', fontSize: '14px', color: '#94a3b8' }}>
             <Link href="#">Privacidad</Link>
             <Link href="#">Términos</Link>
             <Link href="#">Contacto</Link>
           </div>
-          <p style={{ fontSize: '14px', color: '#94a3b8', margin: 0 }}>
-            © 2024 Admnegocios. Todos los derechos reservados.
+          <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
+            © 2025 ADMNegocios. Todos los derechos reservados.
           </p>
         </div>
       </footer>

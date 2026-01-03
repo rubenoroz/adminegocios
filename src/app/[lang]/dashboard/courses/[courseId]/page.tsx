@@ -11,6 +11,7 @@ import { CourseScheduleManager } from "@/components/schools/course-schedule-mana
 import { CourseBuilder } from "@/components/schools/course-builder";
 import { Badge } from "@/components/ui/badge";
 import { ModernKpiCard } from "@/components/ui/modern-kpi-card";
+import { SchoolNavigation } from "@/components/schools/school-navigation";
 
 export default function CourseDetailPage({ params }: { params: Promise<{ lang: string; courseId: string }> }) {
     const { lang, courseId } = use(params);
@@ -47,6 +48,11 @@ export default function CourseDetailPage({ params }: { params: Promise<{ lang: s
 
     return (
         <div className="bg-slate-100 min-h-screen pb-20">
+            {/* School Navigation Bar */}
+            <div style={{ padding: 'var(--spacing-lg) var(--spacing-lg) 0' }}>
+                <SchoolNavigation />
+            </div>
+
             {/* HEADER - MISMO PATRÓN QUE EMPLEADOS/ALUMNOS */}
             <div style={{
                 padding: 'var(--spacing-lg)',

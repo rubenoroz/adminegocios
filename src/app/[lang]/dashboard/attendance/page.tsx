@@ -7,6 +7,7 @@ import { Calendar as CalendarIcon, BookOpen, Users, UserCheck, Clock } from "luc
 import { AttendanceTaker } from "@/components/schools/attendance-taker";
 import { ModernKpiCard } from "@/components/ui/modern-kpi-card";
 import { ModernFilterBar } from "@/components/ui/modern-filter-bar";
+import { SchoolNavigation } from "@/components/schools/school-navigation";
 
 export default function AttendancePage() {
     const { selectedBranch } = useBranch();
@@ -64,6 +65,11 @@ export default function AttendancePage() {
 
     return (
         <div className="bg-slate-100 pb-16 min-h-screen">
+            {/* School Navigation Bar */}
+            <div style={{ padding: 'var(--spacing-lg) var(--spacing-lg) 0' }}>
+                <SchoolNavigation />
+            </div>
+
             {/* HEADER - MISMO PATRÓN QUE OTRAS PÁGINAS */}
             <div style={{
                 padding: 'var(--spacing-lg)',

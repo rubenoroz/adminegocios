@@ -1,27 +1,38 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 export function Navbar({ dict }: { dict: any }) {
     return (
         <header style={{
             maxWidth: '1280px',
             margin: '0 auto',
-            padding: '24px 40px',
+            padding: '40px 40px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            backgroundColor: 'transparent'
+            backgroundColor: 'transparent',
+            position: 'relative'
         }}>
-            {/* Logo */}
-            <div style={{
-                fontSize: '24px',
-                fontWeight: 900,
-                letterSpacing: '-0.025em',
-                color: '#0f172a'
+            {/* Logo Horizontal - posicionado absolutamente */}
+            <Link href="/" style={{
+                display: 'flex',
+                alignItems: 'center',
+                position: 'absolute',
+                left: '-100px',
+                top: '0'
             }}>
-                Admnegocios
-            </div>
+                <Image
+                    src="/logo-horizontal.svg"
+                    alt="ADMNegocios"
+                    width={440}
+                    height={120}
+                    priority
+                />
+            </Link>
+            {/* Placeholder para mantener el espacio */}
+            <div style={{ width: '440px', height: '120px' }}></div>
 
             {/* Actions */}
             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
@@ -30,7 +41,7 @@ export function Navbar({ dict }: { dict: any }) {
                         padding: '8px 16px',
                         borderRadius: '6px',
                         backgroundColor: 'transparent',
-                        color: '#475569',
+                        color: '#94a3b8',
                         border: 'none',
                         cursor: 'pointer',
                         fontSize: '14px'
@@ -42,13 +53,13 @@ export function Navbar({ dict }: { dict: any }) {
                     <button style={{
                         padding: '8px 20px',
                         borderRadius: '8px',
-                        backgroundColor: '#2563eb',
+                        background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                         color: 'white',
                         border: 'none',
                         cursor: 'pointer',
                         fontSize: '14px',
                         fontWeight: 500,
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                        boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4)'
                     }}>
                         Iniciar sesión
                     </button>

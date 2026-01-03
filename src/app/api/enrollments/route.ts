@@ -17,10 +17,17 @@ export async function POST(req: Request) {
             return new NextResponse("Missing required fields", { status: 400 });
         }
 
-        // Create enrollments for all students
-        const enrollments = await Promise.all(
-            studentIds.map((studentId: string) =>
-                prisma.enrollment.create({
+        // Get course details for fee creation
+        const course = await prisma.course.findUnique({
+            where: { id: courseId },
+            select: { name: true, businessId: true }
+        });
+
+        // Create enrollments and fees for all students
+        const results = await Promise.all(
+            studentIds.map(async (studentId: string) => {
+                // Create enrollment
+                const enrollment = await prisma.enrollment.create({
                     data: {
                         courseId,
                         studentId,
@@ -35,14 +42,37 @@ export async function POST(req: Request) {
                             },
                         },
                     },
-                })
-            )
+                });
+
+                // Create initial monthly fee for current month
+                const now = new Date();
+                const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                const currentMonth = monthNames[now.getMonth()];
+                const dueDate = new Date(now.getFullYear(), now.getMonth() + 1, 5); // Due on 5th of next month
+
+                await prisma.studentFee.create({
+                    data: {
+                        title: `Colegiatura ${currentMonth} - ${course?.name || 'Curso'}`,
+                        amount: 0, // Will be set when fee template is configured
+                        dueDate: dueDate,
+                        status: "PENDING",
+                        studentId: studentId,
+                        courseId: courseId,
+                        originalAmount: 0,
+                        discountApplied: 0,
+                    }
+                });
+
+                return enrollment;
+            })
         );
 
         return NextResponse.json({
             success: true,
-            count: enrollments.length,
-            enrollments,
+            count: results.length,
+            enrollments: results,
+            message: "Alumnos inscritos y cargos creados"
         });
     } catch (error) {
         console.error("[ENROLLMENTS_POST]", error);

@@ -120,7 +120,8 @@ model Plan {
 model Business {
   id          String   @id @default(cuid())
   name        String
-  type        String   // RETAIL, RESTAURANT, SCHOOL, SERVICE
+  type        String   // RETAIL, RESTAURANT, SCHOOL, SERVICE (primary type for backwards compatibility)
+  enabledModules String?  // JSON array: ["SCHOOL", "RETAIL", "RESTAURANT"] - all enabled module types
   
   // Branding
   logoUrl          String?
@@ -160,6 +161,9 @@ model Business {
   orders      Order[]
   reservations Reservation[]
   
+  // Suppliers
+  suppliers   Supplier[]
+  
   // School specific
   feeTemplates SchoolFeeTemplate[]
   scheduledPayments ScheduledPayment[]
@@ -169,6 +173,9 @@ model Business {
   events      SchoolEvent[]
   classrooms  Classroom[]
   commissionSettlements CommissionSettlement[]
+  
+  // Services
+  services    Service[]
   ownerRecoveryRequests OwnerRecoveryRequest[]
 }
 
@@ -189,6 +196,8 @@ model Branch {
   orders      Order[]
   reservations Reservation[]
   schedules   ClassSchedule[]
+  supplierOrders SupplierOrder[]
+  appointments Appointment[]
 }
 
 model Product {
@@ -201,13 +210,18 @@ model Product {
   cost        Float?
   category    String?
   image       String?
+  status      String   @default("ACTIVE") // ACTIVE or INACTIVE
   
   businessId  String
   business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   
+  supplierId  String?
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
+  
   inventory   InventoryItem[]
   saleItems   SaleItem[]
   orderItems  OrderItem[]
+  supplierOrderItems SupplierOrderItem[]
 }
 
 model InventoryItem {
@@ -234,6 +248,94 @@ model Customer {
   businessId  String
   business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   sales       Sale[]
+  appointments Appointment[]
+}
+
+model Supplier {
+  id          String   @id @default(cuid())
+  name        String
+  contactName String?
+  phone       String?
+  email       String?
+  address     String?
+  category    String?
+  createdAt   DateTime @default(now())
+  
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  products    Product[]
+  orders      SupplierOrder[]
+}
+
+model SupplierOrder {
+  id          String   @id @default(cuid())
+  orderNumber String?
+  status      String   @default("PENDING") // PENDING, ORDERED, RECEIVED, CANCELLED
+  notes       String?
+  total       Float    @default(0)
+  createdAt   DateTime @default(now())
+  receivedAt  DateTime?
+  
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  
+  branchId    String
+  branch      Branch   @relation(fields: [branchId], references: [id])
+  
+  items       SupplierOrderItem[]
+}
+
+model SupplierOrderItem {
+  id          String   @id @default(cuid())
+  quantity    Int
+  unitPrice   Float
+  total       Float
+  
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  
+  orderId     String
+  order       SupplierOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+// ===== SERVICE BUSINESS MODELS =====
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  duration    Int      @default(30) // duration in minutes
+  price       Float
+  color       String?  @default("#3B82F6") // color for calendar display
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  appointments Appointment[]
+}
+
+model Appointment {
+  id          String   @id @default(cuid())
+  startTime   DateTime
+  endTime     DateTime
+  status      String   @default("SCHEDULED") // SCHEDULED, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW
+  notes       String?
+  createdAt   DateTime @default(now())
+  
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id])
+  
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id])
+  
+  employeeId  String?
+  employee    Employee? @relation(fields: [employeeId], references: [id])
+  
+  branchId    String
+  branch      Branch   @relation(fields: [branchId], references: [id])
 }
 
 model Sale {
@@ -291,6 +393,7 @@ model Employee {
   scheduledPayments ScheduledPayment[]
   classPayments     StudentPayment[]  // Payments where this employee was the teacher
   commissionSettlements CommissionSettlement[]  // Liquidaciones de comisiones
+  appointments Appointment[]  // Citas asignadas a este empleado
 }
 
 model Expense {

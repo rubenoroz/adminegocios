@@ -74,22 +74,27 @@ export async function PATCH(
         }
 
         const body = await req.json();
-        const { planId, recalculate } = body;
+        const { planId, enabledModules, recalculate } = body;
 
-        if (!planId) {
-            return NextResponse.json({ error: "planId is required" }, { status: 400 });
+        // Build update data
+        const updateData: any = {};
+        if (planId) {
+            // Verificar que el plan existe
+            const plan = await prisma.plan.findUnique({ where: { id: planId } });
+            if (!plan) {
+                return NextResponse.json({ error: "Plan not found" }, { status: 404 });
+            }
+            updateData.planId = planId;
         }
 
-        // Verificar que el plan existe
-        const plan = await prisma.plan.findUnique({ where: { id: planId } });
-        if (!plan) {
-            return NextResponse.json({ error: "Plan not found" }, { status: 404 });
+        if (enabledModules !== undefined) {
+            updateData.enabledModules = enabledModules;
         }
 
-        // Actualizar plan del negocio
+        // Actualizar negocio
         const business = await prisma.business.update({
             where: { id },
-            data: { planId },
+            data: updateData,
             include: { plan: true }
         });
 

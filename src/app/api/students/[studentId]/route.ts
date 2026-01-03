@@ -49,14 +49,14 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ stude
 
         const { studentId } = await params;
 
-        // Soft delete (Archive)
-        const student = await prisma.student.update({
-            where: { id: studentId },
-            data: { status: "ARCHIVED" }
+        // Hard delete - permanently remove student
+        await prisma.student.delete({
+            where: { id: studentId }
         });
 
-        return NextResponse.json(student);
+        return NextResponse.json({ success: true, message: "Student deleted permanently" });
     } catch (error) {
+        console.error("Error deleting student:", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

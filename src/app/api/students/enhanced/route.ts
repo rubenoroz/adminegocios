@@ -27,9 +27,10 @@ export async function GET(req: Request) {
                     },
                 },
             },
-            orderBy: {
-                firstName: "asc",
-            },
+            orderBy: [
+                { lastName: "asc" },
+                { firstName: "asc" },
+            ],
         });
 
         // Calculate balance for each student
@@ -57,6 +58,7 @@ export async function GET(req: Request) {
                 matricula: student.matricula,
                 email: student.email,
                 phone: student.phone,
+                status: student.status, // Include status for inactive visual indicator
                 hasScholarship: student.scholarships.length > 0,
                 scholarshipCount: student.scholarships.length,
                 totalDebt,

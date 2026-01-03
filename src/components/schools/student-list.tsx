@@ -70,13 +70,21 @@ export function StudentList() {
     };
 
     const handleStatusChange = async (studentId: string, newStatus: string) => {
+        console.log("🔄 Changing status:", studentId, "to", newStatus);
         try {
-            await fetch(`/api/students/${studentId}`, {
+            const response = await fetch(`/api/students/${studentId}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: newStatus })
             });
-            refetch();
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log("✅ Status changed successfully:", data);
+                refetch();
+            } else {
+                console.error("❌ Failed to change status:", response.status, await response.text());
+            }
         } catch (error) {
             console.error("Failed to update status", error);
         }
@@ -112,10 +120,29 @@ export function StudentList() {
         if (!confirm(`¿Eliminar ${selectedIds.length} alumnos permanentemente?`)) return;
 
         setIsDeletingBulk(true);
+        console.log("🗑️ Starting bulk delete for:", selectedIds.length, "students");
+
+        let successCount = 0;
+        let errorCount = 0;
+
         try {
             for (const id of selectedIds) {
-                await fetch(`/api/students/${id}`, { method: "DELETE" });
+                try {
+                    const response = await fetch(`/api/students/${id}`, { method: "DELETE" });
+                    if (response.ok) {
+                        successCount++;
+                        console.log("✅ Deleted student:", id);
+                    } else {
+                        errorCount++;
+                        console.error("❌ Failed to delete student:", id, response.status);
+                    }
+                } catch (e) {
+                    errorCount++;
+                    console.error("❌ Error deleting student:", id, e);
+                }
             }
+
+            console.log(`🗑️ Bulk delete complete: ${successCount} deleted, ${errorCount} errors`);
             setSelectedIds([]);
             setIsSelectionMode(false);
             refetch();
@@ -138,9 +165,9 @@ export function StudentList() {
         return matchesSearch && matchesFilter;
     });
 
-    // Calculate stats
+    // Calculate stats - treat null/undefined status as ACTIVE
     const totalStudents = activeStudents.length;
-    const activeCount = activeStudents.filter(s => s.status === "ACTIVE").length;
+    const activeCount = activeStudents.filter(s => s.status === "ACTIVE" || !s.status).length;
     const totalBalance = activeStudents.reduce((sum, s) => sum + (s.balance || 0), 0);
     const scholarshipCount = activeStudents.filter(s => s.hasScholarship).length;
 
@@ -480,7 +507,11 @@ export function StudentList() {
                                 4: { bg: '#D1FAE5', accent: '#059669' },
                                 5: { bg: '#CCFBF1', accent: '#0D9488' },
                             };
-                            const colors = studentColors[index % 6];
+
+                            // Use gray colors for inactive students
+                            const isInactive = student.status === "INACTIVE";
+                            const inactiveColors = { bg: '#F1F5F9', accent: '#94A3B8' };
+                            const colors = isInactive ? inactiveColors : studentColors[index % 6];
                             const isSelected = selectedIds.includes(student.id);
 
                             return (
@@ -489,16 +520,46 @@ export function StudentList() {
                                     className={`student-card ${isSelectionMode ? 'cursor-pointer' : ''}`}
                                     onClick={() => isSelectionMode && toggleSelection(student.id)}
                                     style={{
-                                        backgroundColor: colors.bg,
+                                        backgroundColor: isInactive ? '#E5E7EB' : colors.bg,
                                         borderRadius: '20px',
                                         padding: '28px',
                                         minHeight: '280px',
-                                        boxShadow: isSelected ? '0 0 0 3px #7c3aed' : '0 10px 40px rgba(0,0,0,0.12)',
+                                        boxShadow: isSelected
+                                            ? '0 0 0 3px #7c3aed'
+                                            : isInactive
+                                                ? '0 0 0 3px #EF4444, 0 4px 12px rgba(0,0,0,0.08)'
+                                                : '0 10px 40px rgba(0,0,0,0.12)',
                                         display: 'flex',
                                         flexDirection: 'column' as const,
-                                        position: 'relative' as const
+                                        position: 'relative' as const,
+                                        opacity: isInactive ? 0.6 : 1,
+                                        filter: isInactive ? 'grayscale(100%)' : 'none'
                                     }}
                                 >
+                                    {/* INACTIVE BADGE - BIG AND VISIBLE */}
+                                    {isInactive && (
+                                        <div
+                                            style={{
+                                                position: 'absolute',
+                                                top: '12px',
+                                                left: '12px',
+                                                right: '12px',
+                                                padding: '6px 12px',
+                                                backgroundColor: '#DC2626',
+                                                color: 'white',
+                                                borderRadius: '8px',
+                                                fontSize: '11px',
+                                                fontWeight: 'bold',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.05em',
+                                                textAlign: 'center' as const,
+                                                zIndex: 10
+                                            }}
+                                        >
+                                            ⛔ INACTIVO
+                                        </div>
+                                    )}
+
                                     {/* CHECKBOX DE SELECCIÓN */}
                                     {isSelectionMode && (
                                         <div
@@ -540,7 +601,7 @@ export function StudentList() {
                                             boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
                                         }}
                                     >
-                                        {student.firstName[0]}{student.lastName[0]}
+                                        {student.lastName[0]}{student.firstName[0]}
                                     </div>
 
                                     {/* NOMBRE */}
@@ -550,7 +611,7 @@ export function StudentList() {
                                         color: '#1E293B',
                                         marginBottom: '8px'
                                     }}>
-                                        {student.firstName} {student.lastName}
+                                        {student.lastName} {student.firstName}
                                     </h3>
 
                                     {/* MATRÍCULA (como rol) */}
@@ -610,8 +671,34 @@ export function StudentList() {
                                                     alignItems: 'center',
                                                     justifyContent: 'center'
                                                 }}
+                                                title="Ver pagos"
                                             >
                                                 <CreditCard size={18} color={colors.accent} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleStatusChange(
+                                                    student.id,
+                                                    student.status === "INACTIVE" ? "ACTIVE" : "INACTIVE"
+                                                )}
+                                                style={{
+                                                    width: '40px',
+                                                    height: '40px',
+                                                    borderRadius: '10px',
+                                                    backgroundColor: 'white',
+                                                    border: 'none',
+                                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                                title={student.status === "INACTIVE" ? "Activar alumno" : "Desactivar alumno"}
+                                            >
+                                                {student.status === "INACTIVE" ? (
+                                                    <PlayCircle size={18} color="#059669" />
+                                                ) : (
+                                                    <Ban size={18} color="#F59E0B" />
+                                                )}
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(student.id)}
@@ -627,6 +714,7 @@ export function StudentList() {
                                                     alignItems: 'center',
                                                     justifyContent: 'center'
                                                 }}
+                                                title="Eliminar alumno"
                                             >
                                                 <Trash2 size={18} color="#EF4444" />
                                             </button>

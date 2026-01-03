@@ -7,6 +7,10 @@ interface Branch {
     name: string;
     address: string | null;
     businessId: string;
+    business?: {
+        type: string;
+        // add other fields if needed for types
+    };
 }
 
 interface BranchContextType {

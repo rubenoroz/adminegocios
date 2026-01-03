@@ -62,6 +62,7 @@ export const authOptions: NextAuthOptions = {
                 session.user.id = token.sub!;
                 session.user.businessId = token.businessId as string;
                 session.user.businessType = token.businessType as string;
+                session.user.enabledModules = token.enabledModules as string;
                 session.user.role = token.role as string;
 
                 // Debug Session
@@ -79,9 +80,10 @@ export const authOptions: NextAuthOptions = {
                 if (user.businessId) {
                     const business = await prisma.business.findUnique({
                         where: { id: user.businessId },
-                        select: { type: true }
+                        select: { type: true, enabledModules: true }
                     });
                     token.businessType = business?.type;
+                    token.enabledModules = business?.enabledModules;
                 }
             }
             // Subsequent calls - Re-fetch from DB to stay in sync
@@ -99,9 +101,10 @@ export const authOptions: NextAuthOptions = {
                     if (dbUser.businessId) {
                         const business = await prisma.business.findUnique({
                             where: { id: dbUser.businessId },
-                            select: { type: true }
+                            select: { type: true, enabledModules: true }
                         });
                         token.businessType = business?.type;
+                        token.enabledModules = business?.enabledModules;
                     }
                 }
             }

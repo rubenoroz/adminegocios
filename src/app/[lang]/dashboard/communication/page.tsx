@@ -1,7 +1,13 @@
 "use client";
 
 import { CommunicationHub } from "@/components/schools/communication-hub";
+import { SchoolNavigation } from "@/components/schools/school-navigation";
 
 export default function CommunicationPage() {
-    return <CommunicationHub />;
+    return (
+        <div>
+            <SchoolNavigation />
+            <CommunicationHub />
+        </div>
+    );
 }

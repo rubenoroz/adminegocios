@@ -23,7 +23,8 @@ import {
     TrendingUp,
     Loader2,
     Building2,
-    CreditCard
+    CreditCard,
+    ClipboardList
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
@@ -139,6 +140,17 @@ export function Sidebar({
             allowedRoles: ["OWNER", "ADMIN", "CASHIER", "MANAGER"]
         },
 
+        // Servicios - Para consultorios, agencias, constructoras, etc.
+        {
+            label: "Servicios",
+            icon: ClipboardList,
+            href: "/dashboard/services",
+            moduleColor: "var(--module-primary)",
+            group: "Servicios",
+            allowedTypes: ["SERVICE"],
+            allowedRoles: ["OWNER", "ADMIN", "MANAGER", "STAFF"]
+        },
+
         {
             label: "Finanzas",
             icon: DollarSign,
@@ -237,6 +249,21 @@ export function Sidebar({
     const currentRole = role?.toUpperCase().trim();
     const currentType = businessType?.toUpperCase().trim();
 
+    // Parse enabled modules - fallback to current type for backwards compatibility
+    let enabledModules: string[] = [];
+    try {
+        const rawModules = session?.user?.enabledModules;
+        if (rawModules) {
+            enabledModules = JSON.parse(rawModules);
+        }
+    } catch {
+        // Fallback to just the business type
+    }
+    // If no enabledModules, use the current type as the only enabled module
+    if (enabledModules.length === 0 && currentType) {
+        enabledModules = [currentType];
+    }
+
     // Filtrar rutas por tipo de negocio y rol con bypass para OWNER
     const routes = allRoutes.filter(route => {
         // En estado de carga, mostramos todo por petición del usuario (menú azul)
@@ -247,8 +274,9 @@ export function Sidebar({
             return true;
         }
 
-        // Validar tipo de negocio (siempre obligatorio si está definido en la ruta)
-        const typeMatch = !currentType || route.allowedTypes.includes(currentType as any);
+        // Check if any enabled module matches any allowed type for this route
+        const typeMatch = enabledModules.length === 0 ||
+            route.allowedTypes.some(allowedType => enabledModules.includes(allowedType));
 
         // Bypass total para OWNER y ADMIN (ven todo lo de su tipo de negocio)
         if (currentRole === "OWNER" || currentRole === "ADMIN") {
@@ -262,6 +290,8 @@ export function Sidebar({
 
     console.log("🔍 DEBUG - Total rutas filtradas:", routes.length);
     console.log("🔍 DEBUG - Rutas de Super Admin:", routes.filter(r => r.group === "Super Admin").map(r => r.label));
+    console.log("🔍 DEBUG - Rutas de Servicios:", routes.filter(r => r.group === "Servicios").map(r => r.label));
+    console.log("🔍 DEBUG - allRoutes incluye Servicios:", allRoutes.some(r => r.label === "Servicios"));
 
     // Agrupar rutas
     const groupedRoutes = routes.reduce((acc, route) => {
@@ -271,7 +301,7 @@ export function Sidebar({
         return acc;
     }, {} as Record<string, typeof routes>);
 
-    const groupOrder = ["Super Admin", "Dashboard", "Personas", "Escuela", "Restaurante", "Tienda", "Finanzas", "Inventario", "Administración"];
+    const groupOrder = ["Super Admin", "Dashboard", "Personas", "Escuela", "Restaurante", "Tienda", "Servicios", "Finanzas", "Inventario", "Administración"];
 
     const branding = useBranding();
 

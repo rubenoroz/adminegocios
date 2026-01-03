@@ -92,22 +92,10 @@ export function RegisterForm() {
                 <Link href="/" style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
                     marginBottom: '24px',
                     textDecoration: 'none'
                 }}>
-                    <div style={{
-                        width: '32px',
-                        height: '32px',
-                        backgroundColor: '#2563eb',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}>
-                        <span style={{ color: 'white', fontWeight: 700, fontSize: '14px' }}>A</span>
-                    </div>
-                    <span style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>Admnegocios</span>
+                    <img src="/logo.svg" alt="ADMNegocios" style={{ height: '36px' }} />
                 </Link>
 
                 <h3 style={{

@@ -9,6 +9,7 @@ interface Business {
     id: string;
     name: string;
     type: string;
+    enabledModules?: string; // JSON array string
     plan: {
         id: string;
         name: string;
@@ -23,6 +24,13 @@ interface Business {
     };
     createdAt: string;
 }
+
+const MODULE_OPTIONS = [
+    { id: 'SCHOOL', label: 'Escuela', icon: '🎓', description: 'Cursos, alumnos, maestros' },
+    { id: 'RETAIL', label: 'Tienda', icon: '🏪', description: 'Inventario, productos, ventas' },
+    { id: 'RESTAURANT', label: 'Restaurante', icon: '🍽️', description: 'Mesas, órdenes, cocina' },
+    { id: 'SERVICE', label: 'Servicios', icon: '🔧', description: 'Citas, clientes' }
+];
 
 interface Plan {
     id: string;
@@ -41,6 +49,7 @@ export default function BusinessesManagementPage() {
     const [loading, setLoading] = useState(true);
     const [selectedBusiness, setSelectedBusiness] = useState<string | null>(null);
     const [selectedPlan, setSelectedPlan] = useState<string>("");
+    const [selectedModules, setSelectedModules] = useState<string[]>([]);
 
     useEffect(() => {
         if (status === "loading") return;
@@ -79,7 +88,11 @@ export default function BusinessesManagementPage() {
             const res = await fetch(`/api/admin/businesses/${selectedBusiness}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ planId: selectedPlan, recalculate: true })
+                body: JSON.stringify({
+                    planId: selectedPlan,
+                    enabledModules: JSON.stringify(selectedModules),
+                    recalculate: true
+                })
             });
 
             if (res.ok) {
@@ -167,6 +180,12 @@ export default function BusinessesManagementPage() {
                                             onClick={() => {
                                                 setSelectedBusiness(business.id);
                                                 setSelectedPlan(business.plan?.id || "");
+                                                try {
+                                                    const modules = business.enabledModules ? JSON.parse(business.enabledModules) : [business.type];
+                                                    setSelectedModules(modules);
+                                                } catch {
+                                                    setSelectedModules([business.type]);
+                                                }
                                             }}
                                             style={{
                                                 display: 'inline-flex',
@@ -272,6 +291,54 @@ export default function BusinessesManagementPage() {
                                     </option>
                                 ))}
                             </select>
+                        </div>
+
+                        <div style={{ marginBottom: '24px' }}>
+                            <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: 500,
+                                color: '#334155',
+                                marginBottom: '12px'
+                            }}>
+                                Módulos Habilitados
+                            </label>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                {MODULE_OPTIONS.map(mod => (
+                                    <label
+                                        key={mod.id}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '10px',
+                                            padding: '12px',
+                                            borderRadius: '10px',
+                                            border: selectedModules.includes(mod.id) ? '2px solid #3B82F6' : '2px solid #E2E8F0',
+                                            backgroundColor: selectedModules.includes(mod.id) ? '#EFF6FF' : 'white',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.15s ease'
+                                        }}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedModules.includes(mod.id)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setSelectedModules([...selectedModules, mod.id]);
+                                                } else {
+                                                    setSelectedModules(selectedModules.filter(m => m !== mod.id));
+                                                }
+                                            }}
+                                            style={{ width: '18px', height: '18px', accentColor: '#3B82F6' }}
+                                        />
+                                        <span style={{ fontSize: '20px' }}>{mod.icon}</span>
+                                        <div>
+                                            <div style={{ fontWeight: 600, fontSize: '14px', color: '#0F172A' }}>{mod.label}</div>
+                                            <div style={{ fontSize: '11px', color: '#64748B' }}>{mod.description}</div>
+                                        </div>
+                                    </label>
+                                ))}
+                            </div>
                         </div>
 
                         <div style={{ display: 'flex', gap: '12px' }}>

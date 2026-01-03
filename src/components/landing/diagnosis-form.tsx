@@ -15,7 +15,7 @@ export function DiagnosisForm({ dict }: { dict: any }) {
                 borderRadius: '24px',
                 padding: '64px',
                 textAlign: 'center',
-                boxShadow: '0 25px 50px -12px rgba(37, 99, 235, 0.25)'
+                boxShadow: '0 25px 50px -12px rgba(37, 99, 235, 0.35)'
             }}>
                 {/* Título grande */}
                 <h2 style={{

@@ -10,7 +10,7 @@ import { BrandingSettings } from "@/components/settings/branding-settings";
 import { UserManagement } from "@/components/settings/user-management";
 import { PayrollSettings } from "@/components/settings/payroll-settings";
 import { AcademicSettings } from "@/components/settings/academic-settings";
-import { Settings, Building, Palette, Wallet, GraduationCap, Users } from "lucide-react";
+import { Settings, Building, Palette, Wallet, GraduationCap, Users, Upload } from "lucide-react";
 
 export default async function SettingsPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
@@ -118,6 +118,36 @@ export default async function SettingsPage({ params }: { params: Promise<{ lang:
                                 </div>
                                 <div className="p-6">
                                     <UserManagement />
+                                </div>
+                            </div>
+                        )}
+
+                        {isOwnerOrAdmin && (
+                            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-4">
+                                    <h3 className="font-bold text-lg text-slate-800">Herramientas de Datos</h3>
+                                    <Link
+                                        href={`/${lang}/dashboard/settings/import`}
+                                        className="inline-flex items-center justify-center gap-2 font-medium transition-colors"
+                                        style={{
+                                            backgroundColor: '#FFFFFF',
+                                            color: '#334155',
+                                            border: '1px solid #E2E8F0',
+                                            padding: '8px 16px',
+                                            borderRadius: '8px',
+                                            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+                                            cursor: 'pointer',
+                                            fontSize: '14px'
+                                        }}
+                                    >
+                                        <Upload className="h-4 w-4" />
+                                        Ir al Importador de Datos
+                                    </Link>
+                                </div>
+                                <div className="p-6">
+                                    <p className="text-sm text-slate-500">
+                                        Carga masiva de alumnos, maestros, cursos y otros datos desde Excel.
+                                    </p>
                                 </div>
                             </div>
                         )}

@@ -6,8 +6,12 @@ import { cn } from "@/lib/utils";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "Admnegocios",
-  description: "Sistema de administración de negocios adaptable",
+  title: "ADMNegocios | Sistema de Administración de Negocios",
+  description: "Plataforma integral para administrar escuelas, academias, tiendas y restaurantes en un solo lugar.",
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/imago.svg",
+  },
 };
 
 export async function generateStaticParams() {

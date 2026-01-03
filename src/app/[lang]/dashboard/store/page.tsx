@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { POSInterface } from "@/components/sales/pos-interface";
 import { ProductList } from "@/components/inventory/product-list";
 import { CustomerList } from "@/components/store/customer-list";
@@ -15,7 +16,24 @@ import { ShoppingCart, Package, Users, Truck, History, Calculator, Briefcase } f
 type TabType = "pos" | "inventory" | "customers" | "suppliers" | "history" | "cash" | "staff";
 
 export default function StorePage() {
-    const [activeTab, setActiveTab] = useState<TabType>("pos");
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+
+    // Get tab from URL or default to "pos"
+    const tabFromUrl = searchParams.get("tab") as TabType | null;
+    const validTabs: TabType[] = ["pos", "inventory", "customers", "suppliers", "history", "cash", "staff"];
+    const initialTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "pos";
+
+    const [activeTab, setActiveTab] = useState<TabType>(initialTab);
+
+    // Update URL when tab changes
+    const handleTabChange = (tab: TabType) => {
+        setActiveTab(tab);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("tab", tab);
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    };
 
     const tabs = [
         { id: "pos" as TabType, label: "POS", icon: ShoppingCart },
@@ -38,7 +56,7 @@ export default function StorePage() {
                         return (
                             <button
                                 key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
+                                onClick={() => handleTabChange(tab.id)}
                                 data-state={isActive ? "active" : "inactive"}
                                 className="course-tab"
                             >

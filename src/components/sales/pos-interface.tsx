@@ -19,6 +19,7 @@ export function POSInterface() {
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [scannerOpen, setScannerOpen] = useState(false);
     const [scanFeedback, setScanFeedback] = useState<string | null>(null);
+    const [stockWarning, setStockWarning] = useState<string | null>(null);
 
     // USB Scanner listener - detects rapid keystrokes
     const barcodeBuffer = useRef("");
@@ -48,8 +49,17 @@ export function POSInterface() {
         );
 
         if (product) {
+            const stock = product.inventory?.[0]?.quantity || 0;
+            const currentInCart = items.find(i => i.productId === product.id)?.quantity || 0;
+
+            if (currentInCart >= stock) {
+                setStockWarning(`⚠️ Sin stock disponible para ${product.name}`);
+                setTimeout(() => setStockWarning(null), 3000);
+                return;
+            }
+
             addItem(product);
-            setScanFeedback(`✓ ${product.name} agregado`);
+            setScanFeedback(`✓ ${product.name} agregado (Stock: ${stock - currentInCart - 1})`);
             // Play success sound (beep)
             try {
                 const audio = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQAAfnqtjYx5Ynfb3KJ0RxwYXajq1IIaABBUjLa7iGx1fHJxk5SHeXh1iq7EvoNzVVpqgpOQfXaBjZqWj39sf4qMiYSDgIWHi4uEgYKEhoyMhoaGhoiKioqIhoaHiYqKiYmHh4iJiYmJiIiIiYmJiYmIiIiJiYmJiYiIiImJiYmJiIiIiYmJiYmIiIiJiYmJiYmIiA==");
@@ -61,7 +71,7 @@ export function POSInterface() {
         }
 
         setTimeout(() => setScanFeedback(null), 2000);
-    }, [products, addItem]);
+    }, [products, addItem, items]);
 
     // USB Scanner keyboard listener
     useEffect(() => {
@@ -217,6 +227,20 @@ export function POSInterface() {
                     </div>
                 )}
 
+                {/* Stock Warning Toast */}
+                {stockWarning && (
+                    <div
+                        className="fixed top-24 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-xl shadow-lg font-semibold flex items-center gap-2"
+                        style={{
+                            backgroundColor: '#FEF3C7',
+                            color: '#92400E',
+                            border: '2px solid #F59E0B'
+                        }}
+                    >
+                        {stockWarning}
+                    </div>
+                )}
+
                 {/* Camera Scanner Modal */}
                 <BarcodeScanner
                     isOpen={scannerOpen}
@@ -268,17 +292,47 @@ export function POSInterface() {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 overflow-y-auto pr-2 pb-2">
                     {filteredProducts.map((product, index) => {
                         const colorSet = colors[index % 6];
+                        const stock = product.inventory?.[0]?.quantity || 0;
+                        const inCart = items.find(i => i.productId === product.id)?.quantity || 0;
+                        const available = stock - inCart;
+                        const isOutOfStock = available <= 0;
+
                         return (
                             <div
                                 key={product.id}
-                                className="cursor-pointer rounded-2xl transition-all hover:scale-[1.02]"
+                                className={`cursor-pointer rounded-2xl transition-all ${isOutOfStock ? 'opacity-50' : 'hover:scale-[1.02]'}`}
                                 style={{
                                     backgroundColor: colorSet.bg,
                                     padding: '20px',
-                                    boxShadow: '0 10px 40px rgba(0,0,0,0.1)'
+                                    boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+                                    position: 'relative'
                                 }}
-                                onClick={() => addItem(product)}
+                                onClick={() => {
+                                    if (isOutOfStock) {
+                                        setStockWarning(`⚠️ ${product.name} - Sin stock disponible`);
+                                        setTimeout(() => setStockWarning(null), 2500);
+                                        return;
+                                    }
+                                    addItem(product);
+                                }}
                             >
+                                {/* Stock Badge */}
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        top: '12px',
+                                        right: '12px',
+                                        padding: '4px 10px',
+                                        borderRadius: '20px',
+                                        fontSize: '12px',
+                                        fontWeight: 700,
+                                        backgroundColor: isOutOfStock ? '#FEE2E2' : available <= 5 ? '#FEF3C7' : '#D1FAE5',
+                                        color: isOutOfStock ? '#DC2626' : available <= 5 ? '#D97706' : '#059669'
+                                    }}
+                                >
+                                    {isOutOfStock ? 'Agotado' : `${available} disp.`}
+                                </div>
+
                                 <div
                                     style={{
                                         width: '48px',
@@ -361,42 +415,55 @@ export function POSInterface() {
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {items.map((item, idx) => (
-                                <div
-                                    key={item.productId}
-                                    className="flex items-center gap-3 p-3 rounded-xl transition-colors"
-                                    style={{ backgroundColor: idx % 2 === 0 ? '#F8FAFC' : '#FFFFFF' }}
-                                >
-                                    <div className="flex-1 overflow-hidden">
-                                        <p className="font-semibold text-slate-800 truncate">{item.name}</p>
-                                        <p className="text-sm text-slate-500">${item.price.toFixed(2)} c/u</p>
+                            {items.map((item, idx) => {
+                                const product = products.find(p => p.id === item.productId);
+                                const stock = product?.inventory?.[0]?.quantity || 0;
+                                const canIncrease = item.quantity < stock;
+
+                                return (
+                                    <div
+                                        key={item.productId}
+                                        className="flex items-center gap-3 p-3 rounded-xl transition-colors"
+                                        style={{ backgroundColor: idx % 2 === 0 ? '#F8FAFC' : '#FFFFFF' }}
+                                    >
+                                        <div className="flex-1 overflow-hidden">
+                                            <p className="font-semibold text-slate-800 truncate">{item.name}</p>
+                                            <p className="text-sm text-slate-500">${item.price.toFixed(2)} c/u</p>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                                                className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center"
+                                            >
+                                                <Minus className="h-3 w-3" />
+                                            </button>
+                                            <span className="w-8 text-center font-bold text-slate-700">{item.quantity}</span>
+                                            <button
+                                                onClick={() => {
+                                                    if (!canIncrease) {
+                                                        setStockWarning(`⚠️ Stock máximo alcanzado para ${item.name}`);
+                                                        setTimeout(() => setStockWarning(null), 2500);
+                                                        return;
+                                                    }
+                                                    updateQuantity(item.productId, item.quantity + 1);
+                                                }}
+                                                className={`w-7 h-7 rounded-lg flex items-center justify-center ${canIncrease ? 'bg-slate-100 hover:bg-slate-200' : 'bg-red-50 cursor-not-allowed'}`}
+                                            >
+                                                <Plus className={`h-3 w-3 ${canIncrease ? '' : 'text-red-400'}`} />
+                                            </button>
+                                        </div>
+                                        <div className="text-right min-w-[70px]">
+                                            <p className="font-bold text-emerald-600">${(item.price * item.quantity).toFixed(2)}</p>
+                                            <button
+                                                onClick={() => removeItem(item.productId)}
+                                                className="text-red-400 hover:text-red-600"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                                            className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center"
-                                        >
-                                            <Minus className="h-3 w-3" />
-                                        </button>
-                                        <span className="w-8 text-center font-bold text-slate-700">{item.quantity}</span>
-                                        <button
-                                            onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                                            className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center"
-                                        >
-                                            <Plus className="h-3 w-3" />
-                                        </button>
-                                    </div>
-                                    <div className="text-right min-w-[70px]">
-                                        <p className="font-bold text-emerald-600">${(item.price * item.quantity).toFixed(2)}</p>
-                                        <button
-                                            onClick={() => removeItem(item.productId)}
-                                            className="text-red-400 hover:text-red-600"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>

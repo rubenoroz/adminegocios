@@ -13,6 +13,9 @@ export async function GET(req: Request) {
         const branches = await prisma.branch.findMany({
             where: {
                 businessId: session.user.businessId
+            },
+            include: {
+                business: true
             }
         });
 

@@ -37,9 +37,10 @@ export async function GET(req: Request) {
                     ]
                 } : {})
             },
-            orderBy: {
-                lastName: 'asc'
-            },
+            orderBy: [
+                { lastName: 'asc' },
+                { firstName: 'asc' }
+            ],
             include: {
                 branch: true
             }

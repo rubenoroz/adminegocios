@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
-        const { name, price, sku, category } = body;
+        const { name, price, sku, category, quantity, supplierId } = body;
 
         const user = await prisma.user.findUnique({
             where: { email: session.user.email }
@@ -67,10 +67,11 @@ export async function POST(req: Request) {
                 sku,
                 category,
                 businessId: user.businessId,
+                ...(supplierId && { supplierId }),
                 inventory: {
                     create: {
                         branchId: user.branchId || (await prisma.branch.findFirst({ where: { businessId: user.businessId } }))?.id || "",
-                        quantity: 0
+                        quantity: parseInt(quantity) || 0
                     }
                 }
             }

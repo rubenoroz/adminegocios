@@ -661,7 +661,7 @@ export function EmployeeList() {
                                             boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
                                         }}
                                     >
-                                        {employee.firstName[0]}{employee.lastName[0]}
+                                        {employee.lastName[0]}{employee.firstName[0]}
                                     </div>
 
                                     {/* NOMBRE */}
@@ -671,7 +671,7 @@ export function EmployeeList() {
                                         color: '#1E293B',
                                         marginBottom: '8px'
                                     }}>
-                                        {employee.firstName} {employee.lastName}
+                                        {employee.lastName} {employee.firstName}
                                     </h3>
 
                                     {/* ROL */}
