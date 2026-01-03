@@ -255,7 +255,7 @@ export default function PlansManagementPage() {
                                         <CreditCard size={32} />
                                     </div>
                                     <div style={{ fontSize: '36px', fontWeight: 'bold', color: color.accent }}>
-                                        ${plan.price}
+                                        ${plan.price} <span style={{ fontSize: '20px' }}>MXN</span>
                                         <span style={{ fontSize: '16px', color: '#64748B', fontWeight: 'normal' }}>
                                             /{plan.interval === 'monthly' ? 'mo' : 'yr'}
                                         </span>
@@ -401,7 +401,7 @@ export default function PlansManagementPage() {
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                                     <div>
                                         <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#64748B', marginBottom: '8px' }}>
-                                            Precio ($)
+                                            Precio (MXN)
                                         </label>
                                         <input
                                             type="number"
