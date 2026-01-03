@@ -199,7 +199,8 @@ export default function BusinessesManagementPage() {
                                                 fontWeight: 500,
                                                 border: 'none',
                                                 cursor: 'pointer',
-                                                transition: 'all 0.15s ease'
+                                                transition: 'all 0.15s ease',
+                                                marginRight: '8px'
                                             }}
                                             onMouseEnter={(e) => {
                                                 e.currentTarget.style.backgroundColor = '#1D4ED8';
@@ -212,6 +213,59 @@ export default function BusinessesManagementPage() {
                                         >
                                             <Edit size={16} />
                                             Cambiar Plan
+                                        </button>
+
+                                        <button
+                                            onClick={async () => {
+                                                if (!confirm("¿Estás seguro de que quieres eliminar este negocio y TODOS sus datos (usuarios, productos, etc.)? Esta acción no se puede deshacer.")) return;
+
+                                                const reason = prompt("Escribe 'ELIMINAR' para confirmar:");
+                                                if (reason !== "ELIMINAR") return;
+
+                                                try {
+                                                    setLoading(true);
+                                                    const res = await fetch(`/api/admin/businesses/${business.id}`, {
+                                                        method: "DELETE"
+                                                    });
+
+                                                    if (res.ok) {
+                                                        alert("Negocio eliminado correctamente");
+                                                        fetchData(); // Reload list
+                                                    } else {
+                                                        alert("Error al eliminar el negocio");
+                                                    }
+                                                } catch (error) {
+                                                    console.error(error);
+                                                    alert("Error de conexión");
+                                                } finally {
+                                                    setLoading(false);
+                                                }
+                                            }}
+                                            style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                padding: '8px 16px',
+                                                borderRadius: '8px',
+                                                backgroundColor: '#EF4444',
+                                                color: 'white',
+                                                fontSize: '14px',
+                                                fontWeight: 500,
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.15s ease'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.backgroundColor = '#DC2626';
+                                                e.currentTarget.style.transform = 'translateY(-1px)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.backgroundColor = '#EF4444';
+                                                e.currentTarget.style.transform = 'translateY(0)';
+                                            }}
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
+                                            Eliminar
                                         </button>
                                     </td>
                                 </tr>

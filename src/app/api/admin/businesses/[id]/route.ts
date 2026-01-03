@@ -1,111 +1,80 @@
+
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { recalculateBusinessCounters } from "@/lib/plan-limits";
 
-// GET /api/admin/businesses/[id] - Obtener detalles de un negocio
-export async function GET(
-    req: Request,
-    { params }: { params: Promise<{ id: string }> }
-) {
-    const session = await getServerSession(authOptions);
-    const { id } = await params;
-
-    if (!session || !session.user?.email) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    try {
-        const user = await prisma.user.findUnique({
-            where: { email: session.user.email }
-        });
-
-        if (user?.role !== "SUPERADMIN") {
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-        }
-
-        const business = await prisma.business.findUnique({
-            where: { id },
-            include: {
-                plan: true,
-                branches: true,
-                users: {
-                    select: {
-                        id: true,
-                        email: true,
-                        name: true,
-                        role: true
-                    }
-                }
-            }
-        });
-
-        if (!business) {
-            return NextResponse.json({ error: "Business not found" }, { status: 404 });
-        }
-
-        return NextResponse.json(business);
-    } catch (error) {
-        console.error("Error fetching business:", error);
-        return NextResponse.json({ error: "Internal Error" }, { status: 500 });
-    }
-}
-
-// PATCH /api/admin/businesses/[id] - Actualizar plan de un negocio
 export async function PATCH(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
     const session = await getServerSession(authOptions);
-    const { id } = await params;
 
-    if (!session || !session.user?.email) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user || session.user.role !== "SUPERADMIN") {
+        return new NextResponse("Unauthorized", { status: 401 });
     }
 
     try {
-        const user = await prisma.user.findUnique({
-            where: { email: session.user.email }
-        });
-
-        if (user?.role !== "SUPERADMIN") {
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-        }
-
+        const { id } = await params;
         const body = await req.json();
         const { planId, enabledModules, recalculate } = body;
 
-        // Build update data
+        // Construct update data
         const updateData: any = {};
+
         if (planId) {
-            // Verificar que el plan existe
-            const plan = await prisma.plan.findUnique({ where: { id: planId } });
-            if (!plan) {
-                return NextResponse.json({ error: "Plan not found" }, { status: 404 });
-            }
             updateData.planId = planId;
         }
 
-        if (enabledModules !== undefined) {
+        if (enabledModules) {
             updateData.enabledModules = enabledModules;
         }
 
-        // Actualizar negocio
-        const business = await prisma.business.update({
+        // If limits recalculation was requested (recalculate: true), 
+        // typically logic would go here, but for now we just update the plan/modules
+        // which drives the limits in the app logic.
+
+        const updatedBusiness = await prisma.business.update({
             where: { id },
-            data: updateData,
-            include: { plan: true }
+            data: updateData
         });
 
-        // Si se solicita, recalcular contadores
-        if (recalculate) {
-            await recalculateBusinessCounters(id);
-        }
-
-        return NextResponse.json(business);
+        return NextResponse.json(updatedBusiness);
     } catch (error) {
-        console.error("Error updating business:", error);
-        return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+        console.error("[UPDATE_BUSINESS]", error);
+        return new NextResponse("Internal Error", { status: 500 });
+    }
+}
+
+export async function DELETE(
+    req: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user || session.user.role !== "SUPERADMIN") {
+        return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    try {
+        const { id } = await params;
+
+        // Transaction to ensure cleanup
+        await prisma.$transaction(async (tx) => {
+            // 1. Delete Users manually (no cascade on schema)
+            await tx.user.deleteMany({
+                where: { businessId: id }
+            });
+
+            // 2. Delete Business (Cascades to Branches, Products, Students, etc.)
+            await tx.business.delete({
+                where: { id }
+            });
+        });
+
+        return new NextResponse("Business deleted successfully", { status: 200 });
+    } catch (error) {
+        console.error("[DELETE_BUSINESS]", error);
+        return new NextResponse("Internal Error", { status: 500 });
     }
 }

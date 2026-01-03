@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 export function RegisterForm() {
@@ -16,6 +16,9 @@ export function RegisterForm() {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+
+    const searchParams = useSearchParams();
+    const planId = searchParams.get("plan");
 
     const registerUser = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -40,10 +43,44 @@ export function RegisterForm() {
             });
 
             if (response.ok) {
+                const userData = await response.json();
+
+                // If a plan was selected, redirect to Stripe
+                if (planId) {
+                    try {
+                        const checkoutRes = await fetch("/api/create-checkout-session", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                planId,
+                                email: data.email,
+                                userId: userData.id
+                            })
+                        });
+
+                        if (checkoutRes.ok) {
+                            const { url } = await checkoutRes.json();
+                            if (url) {
+                                window.location.href = url;
+                                return; // Stop execution to allow redirect
+                            }
+                        } else {
+                            const err = await checkoutRes.text();
+                            console.error("Checkout Error:", err);
+                            setError(`Error iniciando pago: ${err}`);
+                            return; // Stop here so user sees the error
+                        }
+                    } catch (stripeError) {
+                        console.error("Stripe Error:", stripeError);
+                        setError("Error iniciando pasarela de pago.");
+                        return;
+                    }
+                }
+
                 router.push("/login");
             } else {
                 const errorData = await response.json();
-                setError(errorData.message || "Error creating account");
+                setError(errorData.error || errorData.message || "Error creating account");
             }
         } catch (error) {
             console.error(error);
@@ -113,6 +150,21 @@ export function RegisterForm() {
                 }}>
                     Empieza a administrar tu negocio hoy.
                 </p>
+
+                {planId && (
+                    <div style={{
+                        padding: '12px',
+                        backgroundColor: '#eff6ff',
+                        border: '1px solid #bfdbfe',
+                        borderRadius: '8px',
+                        marginBottom: '24px',
+                        color: '#1e40af',
+                        fontSize: '14px',
+                        fontWeight: 500
+                    }}>
+                        Has seleccionado un plan. Completa tu registro para proceder al pago seguro.
+                    </div>
+                )}
 
                 <form onSubmit={registerUser}>
                     <div style={{ marginBottom: '16px' }}>

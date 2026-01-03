@@ -30,6 +30,7 @@ export async function POST(req: Request) {
                 data: {
                     name: businessName,
                     type: businessType,
+                    planId: null, // Avoid default "free" if it doesn't exist
                 }
             });
 

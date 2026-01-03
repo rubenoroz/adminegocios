@@ -278,10 +278,7 @@ export function Sidebar({
         const typeMatch = enabledModules.length === 0 ||
             route.allowedTypes.some(allowedType => enabledModules.includes(allowedType));
 
-        // Bypass total para OWNER y ADMIN (ven todo lo de su tipo de negocio)
-        if (currentRole === "OWNER" || currentRole === "ADMIN") {
-            return typeMatch;
-        }
+
 
         // Filtro normal para otros roles
         const roleMatch = !currentRole || route.allowedRoles.includes(currentRole as any);

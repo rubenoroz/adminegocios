@@ -4,6 +4,7 @@ import { Features } from "@/components/landing/features";
 import { getDictionary } from "@/lib/dictionaries";
 import { Navbar } from "@/components/landing/navbar";
 import Link from "next/link";
+import { PricingSection } from "@/components/landing/pricing-section";
 
 export default async function Home({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
@@ -18,6 +19,7 @@ export default async function Home({ params }: { params: Promise<{ lang: string 
       <Navbar dict={dict.landing.nav} />
       <Hero dict={dict.landing.hero} />
       <Features dict={dict.landing.features} />
+      <PricingSection />
       <DiagnosisForm dict={dict.landing.diagnosis} />
 
       {/* Footer */}
