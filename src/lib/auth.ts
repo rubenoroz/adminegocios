@@ -83,7 +83,7 @@ export const authOptions: NextAuthOptions = {
                         select: { type: true, enabledModules: true }
                     });
                     token.businessType = business?.type;
-                    token.enabledModules = business?.enabledModules;
+                    token.enabledModules = business?.enabledModules ?? undefined;
                 }
             }
             // Subsequent calls - Re-fetch from DB to stay in sync
@@ -104,7 +104,7 @@ export const authOptions: NextAuthOptions = {
                             select: { type: true, enabledModules: true }
                         });
                         token.businessType = business?.type;
-                        token.enabledModules = business?.enabledModules;
+                        token.enabledModules = business?.enabledModules ?? undefined;
                     }
                 }
             }
