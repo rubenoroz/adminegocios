@@ -11,12 +11,14 @@ declare module "next-auth" {
             businessType?: string;
             enabledModules?: string; // JSON array string
             role?: string;
+            isSuperAdmin?: boolean;
         }
     }
 
     interface User {
         businessId?: string | null;
         role?: string;
+        isSuperAdmin?: boolean;
     }
 }
 
@@ -26,5 +28,6 @@ declare module "next-auth/jwt" {
         businessType?: string;
         enabledModules?: string;
         role?: string;
+        isSuperAdmin?: boolean;
     }
 }

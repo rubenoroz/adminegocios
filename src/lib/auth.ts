@@ -64,6 +64,7 @@ export const authOptions: NextAuthOptions = {
                 session.user.businessType = token.businessType as string;
                 session.user.enabledModules = token.enabledModules as string;
                 session.user.role = token.role as string;
+                session.user.isSuperAdmin = token.isSuperAdmin as boolean; // Pass to session
 
                 // Debug Session
                 // console.log("[AUTH-SESSION] Session callback for:", session.user.email, "Role:", session.user.role);
@@ -76,6 +77,7 @@ export const authOptions: NextAuthOptions = {
                 console.log("[AUTH-JWT] Initial signin token creation for:", user.email);
                 token.businessId = user.businessId;
                 token.role = user.role;
+                token.isSuperAdmin = user.role === "SUPERADMIN"; // Set flag
 
                 if (user.businessId) {
                     const business = await prisma.business.findUnique({
@@ -97,6 +99,7 @@ export const authOptions: NextAuthOptions = {
                 if (dbUser) {
                     token.role = dbUser.role;
                     token.businessId = dbUser.businessId;
+                    token.isSuperAdmin = dbUser.role === "SUPERADMIN"; // Update flag
 
                     if (dbUser.businessId) {
                         const business = await prisma.business.findUnique({
