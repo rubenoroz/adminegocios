@@ -61,7 +61,7 @@ export async function POST(req: Request) {
                                 matricula: item.matricula || null,
                                 status: "ACTIVE",
                                 businessId,
-                                branchId: branchId || null
+                                branches: branchId ? { connect: { id: branchId } } : undefined
                             }
                         });
                         success++;
@@ -119,7 +119,7 @@ export async function POST(req: Request) {
                             schedule: item.schedule || null,
                             room: item.room || null,
                             businessId,
-                            branchId: branchId || null
+                            branches: branchId ? { connect: { id: branchId } } : undefined
                         }
                     });
                     success++;
