@@ -341,7 +341,7 @@ export function Sidebar({
                     ) : (
                         <div className="relative flex items-center justify-center w-full h-12 px-2">
                             <Image
-                                src="/admin-logo.svg"
+                                src="/ADMNegocios.svg"
                                 alt="Admnegocios"
                                 width={180}
                                 height={48}
