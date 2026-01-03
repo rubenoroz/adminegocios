@@ -48,7 +48,7 @@ export async function PATCH(
         }
 
         const body = await req.json();
-        const { name, price, interval, maxCourses, maxTeachers, maxStudents, maxBranches, maxInventoryItems, isActive } = body;
+        const { name, price, interval, maxCourses, maxTeachers, maxStudents, maxBranches, maxInventoryItems, isActive, description, features } = body;
 
         const updatedPlan = await prisma.plan.update({
             where: { id },
@@ -61,7 +61,9 @@ export async function PATCH(
                 maxStudents,
                 maxBranches,
                 maxInventoryItems,
-                isActive
+                isActive,
+                description,
+                features
             }
         });
 

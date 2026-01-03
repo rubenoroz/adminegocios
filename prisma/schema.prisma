@@ -102,6 +102,9 @@ model Plan {
   price       Float    @default(0)
   interval    String   @default("monthly") // monthly, yearly
   
+  description String?  @default("")
+  features    String?  @default("") // JSON string or newline separated list
+  
   // Límites (null = ilimitado)
   maxCourses  Int?     @default(2)
   maxTeachers Int?     @default(2)

@@ -56,7 +56,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { name, price, interval, maxCourses, maxTeachers, maxStudents, maxBranches, maxInventoryItems } = body;
+        const { name, price, interval, maxCourses, maxTeachers, maxStudents, maxBranches, maxInventoryItems, description, features } = body;
 
         if (!name || price === undefined) {
             return NextResponse.json({ error: "Name and price are required" }, { status: 400 });
@@ -71,7 +71,9 @@ export async function POST(req: Request) {
                 maxTeachers: maxTeachers ? parseInt(maxTeachers) : null,
                 maxStudents: maxStudents ? parseInt(maxStudents) : null,
                 maxBranches: maxBranches ? parseInt(maxBranches) : null,
-                maxInventoryItems: maxInventoryItems ? parseInt(maxInventoryItems) : null
+                maxInventoryItems: maxInventoryItems ? parseInt(maxInventoryItems) : null,
+                description: description || "",
+                features: features || ""
             }
         });
 
