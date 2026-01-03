@@ -339,12 +339,12 @@ export function Sidebar({
                             />
                         </div>
                     ) : (
-                        <div className="relative flex items-center justify-center w-full h-12 px-2">
+                        <div className="relative flex items-center justify-center w-full h-48 px-2 py-4">
                             <Image
                                 src="/ADMNegocios.svg"
                                 alt="Admnegocios"
-                                width={180}
-                                height={48}
+                                width={1080}
+                                height={288}
                                 className="object-contain"
                                 priority
                             />
