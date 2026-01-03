@@ -35,7 +35,7 @@ export function EmployeeList() {
         commissionPercentage: "",
         reservePercentage: "",
         paymentFrequency: "MONTHLY",
-        paymentFrequency: "MONTHLY",
+
         paymentDay: "",
         branchIds: [] as string[]
     });
