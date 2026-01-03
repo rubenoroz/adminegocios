@@ -339,7 +339,16 @@ export function Sidebar({
                             />
                         </div>
                     ) : (
-                        "Admnegocios"
+                        <div className="relative flex items-center justify-center w-full h-12 px-2">
+                            <Image
+                                src="/admin-logo.svg"
+                                alt="Admnegocios"
+                                width={180}
+                                height={48}
+                                className="object-contain"
+                                priority
+                            />
+                        </div>
                     )}
                 </Link>
             </div>
