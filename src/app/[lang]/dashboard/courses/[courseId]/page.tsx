@@ -126,7 +126,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ lang: s
             <div style={{ padding: '0 var(--spacing-lg)' }}>
                 {/* TABS NAVIGATION */}
                 <Tabs defaultValue="content" className="w-full">
-                    <div className="mb-8 flex justify-center sticky top-0 z-10 bg-slate-50 py-4 -mx-6 px-6" style={{ scrollMarginTop: '100px' }}>
+                    <div className="mb-8 flex justify-center overflow-x-auto bg-slate-100 py-4 -mx-6 px-6">
                         <TabsList className="course-tabs-container">
                             <TabsTrigger value="content" className="course-tab">
                                 <Layout size={16} strokeWidth={2.5} />

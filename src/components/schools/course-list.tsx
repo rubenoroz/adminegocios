@@ -11,6 +11,7 @@ import { ModernFilterBar } from "@/components/ui/modern-filter-bar";
 import { ModernInput } from "@/components/ui/modern-components";
 import { ModernKpiCard } from "@/components/ui/modern-kpi-card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PremiumSelect } from "@/components/ui/premium-select";
 import { CourseScheduleSelector } from "@/components/schools/course-schedule-selector";
 import { useBranch } from "@/context/branch-context";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -470,31 +471,32 @@ export function CourseList() {
                                     <div className="grid grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-sm font-medium mb-2">Profesor</label>
-                                            <Select value={newTeacherId} onValueChange={setNewTeacherId}>
-                                                <SelectTrigger className="w-full bg-white border-2 border-border h-12 rounded-xl">
-                                                    <SelectValue placeholder="Seleccionar profesor..." />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="none">Sin asignar</SelectItem>
-                                                    {teachers.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                                                </SelectContent>
-                                            </Select>
+                                            <PremiumSelect
+                                                value={newTeacherId}
+                                                onValueChange={setNewTeacherId}
+                                                placeholder="Seleccionar profesor..."
+                                                label="Seleccionar Profesor"
+                                                options={[
+                                                    { value: "none", label: "Sin asignar" },
+                                                    ...teachers.map((t) => ({ value: t.id, label: t.name }))
+                                                ]}
+                                            />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium mb-2">Salón</label>
-                                            <Select value={newClassroomId} onValueChange={setNewClassroomId}>
-                                                <SelectTrigger className="w-full bg-white border-2 border-border h-12 rounded-xl">
-                                                    <SelectValue placeholder="Seleccionar salón..." />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="none">Sin asignar</SelectItem>
-                                                    {classrooms.map((c) => (
-                                                        <SelectItem key={c.id} value={c.id}>
-                                                            {c.name} {c.branch ? `(${c.branch.name})` : ''}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                            <PremiumSelect
+                                                value={newClassroomId}
+                                                onValueChange={setNewClassroomId}
+                                                placeholder="Seleccionar salón..."
+                                                label="Seleccionar Salón"
+                                                options={[
+                                                    { value: "none", label: "Sin asignar" },
+                                                    ...classrooms.map((c) => ({
+                                                        value: c.id,
+                                                        label: c.name + (c.branch ? ` (${c.branch.name})` : '')
+                                                    }))
+                                                ]}
+                                            />
                                         </div>
                                     </div>
                                     <CourseScheduleSelector
@@ -919,48 +921,40 @@ export function CourseList() {
                         {/* Teacher Selector */}
                         <div className="space-y-2">
                             <label className="block text-sm font-medium">Maestro</label>
-                            <Select
+                            <PremiumSelect
                                 value={editingCourse?.teacher?.id || ""}
                                 onValueChange={(val) => setEditingCourse({
                                     ...editingCourse,
                                     teacher: teachers.find(t => t.id === val) || null
                                 })}
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Seleccionar maestro" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {teachers.map(teacher => (
-                                        <SelectItem key={teacher.id} value={teacher.id}>
-                                            {teacher.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                placeholder="Seleccionar maestro"
+                                label="Seleccionar Maestro"
+                                options={teachers.map(teacher => ({
+                                    value: teacher.id,
+                                    label: teacher.name
+                                }))}
+                            />
                         </div>
 
                         {/* CLASSROOM SELECTOR (shows branch) */}
                         <div className="pt-4 border-t border-slate-100">
                             <label className="block text-sm font-medium mb-2">Salón (Sucursal)</label>
-                            <Select
+                            <PremiumSelect
                                 value={editingCourse?.classroom?.id || "none"}
                                 onValueChange={(val) => setEditingCourse({
                                     ...editingCourse,
                                     classroom: val === "none" ? null : classrooms.find(c => c.id === val) || null
                                 })}
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Seleccionar salón" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="none">Sin asignar</SelectItem>
-                                    {classrooms.map((c) => (
-                                        <SelectItem key={c.id} value={c.id}>
-                                            {c.name} {c.branch ? `(${c.branch.name})` : ''}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                placeholder="Seleccionar salón"
+                                label="Seleccionar Salón"
+                                options={[
+                                    { value: "none", label: "Sin asignar" },
+                                    ...classrooms.map((c) => ({
+                                        value: c.id,
+                                        label: c.name + (c.branch ? ` (${c.branch.name})` : '')
+                                    }))
+                                ]}
+                            />
                         </div>
                     </div>
                     <DialogFooter className="gap-2">

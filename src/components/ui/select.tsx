@@ -74,44 +74,37 @@ const SelectContent = React.forwardRef<
     React.ElementRef<typeof SelectPrimitive.Content>,
     React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
 >(({ className, children, position = "popper", ...props }, ref) => {
-    console.log('🎯 SelectContent rendering', { position, childrenCount: React.Children.count(children) });
-
     return (
         <SelectPrimitive.Portal>
             <SelectPrimitive.Content
                 ref={ref}
                 align="start"
-                sideOffset={4}
+                sideOffset={8}
                 className={cn(
-                    "relative z-[9999] max-h-96 min-w-[8rem] overflow-hidden rounded-md border-2 border-border bg-white !bg-opacity-100 backdrop-blur-none text-popover-foreground shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-                    position === "popper" &&
-                    "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
+                    "relative max-h-96 min-w-[14rem] overflow-hidden text-slate-700",
+                    "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+                    "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+                    position === "popper" && "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
                     className
                 )}
                 position={position}
                 style={{
                     zIndex: 99999,
                     backgroundColor: '#ffffff',
-                    opacity: 1,
-                    visibility: 'visible',
-                    pointerEvents: 'auto',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '12px',
-                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-                    padding: '8px'
+                    borderRadius: '20px',
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                    padding: '14px',
+                    border: 'none',
+                    minWidth: '220px'
                 }}
                 {...props}
             >
                 <SelectScrollUpButton />
                 <SelectPrimitive.Viewport
                     className={cn(
-                        "p-1",
-                        position === "popper" &&
-                        "w-full min-w-[var(--radix-select-trigger-width)]"
+                        "p-0",
+                        position === "popper" && "w-full min-w-[var(--radix-select-trigger-width)]"
                     )}
-                    style={{
-                        backgroundColor: '#ffffff'
-                    }}
                 >
                     {children}
                 </SelectPrimitive.Viewport>
@@ -128,7 +121,7 @@ const SelectLabel = React.forwardRef<
 >(({ className, ...props }, ref) => (
     <SelectPrimitive.Label
         ref={ref}
-        className={cn("py-1.5 pl-8 pr-2 text-sm font-semibold", className)}
+        className={cn("px-3 py-2 text-xs font-bold uppercase tracking-wider text-purple-400", className)}
         {...props}
     />
 ))
@@ -142,22 +135,36 @@ const SelectItem = React.forwardRef<
         <SelectPrimitive.Item
             ref={ref}
             className={cn(
-                "relative flex w-full cursor-pointer select-none items-center gap-3 rounded-lg py-3 px-4 text-sm font-medium outline-none transition-all duration-150",
-                "hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 focus:bg-gradient-to-r focus:from-blue-50 focus:to-indigo-50",
-                "data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-blue-100 data-[state=checked]:to-indigo-100 data-[state=checked]:text-blue-700 data-[state=checked]:font-semibold",
+                "relative flex w-full cursor-pointer select-none items-center justify-between gap-3 outline-none transition-all duration-150",
                 "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
                 className
             )}
+            style={{
+                padding: '12px 14px',
+                borderRadius: '14px',
+                marginBottom: '4px',
+                fontSize: '14px',
+                fontWeight: 500,
+            }}
+            onMouseEnter={(e) => {
+                if (e.currentTarget.getAttribute('data-state') !== 'checked') {
+                    e.currentTarget.style.background = '#f8fafc';
+                }
+            }}
+            onMouseLeave={(e) => {
+                if (e.currentTarget.getAttribute('data-state') !== 'checked') {
+                    e.currentTarget.style.background = 'transparent';
+                }
+            }}
+            data-radix-collection-item=""
             {...props}
         >
-            <span className="absolute left-3 flex h-5 w-5 items-center justify-center">
-                <SelectPrimitive.ItemIndicator>
-                    <Check className="h-4 w-4 text-blue-600" />
-                </SelectPrimitive.ItemIndicator>
-            </span>
-            <SelectPrimitive.ItemText className="pl-6">
+            <SelectPrimitive.ItemText style={{ flex: 1, color: 'inherit' }}>
                 {children}
             </SelectPrimitive.ItemText>
+            <SelectPrimitive.ItemIndicator>
+                <Check className="h-5 w-5 text-purple-500" />
+            </SelectPrimitive.ItemIndicator>
         </SelectPrimitive.Item>
     );
 })
@@ -169,7 +176,7 @@ const SelectSeparator = React.forwardRef<
 >(({ className, ...props }, ref) => (
     <SelectPrimitive.Separator
         ref={ref}
-        className={cn("-mx-1 my-1 h-px bg-muted", className)}
+        className={cn("my-2 h-px bg-slate-100", className)}
         {...props}
     />
 ))

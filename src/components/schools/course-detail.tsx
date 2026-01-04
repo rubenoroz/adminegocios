@@ -24,6 +24,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { PremiumSelect } from "@/components/ui/premium-select";
 import { Plus, UserPlus, Trash2, Download, FileSpreadsheet, FileText, MessageSquare, Clock, DoorOpen, BookOpen, Mail, User } from "lucide-react";
 import {
     Dialog,
@@ -305,7 +306,7 @@ export function CourseDetail({ courseId }: CourseDetailProps) {
                         </div>
                         <h3 className="text-slate-800 font-bold text-sm uppercase tracking-wider">Profesor</h3>
                     </div>
-                    <Select
+                    <PremiumSelect
                         value={course.teacherId || course.teacher?.id || "unassigned"}
                         onValueChange={async (value) => {
                             if (value === "unassigned") return;
@@ -321,19 +322,13 @@ export function CourseDetail({ courseId }: CourseDetailProps) {
                                 toast({ title: "Error al asignar profesor", variant: "destructive" });
                             }
                         }}
-                    >
-                        <SelectTrigger className="w-full bg-slate-50 border-slate-200 font-bold text-slate-700 h-12 rounded-xl">
-                            <SelectValue placeholder="Seleccionar profesor" />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl">
-                            <SelectItem value="unassigned" className="font-bold">Sin asignar</SelectItem>
-                            {teachers.map((t) => (
-                                <SelectItem key={t.id} value={t.id} className="font-bold">
-                                    {t.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                        placeholder="Seleccionar profesor"
+                        label="Seleccionar Profesor"
+                        options={[
+                            { value: "unassigned", label: "Sin asignar" },
+                            ...teachers.map((t) => ({ value: t.id, label: t.name }))
+                        ]}
+                    />
                 </div>
 
                 {/* Horario Card */}

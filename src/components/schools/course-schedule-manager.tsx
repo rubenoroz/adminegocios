@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PremiumSelect } from "@/components/ui/premium-select";
 import { X, UserPlus, Clock, FileSpreadsheet, Calendar } from "lucide-react";
 import { useBranch } from "@/context/branch-context";
 import { useToast } from "@/components/ui/use-toast";
@@ -382,21 +382,16 @@ export function CourseScheduleManager({ onUpdate }: CourseScheduleManagerProps) 
                         </div>
                         <div className="space-y-2">
                             <Label>Salón</Label>
-                            <Select
+                            <PremiumSelect
                                 value={newSchedule.room}
                                 onValueChange={(v) => setNewSchedule({ ...newSchedule, room: v })}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccionar..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {classrooms.map(classroom => (
-                                        <SelectItem key={classroom.id} value={classroom.name}>
-                                            {classroom.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                placeholder="Seleccionar..."
+                                label="Seleccionar Salón"
+                                options={classrooms.map(classroom => ({
+                                    value: classroom.name,
+                                    label: classroom.name
+                                }))}
+                            />
                         </div>
                         <div className="space-y-2">
                             <Label className="invisible">Acción</Label>

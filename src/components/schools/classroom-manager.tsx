@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PremiumSelect } from "@/components/ui/premium-select";
 import { useBranch } from "@/context/branch-context";
 
 interface Classroom {
@@ -185,19 +186,19 @@ export function ClassroomManager() {
                                     <Label className="flex items-center gap-2 text-sm font-bold text-gray-700">
                                         <Building2 className="h-5 w-5 text-green-600" /> Sucursal
                                     </Label>
-                                    <Select value={newBranchId || "none"} onValueChange={(val) => setNewBranchId(val === "none" ? "" : val)}>
-                                        <SelectTrigger className="w-full rounded-xl border-gray-200" style={{ height: '48px' }}>
-                                            <SelectValue placeholder="Seleccionar sucursal..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="none">Sin asignar</SelectItem>
-                                            {branches.map((branch) => (
-                                                <SelectItem key={branch.id} value={branch.id}>
-                                                    {branch.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <PremiumSelect
+                                        value={newBranchId || "none"}
+                                        onValueChange={(val) => setNewBranchId(val === "none" ? "" : val)}
+                                        placeholder="Seleccionar sucursal..."
+                                        label="Seleccionar Sucursal"
+                                        options={[
+                                            { value: "none", label: "Sin asignar" },
+                                            ...branches.map((branch) => ({
+                                                value: branch.id,
+                                                label: branch.name
+                                            }))
+                                        ]}
+                                    />
                                 </div>
                             </div>
                         </div>
