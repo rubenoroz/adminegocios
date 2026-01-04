@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Building2, Users, DollarSign, TrendingUp, Plus, Pencil, Trash2 } from "lucide-react";
+import { ChangePlanModal } from "@/components/admin/change-plan-modal";
 
 interface Business {
     id: string;
@@ -41,6 +42,10 @@ export default function AdminDashboardPage() {
     const [stats, setStats] = useState<Stats | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const [changePlanModalOpen, setChangePlanModalOpen] = useState(false);
+    const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+
     useEffect(() => {
         if (status === "loading") return;
 
@@ -73,6 +78,35 @@ export default function AdminDashboardPage() {
         }
     };
 
+    const handleChangePlan = (business: Business) => {
+        setSelectedBusiness(business);
+        setChangePlanModalOpen(true);
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm("¿Estás seguro de eliminar este negocio? Esta acción no se puede deshacer y borrará todos los datos asociados.")) {
+            return;
+        }
+
+        setDeletingId(id);
+        try {
+            const res = await fetch(`/api/admin/businesses/${id}`, {
+                method: "DELETE",
+            });
+
+            if (res.ok) {
+                fetchData(); // Refresh list
+            } else {
+                alert("Error al eliminar el negocio");
+            }
+        } catch (error) {
+            console.error("Error deleting business:", error);
+            alert("Error al eliminar el negocio");
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
     if (status === "loading" || loading) {
         return (
             <div className="bg-slate-100 min-h-screen flex items-center justify-center">
@@ -83,6 +117,20 @@ export default function AdminDashboardPage() {
 
     return (
         <div className="bg-slate-100 min-h-screen pb-16">
+            {/* Modal de Cambio de Plan */}
+            {changePlanModalOpen && selectedBusiness && (
+                <ChangePlanModal
+                    isOpen={changePlanModalOpen}
+                    onClose={() => setChangePlanModalOpen(false)}
+                    businessId={selectedBusiness.id}
+                    currentPlanId={selectedBusiness.plan?.id}
+                    onComplete={() => {
+                        fetchData();
+                        setChangePlanModalOpen(false);
+                    }}
+                />
+            )}
+
             {/* HEADER - Responsive */}
             <div style={{ padding: 'var(--spacing-lg)', marginBottom: '48px' }}>
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -198,18 +246,19 @@ export default function AdminDashboardPage() {
                                                 Ver detalles
                                             </button>
                                             <button
-                                                onClick={() => {/* TODO: Open change plan modal */ }}
+                                                onClick={() => handleChangePlan(business)}
                                                 className="button-modern-sm gradient-green flex items-center gap-1"
                                             >
                                                 <Pencil size={14} />
                                                 Cambiar Plan
                                             </button>
                                             <button
-                                                onClick={() => {/* TODO: Open delete confirmation */ }}
-                                                className="button-modern-sm gradient-red flex items-center gap-1"
+                                                onClick={() => handleDelete(business.id)}
+                                                disabled={deletingId === business.id}
+                                                className="button-modern-sm gradient-red flex items-center gap-1 disabled:opacity-50"
                                             >
                                                 <Trash2 size={14} />
-                                                Eliminar
+                                                {deletingId === business.id ? "..." : "Eliminar"}
                                             </button>
                                         </div>
                                     </div>
@@ -266,12 +315,28 @@ export default function AdminDashboardPage() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="flex justify-center">
+                                                <div className="flex justify-center gap-2">
                                                     <button
                                                         onClick={() => router.push(`/dashboard/admin/businesses/${business.id}`)}
                                                         className="button-modern-sm button-modern-sm-blue"
+                                                        title="Ver detalles"
                                                     >
-                                                        Ver detalles
+                                                        Ver
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleChangePlan(business)}
+                                                        className="button-modern-sm gradient-green px-2"
+                                                        title="Cambiar plan"
+                                                    >
+                                                        <Pencil size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(business.id)}
+                                                        disabled={deletingId === business.id}
+                                                        className="button-modern-sm gradient-red px-2 disabled:opacity-50"
+                                                        title="Eliminar"
+                                                    >
+                                                        <Trash2 size={14} />
                                                     </button>
                                                 </div>
                                             </td>

@@ -72,6 +72,7 @@ export async function PATCH(
     try {
         const { id } = await params;
         const body = await req.json();
+        console.log(`[PATCH_BUSINESS] Updating business ${id} with body:`, body);
         const { planId, enabledModules, recalculate } = body;
 
         // Construct update data
@@ -89,10 +90,14 @@ export async function PATCH(
         // typically logic would go here, but for now we just update the plan/modules
         // which drives the limits in the app logic.
 
+        console.log("[PATCH_BUSINESS] Update data constructed:", updateData);
+
         const updatedBusiness = await prisma.business.update({
             where: { id },
             data: updateData
         });
+
+        console.log("[PATCH_BUSINESS] Success:", updatedBusiness.id);
 
         return NextResponse.json(updatedBusiness);
     } catch (error) {

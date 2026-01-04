@@ -340,7 +340,7 @@ export function UserManagement() {
                                             <SelectValue placeholder="Todas las sucursales" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="">Todas las sucursales</SelectItem>
+                                            <SelectItem value="ALL">Todas las sucursales</SelectItem>
                                             {branches.map((branch) => (
                                                 <SelectItem key={branch.id} value={branch.id}>
                                                     {branch.name}

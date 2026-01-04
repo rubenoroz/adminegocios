@@ -49,7 +49,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ lang:
     });
 
     const t = dict.settings;
-    const isOwnerOrAdmin = session.user.role === "OWNER" || session.user.role === "ADMIN";
+    const isOwnerOrAdmin = session.user.role === "OWNER" || session.user.role === "ADMIN" || session.user.role === "SUPERADMIN";
 
     return (
         <div className="bg-slate-100 pb-16 min-h-screen">

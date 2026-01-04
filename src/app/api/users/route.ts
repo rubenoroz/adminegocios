@@ -11,8 +11,8 @@ export async function POST(req: Request) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        // Only OWNER and ADMIN can create users
-        if (session.user.role !== "OWNER" && session.user.role !== "ADMIN") {
+        // Only OWNER, ADMIN and SUPERADMIN can create users
+        if (session.user.role !== "OWNER" && session.user.role !== "ADMIN" && session.user.role !== "SUPERADMIN") {
             return new NextResponse("Forbidden", { status: 403 });
         }
 
@@ -77,7 +77,7 @@ export async function GET(req: Request) {
         // But only OWNER and ADMIN can view all users or other roles
         const isRequestingTeachers = roles.length === 1 && roles[0] === "TEACHER";
 
-        if (!isRequestingTeachers && session.user.role !== "OWNER" && session.user.role !== "ADMIN") {
+        if (!isRequestingTeachers && session.user.role !== "OWNER" && session.user.role !== "ADMIN" && session.user.role !== "SUPERADMIN") {
             return new NextResponse("Forbidden", { status: 403 });
         }
 
