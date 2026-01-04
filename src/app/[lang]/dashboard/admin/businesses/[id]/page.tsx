@@ -249,7 +249,7 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                                                 <span style={{ fontSize: '20px', fontWeight: 700, color: '#0F172A' }}>{feat.current}</span>
                                                 <span style={{ fontSize: '14px', color: '#94A3B8' }}>/ {feat.max === null ? '∞' : feat.max}</span>
                                             </div>
-                                            {feat.max !== null && (
+                                            {typeof feat.max === 'number' && (
                                                 <div style={{ marginTop: '12px', height: '6px', width: '100%', backgroundColor: '#E2E8F0', borderRadius: '999px', overflow: 'hidden' }}>
                                                     <div
                                                         style={{
