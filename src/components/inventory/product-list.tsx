@@ -267,225 +267,228 @@ export function ProductList() {
 
             {/* FILTROS Y BOTONES DE ACCIÓN */}
             <div style={{ padding: '0 var(--spacing-lg)', marginBottom: '24px', marginTop: '32px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-                    {/* BARRA DE BÚSQUEDA */}
-                    <div style={{ flex: 1, minWidth: '300px' }}>
-                        <ModernFilterBar
-                            searchValue={searchValue}
-                            onSearchChange={setSearchValue}
-                            placeholder="Buscar productos..."
-                            filters={[
-                                { label: "En Stock", value: "IN_STOCK", color: "green" },
-                                { label: "Stock Bajo", value: "LOW_STOCK", color: "orange" },
-                                { label: "Sin Stock", value: "OUT_OF_STOCK", color: "red" }
-                            ]}
-                            activeFilters={filterCategory}
-                            onFilterToggle={(value) => {
-                                setFilterCategory(prev =>
-                                    prev.includes(value)
-                                        ? prev.filter(v => v !== value)
-                                        : [...prev, value]
-                                );
-                            }}
-                        />
-                    </div>
+                {/* BARRA DE BÚSQUEDA - Full width on mobile */}
+                <div style={{ marginBottom: '16px' }}>
+                    <ModernFilterBar
+                        searchValue={searchValue}
+                        onSearchChange={setSearchValue}
+                        placeholder="Buscar productos..."
+                        filters={[
+                            { label: "En Stock", value: "IN_STOCK", color: "green" },
+                            { label: "Stock Bajo", value: "LOW_STOCK", color: "orange" },
+                            { label: "Sin Stock", value: "OUT_OF_STOCK", color: "red" }
+                        ]}
+                        activeFilters={filterCategory}
+                        onFilterToggle={(value) => {
+                            setFilterCategory(prev =>
+                                prev.includes(value)
+                                    ? prev.filter(v => v !== value)
+                                    : [...prev, value]
+                            );
+                        }}
+                    />
+                </div>
 
-                    {/* BOTONES DE ACCIÓN */}
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        <button
-                            onClick={() => setIsScannerOpen(true)}
-                            style={{
+                {/* BOTONES DE ACCIÓN - Flex aligned right on desktop, stacked on mobile via CSS */}
+                <div className="inventory-action-buttons" style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: '12px',
+                    flexWrap: 'wrap'
+                }}>
+                    <button
+                        onClick={() => setIsScannerOpen(true)}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '12px 20px',
+                            borderRadius: '12px',
+                            border: '1px solid #e2e8f0',
+                            backgroundColor: 'white',
+                            color: '#475569',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
+                        }}
+                    >
+                        <Scan size={18} />
+                        Escanear
+                    </button>
+
+                    <button
+                        onClick={toggleSelectionMode}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '12px 20px',
+                            borderRadius: '12px',
+                            border: isSelectionMode ? 'none' : '1px solid #e2e8f0',
+                            backgroundColor: isSelectionMode ? '#1e293b' : 'white',
+                            color: isSelectionMode ? 'white' : '#475569',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
+                        }}
+                    >
+                        {isSelectionMode ? <X size={18} /> : <Trash2 size={18} />}
+                        {isSelectionMode ? 'Cancelar' : 'Gestionar'}
+                    </button>
+
+                    <Dialog open={open} onOpenChange={(isOpen) => {
+                        setOpen(isOpen);
+                        if (isOpen) {
+                            fetch('/api/suppliers').then(res => res.json()).then(data => {
+                                if (Array.isArray(data)) setSuppliers(data);
+                            }).catch(console.error);
+                        }
+                    }}>
+                        <DialogTrigger asChild>
+                            <button style={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '8px',
                                 padding: '12px 20px',
                                 borderRadius: '12px',
-                                border: '1px solid #e2e8f0',
-                                backgroundColor: 'white',
-                                color: '#475569',
+                                border: 'none',
+                                backgroundColor: '#EA580C',
+                                color: 'white',
                                 fontSize: '14px',
                                 fontWeight: 600,
                                 cursor: 'pointer',
-                                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
-                            }}
-                        >
-                            <Scan size={18} />
-                            Escanear
-                        </button>
-
-                        <button
-                            onClick={toggleSelectionMode}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                padding: '12px 20px',
-                                borderRadius: '12px',
-                                border: isSelectionMode ? 'none' : '1px solid #e2e8f0',
-                                backgroundColor: isSelectionMode ? '#1e293b' : 'white',
-                                color: isSelectionMode ? 'white' : '#475569',
-                                fontSize: '14px',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
-                            }}
-                        >
-                            {isSelectionMode ? <X size={18} /> : <Trash2 size={18} />}
-                            {isSelectionMode ? 'Cancelar' : 'Gestionar'}
-                        </button>
-
-                        <Dialog open={open} onOpenChange={(isOpen) => {
-                            setOpen(isOpen);
-                            if (isOpen) {
-                                fetch('/api/suppliers').then(res => res.json()).then(data => {
-                                    if (Array.isArray(data)) setSuppliers(data);
-                                }).catch(console.error);
-                            }
-                        }}>
-                            <DialogTrigger asChild>
-                                <button style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    padding: '12px 20px',
-                                    borderRadius: '12px',
-                                    border: 'none',
-                                    backgroundColor: '#EA580C',
-                                    color: 'white',
-                                    fontSize: '14px',
-                                    fontWeight: 600,
-                                    cursor: 'pointer',
-                                    boxShadow: '0 4px 12px rgba(234, 88, 12, 0.3)'
-                                }}>
-                                    <Plus size={18} />
-                                    Nuevo Producto
-                                </button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
-                                <DialogHeader>
-                                    <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent">
-                                        Agregar Nuevo Producto
-                                    </DialogTitle>
-                                    <DialogDescription className="sr-only">
-                                        Formulario para agregar un nuevo producto
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="grid gap-6 py-4">
+                                boxShadow: '0 4px 12px rgba(234, 88, 12, 0.3)'
+                            }}>
+                                <Plus size={18} />
+                                Nuevo Producto
+                            </button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                                <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent">
+                                    Agregar Nuevo Producto
+                                </DialogTitle>
+                                <DialogDescription className="sr-only">
+                                    Formulario para agregar un nuevo producto
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-6 py-4">
+                                <ModernInput
+                                    label="Nombre del Producto"
+                                    value={newProduct.name}
+                                    onChange={(val) => setNewProduct({ ...newProduct, name: val })}
+                                    placeholder="Ej: Laptop Dell XPS 15"
+                                />
+                                <div className="grid grid-cols-3 gap-4">
                                     <ModernInput
-                                        label="Nombre del Producto"
-                                        value={newProduct.name}
-                                        onChange={(val) => setNewProduct({ ...newProduct, name: val })}
-                                        placeholder="Ej: Laptop Dell XPS 15"
+                                        label="Precio"
+                                        type="number"
+                                        value={newProduct.price}
+                                        onChange={(val) => setNewProduct({ ...newProduct, price: val })}
+                                        placeholder="0.00"
                                     />
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <ModernInput
-                                            label="Precio"
-                                            type="number"
-                                            value={newProduct.price}
-                                            onChange={(val) => setNewProduct({ ...newProduct, price: val })}
-                                            placeholder="0.00"
-                                        />
-                                        <ModernInput
-                                            label="Cantidad"
-                                            type="number"
-                                            value={newProduct.quantity}
-                                            onChange={(val) => setNewProduct({ ...newProduct, quantity: val })}
-                                            placeholder="0"
-                                        />
-                                        <ModernInput
-                                            label="SKU / Código"
-                                            value={newProduct.sku}
-                                            onChange={(val) => setNewProduct({ ...newProduct, sku: val })}
-                                            placeholder="SKU-001"
+                                    <ModernInput
+                                        label="Cantidad"
+                                        type="number"
+                                        value={newProduct.quantity}
+                                        onChange={(val) => setNewProduct({ ...newProduct, quantity: val })}
+                                        placeholder="0"
+                                    />
+                                    <ModernInput
+                                        label="SKU / Código"
+                                        value={newProduct.sku}
+                                        onChange={(val) => setNewProduct({ ...newProduct, sku: val })}
+                                        placeholder="SKU-001"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label style={{
+                                            display: 'block',
+                                            fontSize: '12px',
+                                            fontWeight: 600,
+                                            marginBottom: '8px',
+                                            color: '#64748B',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em'
+                                        }}>
+                                            Categoría
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={newProduct.category}
+                                            onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                                            placeholder="Ej: Electrónicos"
+                                            style={{
+                                                width: '100%',
+                                                padding: '14px 16px',
+                                                borderRadius: '12px',
+                                                border: '2px solid #E2E8F0',
+                                                backgroundColor: '#F8FAFC',
+                                                fontSize: '15px',
+                                                outline: 'none',
+                                                transition: 'all 0.2s'
+                                            }}
                                         />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label style={{
-                                                display: 'block',
-                                                fontSize: '12px',
-                                                fontWeight: 600,
-                                                marginBottom: '8px',
-                                                color: '#64748B',
-                                                textTransform: 'uppercase',
-                                                letterSpacing: '0.05em'
-                                            }}>
-                                                Categoría
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={newProduct.category}
-                                                onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
-                                                placeholder="Ej: Electrónicos"
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '14px 16px',
-                                                    borderRadius: '12px',
-                                                    border: '2px solid #E2E8F0',
-                                                    backgroundColor: '#F8FAFC',
-                                                    fontSize: '15px',
-                                                    outline: 'none',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label style={{
-                                                display: 'block',
-                                                fontSize: '12px',
-                                                fontWeight: 600,
-                                                marginBottom: '8px',
-                                                color: '#64748B',
-                                                textTransform: 'uppercase',
-                                                letterSpacing: '0.05em'
-                                            }}>
-                                                Proveedor
-                                            </label>
-                                            <select
-                                                value={newProduct.supplierId}
-                                                onChange={(e) => setNewProduct({ ...newProduct, supplierId: e.target.value })}
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '14px 16px',
-                                                    borderRadius: '12px',
-                                                    border: '2px solid #E2E8F0',
-                                                    backgroundColor: '#F8FAFC',
-                                                    fontSize: '15px',
-                                                    outline: 'none',
-                                                    transition: 'all 0.2s',
-                                                    cursor: 'pointer'
-                                                }}
-                                            >
-                                                <option value="">Sin proveedor asignado</option>
-                                                {suppliers.map(s => (
-                                                    <option key={s.id} value={s.id}>{s.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
+                                    <div>
+                                        <label style={{
+                                            display: 'block',
+                                            fontSize: '12px',
+                                            fontWeight: 600,
+                                            marginBottom: '8px',
+                                            color: '#64748B',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em'
+                                        }}>
+                                            Proveedor
+                                        </label>
+                                        <select
+                                            value={newProduct.supplierId}
+                                            onChange={(e) => setNewProduct({ ...newProduct, supplierId: e.target.value })}
+                                            style={{
+                                                width: '100%',
+                                                padding: '14px 16px',
+                                                borderRadius: '12px',
+                                                border: '2px solid #E2E8F0',
+                                                backgroundColor: '#F8FAFC',
+                                                fontSize: '15px',
+                                                outline: 'none',
+                                                transition: 'all 0.2s',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <option value="">Sin proveedor asignado</option>
+                                            {suppliers.map(s => (
+                                                <option key={s.id} value={s.id}>{s.name}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
-                                <DialogFooter>
-                                    <button
-                                        onClick={handleCreate}
-                                        disabled={!newProduct.name || !newProduct.price}
-                                        style={{
-                                            padding: '12px 24px',
-                                            borderRadius: '12px',
-                                            border: 'none',
-                                            backgroundColor: '#EA580C',
-                                            color: 'white',
-                                            fontSize: '14px',
-                                            fontWeight: 600,
-                                            cursor: 'pointer',
-                                            opacity: (!newProduct.name || !newProduct.price) ? 0.5 : 1
-                                        }}
-                                    >
-                                        Guardar Producto
-                                    </button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
-                    </div>
+                            </div>
+                            <DialogFooter>
+                                <button
+                                    onClick={handleCreate}
+                                    disabled={!newProduct.name || !newProduct.price}
+                                    style={{
+                                        padding: '12px 24px',
+                                        borderRadius: '12px',
+                                        border: 'none',
+                                        backgroundColor: '#EA580C',
+                                        color: 'white',
+                                        fontSize: '14px',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        opacity: (!newProduct.name || !newProduct.price) ? 0.5 : 1
+                                    }}
+                                >
+                                    Guardar Producto
+                                </button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </div>
 
@@ -564,7 +567,8 @@ export function ProductList() {
                         </div>
                     </div>
                 </div>
-            )}
+            )
+            }
 
             {/* PRODUCT CARDS GRID */}
             <section style={{ padding: '0 var(--spacing-lg)', minHeight: '400px' }} className="pb-8">

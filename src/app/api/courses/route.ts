@@ -152,8 +152,8 @@ export async function GET(req: Request) {
 
         return NextResponse.json(courses);
     } catch (error) {
-        console.error("[COURSES_GET]", error);
-        return NextResponse.json({ error: "INTERNAL_ERROR", message: "Error al obtener cursos" }, { status: 500 });
+        console.error("[COURSES_GET] Full Error:", error);
+        return NextResponse.json({ error: "INTERNAL_ERROR", message: "Error al obtener cursos", details: String(error) }, { status: 500 });
     }
 }
 export async function DELETE(req: Request) {

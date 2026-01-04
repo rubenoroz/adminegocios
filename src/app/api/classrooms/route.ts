@@ -25,8 +25,8 @@ export async function GET(req: Request) {
 
         return NextResponse.json(classrooms);
     } catch (error) {
-        console.error("[CLASSROOMS_GET]", error);
-        return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+        console.error("[CLASSROOMS_GET] Full Error:", error);
+        return NextResponse.json({ error: "Internal Error", details: String(error) }, { status: 500 });
     }
 }
 

@@ -81,16 +81,8 @@ export function Sidebar({
             allowedTypes: ["RETAIL", "RESTAURANT", "SCHOOL", "SERVICE"],
             allowedRoles: ["OWNER", "ADMIN"]
         },
-        {
-            label: "Inventario",
-            icon: Package,
-            href: "/dashboard/inventory",
-            moduleColor: "var(--module-inventory)",
-            group: "Inventario",
-            allowedTypes: ["RETAIL", "RESTAURANT", "SERVICE"],
-            allowedRoles: ["OWNER", "ADMIN", "MANAGER"]
-        },
 
+        // Inventario ahora está como pestaña dentro de Tienda
         // Escuela - Un solo enlace con pestañas internas (incluye Cursos, Alumnos, Padres, Calificaciones, Asistencia, Personal, Comunicación)
         {
             label: "Escuela",
@@ -135,33 +127,7 @@ export function Sidebar({
             allowedRoles: ["OWNER", "ADMIN", "MANAGER", "STAFF"]
         },
 
-        {
-            label: "Finanzas",
-            icon: DollarSign,
-            href: "/dashboard/finance",
-            moduleColor: "var(--module-finance)",
-            group: "Finanzas",
-            allowedTypes: ["SCHOOL"],
-            allowedRoles: ["OWNER", "ADMIN", "ACCOUNTANT"]
-        },
-        {
-            label: "Comisiones",
-            icon: DollarSign,
-            href: "/dashboard/commissions",
-            moduleColor: "var(--module-finance)",
-            group: "Finanzas",
-            allowedTypes: ["SCHOOL"],
-            allowedRoles: ["OWNER", "ADMIN", "ACCOUNTANT"]
-        },
-        {
-            label: "Ventas",
-            icon: ShoppingCart,
-            href: "/dashboard/sales",
-            moduleColor: "var(--module-sales)",
-            group: "Finanzas",
-            allowedTypes: ["RETAIL", "RESTAURANT", "SERVICE"],
-            allowedRoles: ["OWNER", "ADMIN", "CASHIER"]
-        },
+        // Contabilidad y Reportes (Finanzas, Comisiones y Ventas ahora están en sus módulos principales)
         {
             label: "Contabilidad",
             icon: FileText,

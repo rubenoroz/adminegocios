@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Building2, Users, DollarSign, TrendingUp, Plus } from "lucide-react";
+import { Building2, Users, DollarSign, TrendingUp, Plus, Pencil, Trash2 } from "lucide-react";
 
 interface Business {
     id: string;
@@ -97,9 +97,9 @@ export default function AdminDashboardPage() {
                     <div className="flex justify-end lg:justify-start">
                         <button
                             onClick={() => router.push("/dashboard/admin/businesses/new")}
-                            className="button-modern flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 py-2 px-4 text-xs lg:py-3 lg:px-6 lg:text-sm"
+                            className="button-modern gradient-blue flex items-center gap-2"
                         >
-                            <Plus size={16} className="lg:w-[18px] lg:h-[18px]" />
+                            <Plus size={18} />
                             Nuevo Negocio
                         </button>
                     </div>
@@ -193,21 +193,23 @@ export default function AdminDashboardPage() {
                                         <div className="flex flex-wrap gap-2 justify-end">
                                             <button
                                                 onClick={() => router.push(`/dashboard/admin/businesses/${business.id}`)}
-                                                className="py-2 px-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white text-xs font-semibold rounded-lg transition-all"
+                                                className="button-modern-sm button-modern-sm-blue"
                                             >
                                                 Ver detalles
                                             </button>
                                             <button
                                                 onClick={() => {/* TODO: Open change plan modal */ }}
-                                                className="flex items-center gap-1 py-2 px-3 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                                                className="button-modern-sm gradient-green flex items-center gap-1"
                                             >
-                                                ✏️ Cambiar Plan
+                                                <Pencil size={14} />
+                                                Cambiar Plan
                                             </button>
                                             <button
                                                 onClick={() => {/* TODO: Open delete confirmation */ }}
-                                                className="flex items-center gap-1 py-2 px-3 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                                                className="button-modern-sm gradient-red flex items-center gap-1"
                                             >
-                                                🗑️ Eliminar
+                                                <Trash2 size={14} />
+                                                Eliminar
                                             </button>
                                         </div>
                                     </div>
@@ -267,7 +269,7 @@ export default function AdminDashboardPage() {
                                                 <div className="flex justify-center">
                                                     <button
                                                         onClick={() => router.push(`/dashboard/admin/businesses/${business.id}`)}
-                                                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all shadow-sm hover:shadow-md"
+                                                        className="button-modern-sm button-modern-sm-blue"
                                                     >
                                                         Ver detalles
                                                     </button>

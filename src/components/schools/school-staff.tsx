@@ -38,11 +38,13 @@ export function SchoolStaff() {
     }, [selectedBranch]);
 
     const fetchEmployees = async () => {
+        if (!selectedBranch) return;
+
         setLoading(true);
         try {
-            const url = selectedBranch?.id
+            const url = selectedBranch.id
                 ? `/api/employees?branchId=${selectedBranch.id}`
-                : `/api/employees?businessId=${selectedBranch?.businessId}`;
+                : `/api/employees?businessId=${selectedBranch.businessId}`;
             const res = await fetch(url);
             if (res.ok) {
                 const data = await res.json();

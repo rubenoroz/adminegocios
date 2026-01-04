@@ -68,7 +68,7 @@ export function AccountingDashboard() {
     return (
         <div className="space-y-8">
             {/* KPIs */}
-            <div className="grid grid-cols-3 gap-8">
+            <div className="accounting-kpis-grid grid grid-cols-3 gap-4 md:gap-8">
                 <ModernKpiCard
                     title="Ingresos Totales"
                     value={`$${summary?.totalIncome?.toLocaleString() || '0'}`}
@@ -94,12 +94,12 @@ export function AccountingDashboard() {
 
             {/* Transactions Section */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="accounting-header p-6 border-b border-slate-100" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
                     <div>
                         <h3 className="text-xl font-bold text-slate-800">Transacciones Recientes</h3>
                         <p className="text-sm text-slate-500">Historial de movimientos financieros</p>
                     </div>
-                    <div className="w-fit ml-auto">
+                    <div className="accounting-add-button">
                         <Dialog open={open} onOpenChange={setOpen}>
                             <DialogTrigger asChild>
                                 <button className="button-modern bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 flex items-center gap-2" style={{ borderRadius: '8px' }}>
@@ -181,55 +181,55 @@ export function AccountingDashboard() {
                             </DialogContent>
                         </Dialog>
                     </div>
+                </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-slate-50 border-b border-slate-200">
-                                <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Descripción</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
-                                    <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Monto</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {summary?.transactions.map((t: any, index: number) => (
-                                    <tr
-                                        key={t.id}
-                                        className="hover:bg-blue-50/50 transition-colors"
-                                        style={{ backgroundColor: index % 2 === 0 ? '#FFFFFF' : '#F8FAFC' }}
-                                    >
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                                            {new Date(t.date).toLocaleDateString('es-MX')}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm font-medium text-slate-800">
-                                            {t.description}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${t.type === 'INCOME'
-                                                ? 'bg-green-50 text-green-700 border-green-200'
-                                                : 'bg-red-50 text-red-700 border-red-200'
-                                                }`}>
-                                                {t.type === 'INCOME' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                                                {t.type === 'INCOME' ? 'Ingreso' : 'Gasto'}
-                                            </span>
-                                        </td>
-                                        <td className={`px-6 py-4 whitespace-nowrap text-sm text-right font-bold ${t.type === 'INCOME' ? 'text-green-600' : 'text-red-600'
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead className="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Descripción</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
+                                <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {summary?.transactions.map((t: any, index: number) => (
+                                <tr
+                                    key={t.id}
+                                    className="hover:bg-blue-50/50 transition-colors"
+                                    style={{ backgroundColor: index % 2 === 0 ? '#FFFFFF' : '#F8FAFC' }}
+                                >
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                                        {new Date(t.date).toLocaleDateString('es-MX')}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-medium text-slate-800">
+                                        {t.description}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${t.type === 'INCOME'
+                                            ? 'bg-green-50 text-green-700 border-green-200'
+                                            : 'bg-red-50 text-red-700 border-red-200'
                                             }`}>
-                                            {t.type === 'INCOME' ? '+' : '-'}${t.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                        </td>
-                                    </tr>
-                                ))}
-                                {(!summary?.transactions || summary.transactions.length === 0) && (
-                                    <tr>
-                                        <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
-                                            No hay transacciones registradas recientemente
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                            {t.type === 'INCOME' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                                            {t.type === 'INCOME' ? 'Ingreso' : 'Gasto'}
+                                        </span>
+                                    </td>
+                                    <td className={`px-6 py-4 whitespace-nowrap text-sm text-right font-bold ${t.type === 'INCOME' ? 'text-green-600' : 'text-red-600'
+                                        }`}>
+                                        {t.type === 'INCOME' ? '+' : '-'}${t.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                    </td>
+                                </tr>
+                            ))}
+                            {(!summary?.transactions || summary.transactions.length === 0) && (
+                                <tr>
+                                    <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
+                                        No hay transacciones registradas recientemente
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

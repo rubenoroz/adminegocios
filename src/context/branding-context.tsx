@@ -27,7 +27,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
 
     const fetchBranding = async () => {
-        if (!session?.user) {
+        if (!session?.user?.businessId) {
             setLoading(false);
             return;
         }

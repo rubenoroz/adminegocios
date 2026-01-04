@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { useSession } from "next-auth/react";
 
 interface Branch {
     id: string;
@@ -24,6 +25,7 @@ interface BranchContextType {
 const BranchContext = createContext<BranchContextType | undefined>(undefined);
 
 export function BranchProvider({ children }: { children: ReactNode }) {
+    const { data: session, status } = useSession();
     const [selectedBranch, setSelectedBranchState] = useState<Branch | null>(null);
     const [branches, setBranches] = useState<Branch[]>([]);
     const [loading, setLoading] = useState(true);
@@ -88,9 +90,16 @@ export function BranchProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    // Modified useEffect to check for session and businessId
     useEffect(() => {
-        fetchBranches();
-    }, []);
+        if (status === "authenticated" && session?.user?.businessId) {
+            fetchBranches();
+        } else if (status === "authenticated" && !session?.user?.businessId) {
+            console.warn("User has no businessId, skipping branch fetch.");
+            setBranches([]);
+            setLoading(false);
+        }
+    }, [status, session]);
 
     const setSelectedBranch = (branch: Branch) => {
         setSelectedBranchState(branch);

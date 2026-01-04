@@ -11,12 +11,13 @@ import { SchoolStaff } from "@/components/schools/school-staff";
 import { CommunicationHub } from "@/components/schools/communication-hub";
 import { FeesList } from "@/components/finance/fees-list";
 import { FeeTemplatesManager } from "@/components/finance/fee-templates-manager";
+import { CommissionsManager } from "@/components/schools/commissions-manager";
 import { ModernKpiCard } from "@/components/ui/modern-kpi-card";
 import { useBranch } from "@/context/branch-context";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, Users, UserCheck, Award, Clock, Briefcase, Megaphone, DollarSign, Wallet, AlertCircle, TrendingUp } from "lucide-react";
 
-type TabType = "courses" | "students" | "parents" | "grades" | "attendance" | "staff" | "communication" | "finance";
+type TabType = "courses" | "students" | "parents" | "grades" | "attendance" | "staff" | "communication" | "finance" | "commissions";
 
 export default function SchoolPage() {
     const searchParams = useSearchParams();
@@ -24,7 +25,7 @@ export default function SchoolPage() {
     const pathname = usePathname();
     const { selectedBranch } = useBranch();
 
-    const validTabs: TabType[] = ["courses", "students", "parents", "grades", "attendance", "staff", "communication", "finance"];
+    const validTabs: TabType[] = ["courses", "students", "parents", "grades", "attendance", "staff", "communication", "finance", "commissions"];
     const tabFromUrl = searchParams.get("tab") as TabType;
     const initialTab = validTabs.includes(tabFromUrl) ? tabFromUrl : "courses";
 
@@ -58,6 +59,7 @@ export default function SchoolPage() {
         { id: "staff" as TabType, label: "Personal", icon: Briefcase },
         { id: "communication" as TabType, label: "Comunicación", icon: Megaphone },
         { id: "finance" as TabType, label: "Finanzas", icon: DollarSign },
+        { id: "commissions" as TabType, label: "Comisiones", icon: TrendingUp },
     ];
 
     return (
@@ -162,6 +164,7 @@ export default function SchoolPage() {
                             </div>
                         </div>
                     )}
+                    {activeTab === "commissions" && <CommissionsManager />}
                 </motion.div>
             </AnimatePresence>
         </div>

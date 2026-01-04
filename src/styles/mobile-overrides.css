@@ -99,6 +99,41 @@
     .mobile-header-controls {
         display: flex !important;
     }
+
+    /* Inventory Action Buttons - Stack on mobile */
+    .inventory-action-buttons {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .inventory-action-buttons button {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    /* Accounting Page - KPIs stack vertically on mobile */
+    .accounting-kpis-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+
+    /* Accounting Page - Button centered and full width on mobile */
+    .accounting-add-button {
+        display: flex !important;
+        justify-content: center !important;
+        width: 100% !important;
+    }
+
+    /* Accounting Header - Stack on mobile */
+    .accounting-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .accounting-add-button button {
+        width: 100% !important;
+        justify-content: center !important;
+    }
 }
 
 /* =========================================
