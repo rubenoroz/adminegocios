@@ -91,17 +91,6 @@ export function Sidebar({
             allowedRoles: ["OWNER", "ADMIN", "MANAGER"]
         },
 
-        // Personas - Solo para tipos de negocio sin módulo propio de personal
-        {
-            label: t.employees,
-            icon: Users,
-            href: "/dashboard/employees",
-            moduleColor: "var(--module-employees)",
-            group: "Personas",
-            allowedTypes: ["RETAIL", "SERVICE"], // SCHOOL y RESTAURANT tienen personal en sus pestañas
-            allowedRoles: ["OWNER", "ADMIN", "HR"]
-        },
-
         // Escuela - Un solo enlace con pestañas internas (incluye Cursos, Alumnos, Padres, Calificaciones, Asistencia, Personal, Comunicación)
         {
             label: "Escuela",

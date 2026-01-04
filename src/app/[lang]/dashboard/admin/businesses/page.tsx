@@ -166,7 +166,7 @@ export default function BusinessesManagementPage() {
                                     📚 {business.coursesCount} cursos · 👨‍🏫 {business.teachersCount} maestros · 👨‍🎓 {business.studentsCount} alumnos
                                 </div>
 
-                                <div className="flex flex-wrap gap-2">
+                                <div className="flex flex-wrap gap-2 justify-end">
                                     <button
                                         onClick={() => {
                                             setSelectedBusiness(business.id);
@@ -250,7 +250,7 @@ export default function BusinessesManagementPage() {
                                     <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: '14px', fontWeight: 600, color: '#64748B' }}>Negocio</th>
                                     <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: '14px', fontWeight: 600, color: '#64748B' }}>Plan Actual</th>
                                     <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: '14px', fontWeight: 600, color: '#64748B' }}>Uso</th>
-                                    <th className="!text-left" style={{ textAlign: 'left', padding: '16px 24px', fontSize: '14px', fontWeight: 600, color: '#64748B' }}>Acciones</th>
+                                    <th style={{ textAlign: 'right', padding: '16px 24px', fontSize: '14px', fontWeight: 600, color: '#64748B' }}>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -287,7 +287,7 @@ export default function BusinessesManagementPage() {
                                                 <div>Alumnos: {business.studentsCount}</div>
                                             </div>
                                         </td>
-                                        <td className="!text-left" style={{ padding: '16px 24px', textAlign: 'left' }}>
+                                        <td style={{ padding: '16px 24px', textAlign: 'right' }}>
                                             <button
                                                 onClick={() => {
                                                     setSelectedBusiness(business.id);

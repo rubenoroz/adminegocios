@@ -60,8 +60,8 @@ export function SalesHistory() {
             {/* Header */}
             <div style={{ padding: "var(--spacing-lg)", marginBottom: "32px" }}>
                 <div>
-                    <h1 className="text-4xl font-bold tracking-tight text-gray-900 mb-3">Historial de Ventas</h1>
-                    <p className="text-muted-foreground text-lg">Revisa todas las transacciones realizadas</p>
+                    <h1 className="text-2xl lg:text-4xl font-bold tracking-tight text-gray-900 mb-2 lg:mb-3">Historial de Ventas</h1>
+                    <p className="text-muted-foreground text-sm lg:text-lg">Revisa todas las transacciones realizadas</p>
                 </div>
             </div>
 

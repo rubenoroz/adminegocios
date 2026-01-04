@@ -99,7 +99,7 @@ export function FeesList() {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+            <div className="finance-search-bar flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                 <div className="flex items-center gap-2 flex-1">
                     <Search className="h-4 w-4 text-slate-400 flex-shrink-0" />
                     <Input
@@ -124,7 +124,7 @@ export function FeesList() {
                     )}
                     <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
                 </button>
-                <button onClick={() => setIsAssignOpen(true)} className="button-modern bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 flex items-center gap-2 shrink-0" style={{ borderRadius: '8px' }}>
+                <button onClick={() => setIsAssignOpen(true)} className="finance-new-btn button-modern bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 flex items-center gap-2 shrink-0" style={{ borderRadius: '8px' }}>
                     <Plus className="h-4 w-4" /> Nuevo Cobro
                 </button>
             </div>
@@ -185,7 +185,7 @@ export function FeesList() {
                 </div>
             )}
 
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden" style={{ minHeight: '400px' }}>
+            <div className="finance-table-container bg-white rounded-2xl border border-slate-100 shadow-sm overflow-x-auto" style={{ minHeight: '400px' }}>
                 <Table>
                     <TableHeader>
                         <TableRow style={{ backgroundColor: '#F8FAFC' }}>

@@ -114,17 +114,27 @@ export function StoreStaff() {
         <div className="bg-slate-100 pb-16">
             {/* Header */}
             <div style={{ padding: "var(--spacing-lg)", marginBottom: "32px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 mb-3">Staff de Tienda</h1>
-                        <p className="text-muted-foreground text-lg">
+                        <h1 className="text-2xl lg:text-4xl font-bold tracking-tight text-gray-900 mb-2 lg:mb-3">Staff de Tienda</h1>
+                        <p className="text-muted-foreground text-sm lg:text-lg">
                             {selectedBranch ? `Sucursal: ${selectedBranch.name}` : "Gestiona cajeros y vendedores"}
                         </p>
                     </div>
                     <Dialog open={open} onOpenChange={setOpen}>
                         <DialogTrigger asChild>
-                            <button className="button-modern gradient-teal" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <Plus size={18} /> Nuevo Empleado
+                            <button
+                                className="button-modern gradient-teal"
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                    alignSelf: 'flex-end',
+                                    padding: '8px 12px',
+                                    fontSize: '13px'
+                                }}
+                            >
+                                <Plus size={14} /> Nuevo Empleado
                             </button>
                         </DialogTrigger>
                         <DialogContent className="max-w-lg">
@@ -234,7 +244,7 @@ export function StoreStaff() {
                         <p className="text-slate-500 text-lg">No hay empleados registrados</p>
                     </div>
                 ) : (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "20px" }}>
+                    <div className="store-cards-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "20px" }}>
                         {filteredEmployees.map((emp, index) => {
                             const colors = [
                                 { bg: "#CCFBF1", accent: "#0D9488" },

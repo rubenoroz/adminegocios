@@ -157,6 +157,97 @@
     scroll-margin-top: 200px;
 }
 
+/* Mobile: Horizontal scroll tabs */
+@media (max-width: 1023px) {
+    .course-tabs-container {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        /* Firefox */
+        -ms-overflow-style: none !important;
+        /* IE/Edge */
+        padding: 4px !important;
+        gap: 2px !important;
+        max-width: 100% !important;
+    }
+
+    .course-tabs-container::-webkit-scrollbar {
+        display: none !important;
+        /* Chrome/Safari */
+    }
+
+    .course-tab {
+        flex-shrink: 0 !important;
+        padding: 8px 12px !important;
+        font-size: 12px !important;
+        gap: 4px !important;
+        white-space: nowrap !important;
+    }
+}
+
+/* Store Module: Mobile-only grid overrides (phones only, under 480px) */
+@media (max-width: 480px) {
+    .store-kpi-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .store-cards-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    /* POS Layout: vertical on mobile, horizontal on desktop */
+    .pos-main-layout {
+        flex-direction: column !important;
+        height: auto !important;
+        gap: 16px !important;
+    }
+
+    .pos-cart-panel {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 280px !important;
+    }
+
+    /* Finance Module: Mobile adjustments */
+    .finance-search-bar {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        padding: 12px !important;
+    }
+
+    .finance-search-bar>div:first-child {
+        width: 100% !important;
+        flex: none !important;
+    }
+
+    .finance-new-btn {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    /* Finance table horizontal scroll */
+    .finance-table-container {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .finance-table-container table {
+        min-width: 700px !important;
+    }
+
+    .finance-table-container th,
+    .finance-table-container td {
+        white-space: nowrap !important;
+        padding: 12px 8px !important;
+        font-size: 13px !important;
+    }
+}
+
 [data-radix-scroll-area-viewport] {
     scroll-behavior: auto !important;
 }

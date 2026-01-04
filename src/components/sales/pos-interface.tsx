@@ -174,11 +174,11 @@ export function POSInterface() {
     ];
 
     return (
-        <div className="flex h-[calc(100vh-8rem)] gap-6">
+        <div className="pos-main-layout flex h-[calc(100vh-8rem)] gap-6">
             {/* Product Grid */}
             <div className="flex-1 flex flex-col gap-4">
                 {/* Search & Filters */}
-                <div className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                <div className="flex flex-wrap items-center gap-2 lg:gap-4 bg-white p-3 lg:p-4 rounded-2xl border border-slate-100 shadow-sm">
                     <div className="flex items-center gap-2 flex-1">
                         <Search className="h-4 w-4 text-slate-400 flex-shrink-0" />
                         <Input
@@ -291,7 +291,7 @@ export function POSInterface() {
                 )}
 
                 {/* Products Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 overflow-y-auto pr-2 pb-2">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-6 overflow-y-auto pr-1 lg:pr-2 pb-2 max-h-[50vh] md:max-h-none">
                     {filteredProducts.map((product, index) => {
                         const colorSet = colors[index % 6];
                         const stock = product.inventory?.[0]?.quantity || 0;
@@ -302,11 +302,11 @@ export function POSInterface() {
                         return (
                             <div
                                 key={product.id}
-                                className={`cursor-pointer rounded-2xl transition-all ${isOutOfStock ? 'opacity-50' : 'hover:scale-[1.02]'}`}
+                                className={`cursor-pointer rounded-xl lg:rounded-2xl transition-all ${isOutOfStock ? 'opacity-50' : 'hover:scale-[1.02]'}`}
                                 style={{
                                     backgroundColor: colorSet.bg,
-                                    padding: '20px',
-                                    boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+                                    padding: '12px',
+                                    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
                                     position: 'relative'
                                 }}
                                 onClick={() => {
@@ -322,44 +322,44 @@ export function POSInterface() {
                                 <div
                                     style={{
                                         position: 'absolute',
-                                        top: '12px',
-                                        right: '12px',
-                                        padding: '4px 10px',
-                                        borderRadius: '20px',
-                                        fontSize: '12px',
+                                        top: '8px',
+                                        right: '8px',
+                                        padding: '2px 8px',
+                                        borderRadius: '12px',
+                                        fontSize: '10px',
                                         fontWeight: 700,
                                         backgroundColor: isOutOfStock ? '#FEE2E2' : available <= 5 ? '#FEF3C7' : '#D1FAE5',
                                         color: isOutOfStock ? '#DC2626' : available <= 5 ? '#D97706' : '#059669'
                                     }}
                                 >
-                                    {isOutOfStock ? 'Agotado' : `${available} disp.`}
+                                    {isOutOfStock ? 'Agotado' : `${available}`}
                                 </div>
 
                                 <div
                                     style={{
-                                        width: '48px',
-                                        height: '48px',
-                                        borderRadius: '12px',
+                                        width: '36px',
+                                        height: '36px',
+                                        borderRadius: '10px',
                                         backgroundColor: colorSet.iconBg,
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        marginBottom: '12px',
-                                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                                        marginBottom: '8px',
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.12)'
                                     }}
                                 >
                                     {product.image ? (
-                                        <img src={product.image} alt={product.name} className="w-8 h-8 object-contain" />
+                                        <img src={product.image} alt={product.name} className="w-6 h-6 object-contain" />
                                     ) : (
-                                        <Package className="h-6 w-6 text-white" />
+                                        <Package className="h-5 w-5 text-white" />
                                     )}
                                 </div>
-                                <h3 className="font-bold text-slate-800 truncate mb-1" title={product.name}>
+                                <h3 className="font-bold text-slate-800 truncate mb-1 text-sm lg:text-base" title={product.name}>
                                     {product.name}
                                 </h3>
-                                <p className="text-sm text-slate-500 mb-3">{product.sku || 'Sin SKU'}</p>
-                                <p className="text-2xl font-bold" style={{ color: colorSet.accent }}>
-                                    ${product.price.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                <p className="text-xs text-slate-500 mb-2 hidden lg:block">{product.sku || 'Sin SKU'}</p>
+                                <p className="text-lg lg:text-2xl font-bold" style={{ color: colorSet.accent }}>
+                                    ${product.price.toLocaleString('es-MX', { minimumFractionDigits: 0 })}
                                 </p>
                             </div>
                         );
@@ -374,18 +374,19 @@ export function POSInterface() {
                 </div>
             </div>
 
-            {/* Cart Sidebar */}
+            {/* Cart Panel - Sidebar on desktop, own row on mobile via CSS */}
             <div
-                className="w-96 flex flex-col h-full"
+                className="pos-cart-panel w-96 flex flex-col h-full"
                 style={{
                     backgroundColor: '#FFFFFF',
-                    borderRadius: '20px',
+                    borderRadius: '16px',
                     boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-                    border: '1px solid #E2E8F0'
+                    border: '1px solid #E2E8F0',
+                    minHeight: '300px'
                 }}
             >
                 {/* Cart Header */}
-                <div style={{ padding: '20px', borderBottom: '1px solid #E2E8F0' }}>
+                <div style={{ padding: '16px', borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
                         <div
                             style={{

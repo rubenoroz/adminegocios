@@ -135,19 +135,26 @@ export function CommunicationHub() {
                 position: 'relative',
                 zIndex: 10
             }}>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 mb-3">
+                        <h1 className="text-2xl lg:text-4xl font-bold tracking-tight text-gray-900 mb-2 lg:mb-3">
                             Comunicación
                         </h1>
-                        <p className="text-muted-foreground text-lg">
+                        <p className="text-muted-foreground text-sm lg:text-lg">
                             {selectedBranch ? `Sucursal: ${selectedBranch.name}` : "Gestiona circulares y eventos para la comunidad"}
                         </p>
                     </div>
                     <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                         <DialogTrigger asChild>
-                            <button className="button-modern flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600">
-                                <Plus size={18} />
+                            <button
+                                className="button-modern flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
+                                style={{
+                                    alignSelf: 'flex-end',
+                                    padding: '8px 12px',
+                                    fontSize: '13px'
+                                }}
+                            >
+                                <Plus size={14} />
                                 Nuevo Comunicado
                             </button>
                         </DialogTrigger>

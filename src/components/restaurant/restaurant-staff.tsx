@@ -120,17 +120,27 @@ export function RestaurantStaff() {
         <div className="bg-slate-100 pb-16">
             {/* Header */}
             <div style={{ padding: "var(--spacing-lg)", marginBottom: "32px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 mb-3">Staff del Restaurante</h1>
-                        <p className="text-muted-foreground text-lg">
+                        <h1 className="text-2xl lg:text-4xl font-bold tracking-tight text-gray-900 mb-2 lg:mb-3">Staff del Restaurante</h1>
+                        <p className="text-muted-foreground text-sm lg:text-lg">
                             {selectedBranch ? `Sucursal: ${selectedBranch.name}` : "Gestiona meseros, chefs y personal"}
                         </p>
                     </div>
                     <Dialog open={open} onOpenChange={setOpen}>
                         <DialogTrigger asChild>
-                            <button className="button-modern gradient-orange" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <Plus size={18} /> Nuevo Staff
+                            <button
+                                className="button-modern gradient-orange"
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                    alignSelf: 'flex-end',
+                                    padding: '8px 12px',
+                                    fontSize: '13px'
+                                }}
+                            >
+                                <Plus size={14} /> Nuevo Staff
                             </button>
                         </DialogTrigger>
                         <DialogContent className="max-w-lg">
