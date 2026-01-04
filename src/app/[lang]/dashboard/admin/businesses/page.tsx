@@ -119,159 +119,272 @@ export default function BusinessesManagementPage() {
 
     return (
         <div style={{ backgroundColor: '#F1F5F9', minHeight: '100vh', paddingBottom: '64px' }}>
-            {/* HEADER */}
-            <div style={{ padding: '32px', marginBottom: '48px' }}>
-                <h1 style={{ fontSize: '36px', fontWeight: 'bold', letterSpacing: '-0.025em', color: '#111827', marginBottom: '12px' }}>
+            {/* HEADER - Responsive */}
+            <div className="p-4 lg:p-8 mb-8 lg:mb-12">
+                <h1 className="text-2xl lg:text-4xl font-bold tracking-tight text-gray-900 mb-2 lg:mb-3">
                     Gestión de Negocios
                 </h1>
-                <p style={{ color: '#6B7280', fontSize: '18px' }}>
+                <p className="text-slate-500 text-sm lg:text-lg">
                     Administra los planes de todos los negocios registrados
                 </p>
             </div>
 
-            {/* TABLA DE NEGOCIOS */}
-            <section style={{ padding: '0 32px' }} className="pb-8">
-                <div style={{ backgroundColor: 'white', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead>
-                            <tr style={{ borderBottom: '1px solid #F1F5F9', backgroundColor: '#F8FAFC' }}>
-                                <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: '14px', fontWeight: 600, color: '#64748B' }}>Negocio</th>
-                                <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: '14px', fontWeight: 600, color: '#64748B' }}>Plan Actual</th>
-                                <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: '14px', fontWeight: 600, color: '#64748B' }}>Uso</th>
-                                <th className="!text-left" style={{ textAlign: 'left', padding: '16px 24px', fontSize: '14px', fontWeight: 600, color: '#64748B' }}>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {businesses.map((business) => (
-                                <tr key={business.id} style={{ borderBottom: '1px solid #F1F5F9', transition: 'background-color 0.15s ease' }}
-                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
-                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                >
-                                    <td style={{ padding: '16px 24px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                            <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: '#DBEAFE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <Building2 size={20} style={{ color: '#2563EB' }} />
-                                            </div>
-                                            <div>
-                                                <div style={{ fontWeight: 600, color: '#0F172A' }}>{business.name}</div>
-                                                <div style={{ fontSize: '14px', color: '#64748B' }}>{business.type}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td style={{ padding: '16px 24px' }}>
-                                        {business.plan ? (
-                                            <div>
-                                                <div style={{ fontWeight: 500, color: '#0F172A' }}>{business.plan.name}</div>
-                                                <div style={{ fontSize: '14px', color: '#64748B' }}>${business.plan.price}/mes</div>
-                                            </div>
-                                        ) : (
-                                            <span style={{ color: '#94A3B8' }}>Sin plan</span>
-                                        )}
-                                    </td>
-                                    <td style={{ padding: '16px 24px' }}>
-                                        <div style={{ fontSize: '14px', color: '#475569' }}>
-                                            <div>Cursos: {business.coursesCount}</div>
-                                            <div>Maestros: {business.teachersCount}</div>
-                                            <div>Alumnos: {business.studentsCount}</div>
-                                        </div>
-                                    </td>
-                                    <td className="!text-left" style={{ padding: '16px 24px', textAlign: 'left' }}>
-                                        <button
-                                            onClick={() => {
-                                                setSelectedBusiness(business.id);
-                                                setSelectedPlan(business.plan?.id || "");
-                                                try {
-                                                    const modules = business.enabledModules ? JSON.parse(business.enabledModules) : [business.type];
-                                                    setSelectedModules(modules);
-                                                } catch {
-                                                    setSelectedModules([business.type]);
+            {/* NEGOCIOS */}
+            <section className="px-4 lg:px-8 pb-8">
+                <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm overflow-hidden">
+
+                    {/* MOBILE: Cards View */}
+                    <div className="lg:hidden divide-y divide-slate-100">
+                        {businesses.map((business) => (
+                            <div key={business.id} className="p-4">
+                                <div className="flex items-start gap-3 mb-3">
+                                    <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                        <Building2 size={20} className="text-blue-600" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-semibold text-slate-900 truncate">{business.name}</h3>
+                                        <p className="text-sm text-slate-500">{business.type}</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+                                    <div className="bg-slate-50 rounded-lg p-2">
+                                        <span className="text-slate-500">Plan:</span>
+                                        <span className="font-medium text-slate-900 ml-1">
+                                            {business.plan?.name || 'Sin plan'}
+                                        </span>
+                                    </div>
+                                    <div className="bg-slate-50 rounded-lg p-2">
+                                        <span className="text-slate-500">Precio:</span>
+                                        <span className="font-medium text-slate-900 ml-1">
+                                            {business.plan ? `$${business.plan.price}/mes` : '-'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="text-xs text-slate-500 mb-3">
+                                    📚 {business.coursesCount} cursos · 👨‍🏫 {business.teachersCount} maestros · 👨‍🎓 {business.studentsCount} alumnos
+                                </div>
+
+                                <div className="flex flex-wrap gap-2">
+                                    <button
+                                        onClick={() => {
+                                            setSelectedBusiness(business.id);
+                                            setSelectedPlan(business.plan?.id || "");
+                                            try {
+                                                const modules = business.enabledModules ? JSON.parse(business.enabledModules) : [business.type];
+                                                setSelectedModules(modules);
+                                            } catch {
+                                                setSelectedModules([business.type]);
+                                            }
+                                        }}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            padding: '8px 12px',
+                                            backgroundColor: '#2563EB',
+                                            color: 'white',
+                                            fontSize: '12px',
+                                            fontWeight: 600,
+                                            borderRadius: '8px',
+                                            border: 'none',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <Edit size={14} />
+                                        Cambiar Plan
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            if (!confirm("¿Estás seguro de que quieres eliminar este negocio y TODOS sus datos (usuarios, productos, etc.)? Esta acción no se puede deshacer.")) return;
+
+                                            const reason = prompt("Escribe 'ELIMINAR' para confirmar:");
+                                            if (reason !== "ELIMINAR") return;
+
+                                            try {
+                                                setLoading(true);
+                                                const res = await fetch(`/api/admin/businesses/${business.id}`, {
+                                                    method: "DELETE"
+                                                });
+
+                                                if (res.ok) {
+                                                    alert("Negocio eliminado correctamente");
+                                                    fetchData();
+                                                } else {
+                                                    alert("Error al eliminar el negocio");
                                                 }
-                                            }}
-                                            style={{
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '8px',
-                                                padding: '8px 16px',
-                                                borderRadius: '8px',
-                                                backgroundColor: '#2563EB',
-                                                color: 'white',
-                                                fontSize: '14px',
-                                                fontWeight: 500,
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.15s ease',
-                                                marginRight: '8px'
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.backgroundColor = '#1D4ED8';
-                                                e.currentTarget.style.transform = 'translateY(-1px)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.backgroundColor = '#2563EB';
-                                                e.currentTarget.style.transform = 'translateY(0)';
-                                            }}
-                                        >
-                                            <Edit size={16} />
-                                            Cambiar Plan
-                                        </button>
+                                            } catch (error) {
+                                                console.error(error);
+                                                alert("Error de conexión");
+                                            } finally {
+                                                setLoading(false);
+                                            }
+                                        }}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            padding: '8px 12px',
+                                            backgroundColor: '#EF4444',
+                                            color: 'white',
+                                            fontSize: '12px',
+                                            fontWeight: 600,
+                                            borderRadius: '8px',
+                                            border: 'none',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        🗑️ Eliminar
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
 
-                                        <button
-                                            onClick={async () => {
-                                                if (!confirm("¿Estás seguro de que quieres eliminar este negocio y TODOS sus datos (usuarios, productos, etc.)? Esta acción no se puede deshacer.")) return;
-
-                                                const reason = prompt("Escribe 'ELIMINAR' para confirmar:");
-                                                if (reason !== "ELIMINAR") return;
-
-                                                try {
-                                                    setLoading(true);
-                                                    const res = await fetch(`/api/admin/businesses/${business.id}`, {
-                                                        method: "DELETE"
-                                                    });
-
-                                                    if (res.ok) {
-                                                        alert("Negocio eliminado correctamente");
-                                                        fetchData(); // Reload list
-                                                    } else {
-                                                        alert("Error al eliminar el negocio");
-                                                    }
-                                                } catch (error) {
-                                                    console.error(error);
-                                                    alert("Error de conexión");
-                                                } finally {
-                                                    setLoading(false);
-                                                }
-                                            }}
-                                            style={{
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '8px',
-                                                padding: '8px 16px',
-                                                borderRadius: '8px',
-                                                backgroundColor: '#EF4444',
-                                                color: 'white',
-                                                fontSize: '14px',
-                                                fontWeight: 500,
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.15s ease'
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.backgroundColor = '#DC2626';
-                                                e.currentTarget.style.transform = 'translateY(-1px)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.backgroundColor = '#EF4444';
-                                                e.currentTarget.style.transform = 'translateY(0)';
-                                            }}
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
-                                            Eliminar
-                                        </button>
-                                    </td>
+                    {/* DESKTOP: Table View */}
+                    <div className="hidden lg:block">
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid #F1F5F9', backgroundColor: '#F8FAFC' }}>
+                                    <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: '14px', fontWeight: 600, color: '#64748B' }}>Negocio</th>
+                                    <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: '14px', fontWeight: 600, color: '#64748B' }}>Plan Actual</th>
+                                    <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: '14px', fontWeight: 600, color: '#64748B' }}>Uso</th>
+                                    <th className="!text-left" style={{ textAlign: 'left', padding: '16px 24px', fontSize: '14px', fontWeight: 600, color: '#64748B' }}>Acciones</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {businesses.map((business) => (
+                                    <tr key={business.id} style={{ borderBottom: '1px solid #F1F5F9', transition: 'background-color 0.15s ease' }}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                    >
+                                        <td style={{ padding: '16px 24px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: '#DBEAFE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <Building2 size={20} style={{ color: '#2563EB' }} />
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontWeight: 600, color: '#0F172A' }}>{business.name}</div>
+                                                    <div style={{ fontSize: '14px', color: '#64748B' }}>{business.type}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td style={{ padding: '16px 24px' }}>
+                                            {business.plan ? (
+                                                <div>
+                                                    <div style={{ fontWeight: 500, color: '#0F172A' }}>{business.plan.name}</div>
+                                                    <div style={{ fontSize: '14px', color: '#64748B' }}>${business.plan.price}/mes</div>
+                                                </div>
+                                            ) : (
+                                                <span style={{ color: '#94A3B8' }}>Sin plan</span>
+                                            )}
+                                        </td>
+                                        <td style={{ padding: '16px 24px' }}>
+                                            <div style={{ fontSize: '14px', color: '#475569' }}>
+                                                <div>Cursos: {business.coursesCount}</div>
+                                                <div>Maestros: {business.teachersCount}</div>
+                                                <div>Alumnos: {business.studentsCount}</div>
+                                            </div>
+                                        </td>
+                                        <td className="!text-left" style={{ padding: '16px 24px', textAlign: 'left' }}>
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedBusiness(business.id);
+                                                    setSelectedPlan(business.plan?.id || "");
+                                                    try {
+                                                        const modules = business.enabledModules ? JSON.parse(business.enabledModules) : [business.type];
+                                                        setSelectedModules(modules);
+                                                    } catch {
+                                                        setSelectedModules([business.type]);
+                                                    }
+                                                }}
+                                                style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px',
+                                                    padding: '8px 16px',
+                                                    borderRadius: '8px',
+                                                    backgroundColor: '#2563EB',
+                                                    color: 'white',
+                                                    fontSize: '14px',
+                                                    fontWeight: 500,
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.15s ease',
+                                                    marginRight: '8px'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.backgroundColor = '#1D4ED8';
+                                                    e.currentTarget.style.transform = 'translateY(-1px)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.backgroundColor = '#2563EB';
+                                                    e.currentTarget.style.transform = 'translateY(0)';
+                                                }}
+                                            >
+                                                <Edit size={16} />
+                                                Cambiar Plan
+                                            </button>
+
+                                            <button
+                                                onClick={async () => {
+                                                    if (!confirm("¿Estás seguro de que quieres eliminar este negocio y TODOS sus datos (usuarios, productos, etc.)? Esta acción no se puede deshacer.")) return;
+
+                                                    const reason = prompt("Escribe 'ELIMINAR' para confirmar:");
+                                                    if (reason !== "ELIMINAR") return;
+
+                                                    try {
+                                                        setLoading(true);
+                                                        const res = await fetch(`/api/admin/businesses/${business.id}`, {
+                                                            method: "DELETE"
+                                                        });
+
+                                                        if (res.ok) {
+                                                            alert("Negocio eliminado correctamente");
+                                                            fetchData();
+                                                        } else {
+                                                            alert("Error al eliminar el negocio");
+                                                        }
+                                                    } catch (error) {
+                                                        console.error(error);
+                                                        alert("Error de conexión");
+                                                    } finally {
+                                                        setLoading(false);
+                                                    }
+                                                }}
+                                                style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px',
+                                                    padding: '8px 16px',
+                                                    borderRadius: '8px',
+                                                    backgroundColor: '#EF4444',
+                                                    color: 'white',
+                                                    fontSize: '14px',
+                                                    fontWeight: 500,
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.15s ease'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.backgroundColor = '#DC2626';
+                                                    e.currentTarget.style.transform = 'translateY(-1px)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.backgroundColor = '#EF4444';
+                                                    e.currentTarget.style.transform = 'translateY(0)';
+                                                }}
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
+                                                Eliminar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
 

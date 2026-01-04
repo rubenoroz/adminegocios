@@ -91,57 +91,33 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
 
     return (
         <div className="bg-slate-100 min-h-screen pb-16">
-            {/* HEADER */}
+            {/* HEADER - Responsive */}
             <div style={{ padding: 'var(--spacing-lg)', marginBottom: '48px' }}>
                 <button
                     onClick={() => router.push("/dashboard/admin")}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '8px 16px',
-                        backgroundColor: 'white',
-                        border: '1px solid #E2E8F0',
-                        borderRadius: '8px',
-                        color: '#64748B',
-                        fontSize: '14px',
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        marginBottom: '16px',
-                        transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#F8FAFC';
-                        e.currentTarget.style.borderColor = '#CBD5E1';
-                        e.currentTarget.style.color = '#0F172A';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'white';
-                        e.currentTarget.style.borderColor = '#E2E8F0';
-                        e.currentTarget.style.color = '#64748B';
-                    }}
+                    className="flex items-center gap-2 py-2 px-4 bg-white border border-slate-200 rounded-lg text-slate-500 text-sm font-medium mb-4 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 transition-all"
                 >
                     <ArrowLeft size={20} />
                     Volver
                 </button>
-                <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center">
-                        <Building2 size={32} className="text-blue-600" />
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
+                    <div className="w-12 h-12 lg:w-16 lg:h-16 rounded-xl lg:rounded-2xl bg-blue-100 flex items-center justify-center">
+                        <Building2 size={24} className="lg:w-8 lg:h-8 text-blue-600" />
                     </div>
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">
+                        <h1 className="text-2xl lg:text-4xl font-bold tracking-tight text-gray-900">
                             {business.name}
                         </h1>
-                        <p className="text-muted-foreground text-lg mt-1">
+                        <p className="text-muted-foreground text-sm lg:text-lg mt-1">
                             {business.type} • Plan {business.plan?.name || "Sin plan"}
                         </p>
                     </div>
                 </div>
             </div>
 
-            {/* ESTADÍSTICAS */}
+            {/* ESTADÍSTICAS - Responsive Grid */}
             <section style={{ padding: '0 var(--spacing-lg)', marginBottom: '40px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
                     {/* Cursos */}
                     <StatCard
                         title="Cursos"
@@ -172,25 +148,25 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                 </div>
             </section>
 
-            {/* INFORMACIÓN DEL PLAN */}
+            {/* INFORMACIÓN DEL PLAN - Responsive */}
             <section style={{ padding: '0 var(--spacing-lg)', marginBottom: '40px' }}>
-                <div className="bg-white rounded-2xl shadow-sm p-8">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6">Detalles del Plan</h2>
+                <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm p-4 lg:p-8">
+                    <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-4 lg:mb-6">Detalles del Plan</h2>
                     {business.plan ? (
                         <div>
-                            <div className="grid grid-cols-2 gap-6 mb-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6 mb-4 lg:mb-6">
                                 <div>
-                                    <div className="text-sm text-slate-500 mb-1">Plan Actual</div>
-                                    <div className="text-xl font-bold text-slate-900">{business.plan.name}</div>
+                                    <div className="text-xs lg:text-sm text-slate-500 mb-1">Plan Actual</div>
+                                    <div className="text-lg lg:text-xl font-bold text-slate-900">{business.plan.name}</div>
                                 </div>
                                 <div>
-                                    <div className="text-sm text-slate-500 mb-1">Precio</div>
-                                    <div className="text-xl font-bold text-slate-900">${business.plan.price}/mes</div>
+                                    <div className="text-xs lg:text-sm text-slate-500 mb-1">Precio</div>
+                                    <div className="text-lg lg:text-xl font-bold text-slate-900">${business.plan.price}/mes</div>
                                 </div>
                             </div>
-                            <div className="border-t border-slate-200 pt-6">
-                                <div className="text-sm font-semibold text-slate-700 mb-4">Límites del Plan</div>
-                                <div className="grid grid-cols-2 gap-4">
+                            <div className="border-t border-slate-200 pt-4 lg:pt-6">
+                                <div className="text-xs lg:text-sm font-semibold text-slate-700 mb-3 lg:mb-4">Límites del Plan</div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 lg:gap-4 text-sm">
                                     <div>Cursos: {business.plan.maxCourses === null ? '∞' : business.plan.maxCourses}</div>
                                     <div>Maestros: {business.plan.maxTeachers === null ? '∞' : business.plan.maxTeachers}</div>
                                     <div>Alumnos: {business.plan.maxStudents === null ? '∞' : business.plan.maxStudents}</div>
@@ -203,118 +179,65 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                 </div>
             </section>
 
-            {/* USUARIOS Y SUCURSALES */}
-            <div style={{ padding: '0 var(--spacing-lg)', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px', marginBottom: '40px' }}>
+            {/* USUARIOS Y SUCURSALES - Responsive */}
+            <div className="px-4 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-10">
                 {/* Sucursales */}
-                <div className="bg-white rounded-2xl shadow-sm p-8">
-                    <h3 className="text-xl font-bold text-gray-900 mb-4">Sucursales</h3>
+                <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm p-4 lg:p-8">
+                    <h3 className="text-lg lg:text-xl font-bold text-gray-900 mb-3 lg:mb-4">Sucursales</h3>
                     <ul className="space-y-2">
                         {business.branches.map(branch => (
-                            <li key={branch.id} className="text-slate-700">{branch.name}</li>
+                            <li key={branch.id} className="text-sm lg:text-base text-slate-700">{branch.name}</li>
                         ))}
                     </ul>
                 </div>
 
                 {/* Usuarios */}
-                <div className="bg-white rounded-2xl shadow-sm p-8">
-                    <h3 className="text-xl font-bold text-gray-900 mb-4">Usuarios ({business.users.length})</h3>
+                <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm p-4 lg:p-8">
+                    <h3 className="text-lg lg:text-xl font-bold text-gray-900 mb-3 lg:mb-4">Usuarios ({business.users.length})</h3>
                     <ul className="space-y-2">
                         {business.users.slice(0, 5).map(user => (
-                            <li key={user.id} className="flex justify-between text-slate-700">
-                                <span>{user.name || user.email}</span>
-                                <span className="text-xs bg-slate-100 px-2 py-1 rounded">{user.role}</span>
+                            <li key={user.id} className="flex justify-between text-sm lg:text-base text-slate-700">
+                                <span className="truncate">{user.name || user.email}</span>
+                                <span className="text-xs bg-slate-100 px-2 py-1 rounded ml-2">{user.role}</span>
                             </li>
                         ))}
                     </ul>
                 </div>
             </div>
 
-            {/* GESTIÓN DE DUEÑO */}
-            <section style={{ padding: '0 var(--spacing-lg)' }}>
-                <div className="bg-white rounded-2xl shadow-sm p-8">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-                        <div style={{
-                            width: '48px',
-                            height: '48px',
-                            borderRadius: '12px',
-                            backgroundColor: '#FEF3C7',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            <ShieldCheck size={24} style={{ color: '#D97706' }} />
+            {/* GESTIÓN DE DUEÑO - Responsive */}
+            <section className="px-4 lg:px-8">
+                <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm p-4 lg:p-8">
+                    <div className="flex items-center gap-3 mb-4 lg:mb-5">
+                        <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-lg lg:rounded-xl bg-amber-100 flex items-center justify-center">
+                            <ShieldCheck size={20} className="lg:w-6 lg:h-6 text-amber-600" />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-gray-900">Gestión de Dueño</h3>
-                            <p className="text-sm text-slate-500">Recuperar acceso o transferir propiedad</p>
+                            <h3 className="text-lg lg:text-xl font-bold text-gray-900">Gestión de Dueño</h3>
+                            <p className="text-xs lg:text-sm text-slate-500">Recuperar acceso o transferir propiedad</p>
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '12px' }}>
+                    <div className="flex flex-col sm:flex-row gap-3">
                         <button
                             onClick={() => setShowRecoveryModal(true)}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                padding: '12px 20px',
-                                borderRadius: '10px',
-                                backgroundColor: '#2563EB',
-                                color: 'white',
-                                fontSize: '14px',
-                                fontWeight: 600,
-                                border: 'none',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = '#1D4ED8';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = '#2563EB';
-                            }}
+                            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors"
                         >
-                            <Key size={18} />
+                            <Key size={16} />
                             Recuperar Acceso
                         </button>
                         <button
                             onClick={() => setShowRecoveryModal(true)}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                padding: '12px 20px',
-                                borderRadius: '10px',
-                                backgroundColor: '#7C3AED',
-                                color: 'white',
-                                fontSize: '14px',
-                                fontWeight: 600,
-                                border: 'none',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = '#6D28D9';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = '#7C3AED';
-                            }}
+                            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition-colors"
                         >
-                            <UserCheck size={18} />
+                            <UserCheck size={16} />
                             Transferir Propiedad
                         </button>
                     </div>
 
                     {/* Current Owner Info */}
                     {business.users.filter(u => u.role === 'OWNER').length > 0 && (
-                        <div style={{
-                            marginTop: '20px',
-                            padding: '12px 16px',
-                            backgroundColor: '#F8FAFC',
-                            borderRadius: '8px',
-                            fontSize: '14px',
-                            color: '#475569'
-                        }}>
+                        <div className="mt-4 p-3 bg-slate-50 rounded-lg text-sm text-slate-600">
                             <strong>Dueño actual:</strong> {business.users.find(u => u.role === 'OWNER')?.name || business.users.find(u => u.role === 'OWNER')?.email}
                         </div>
                     )}
@@ -347,30 +270,21 @@ function StatCard({ title, current, max, icon, bgColor, iconColor }: StatCardPro
     const percentage = max === null ? 0 : Math.min((current / max) * 100, 100);
 
     return (
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
+        <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-sm">
             <div
-                style={{
-                    width: '56px',
-                    height: '56px',
-                    borderRadius: '14px',
-                    backgroundColor: bgColor,
-                    color: iconColor,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: '16px'
-                }}
+                style={{ backgroundColor: bgColor, color: iconColor }}
+                className="w-10 h-10 lg:w-14 lg:h-14 rounded-lg lg:rounded-xl flex items-center justify-center mb-3 lg:mb-4"
             >
-                {icon}
+                <span className="scale-75 lg:scale-100">{icon}</span>
             </div>
-            <div className="text-sm text-slate-500 mb-1">{title}</div>
-            <div className="text-3xl font-bold text-slate-900 mb-2">
+            <div className="text-xs lg:text-sm text-slate-500 mb-1">{title}</div>
+            <div className="text-xl lg:text-3xl font-bold text-slate-900 mb-2">
                 {current} {max !== null && `/ ${max}`}
             </div>
             {max !== null && (
-                <div className="w-full bg-slate-200 rounded-full h-2">
+                <div className="w-full bg-slate-200 rounded-full h-1.5 lg:h-2">
                     <div
-                        className="h-2 rounded-full transition-all"
+                        className="h-1.5 lg:h-2 rounded-full transition-all"
                         style={{ width: `${percentage}%`, backgroundColor: iconColor }}
                     />
                 </div>

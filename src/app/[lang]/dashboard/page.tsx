@@ -32,9 +32,7 @@ export default function DashboardPage() {
     const pathname = usePathname();
 
     useEffect(() => {
-        console.log("Dashboard Session Status:", status);
         if (status === "unauthenticated") {
-            console.log("Redirecting to login due to unauthenticated status");
             router.push("/login");
         }
     }, [status, router]);
@@ -54,7 +52,6 @@ export default function DashboardPage() {
     }
 
     if (!session) {
-        console.log("No session found in DashboardPage");
         return null;
     }
 

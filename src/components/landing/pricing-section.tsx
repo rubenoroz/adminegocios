@@ -68,7 +68,7 @@ export function PricingSection() {
 
                 {/* Grid container - Force 4 columns using min-width and scroll if needed */}
                 <div className="overflow-x-auto pb-4 -mx-4 px-4">
-                    <div className="grid grid-cols-4 gap-4 min-w-[1200px]">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full lg:min-w-[1200px]">
                         {plans.map((plan, index) => {
                             // Color palette matching Admin Panel
                             const colors = [

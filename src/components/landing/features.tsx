@@ -27,7 +27,7 @@ export function Features({ dict }: { dict: any }) {
             </h2>
 
             {/* Grid de 4 tarjetas */}
-            <div style={{
+            <div className="features-grid" style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(4, 1fr)',
                 gap: '24px'

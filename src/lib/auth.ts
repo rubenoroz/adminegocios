@@ -66,8 +66,7 @@ export const authOptions: NextAuthOptions = {
                 session.user.role = token.role as string;
                 session.user.isSuperAdmin = token.isSuperAdmin as boolean; // Pass to session
 
-                // Debug Session
-                // console.log("[AUTH-SESSION] Session callback for:", session.user.email, "Role:", session.user.role);
+
             }
             return session;
         },

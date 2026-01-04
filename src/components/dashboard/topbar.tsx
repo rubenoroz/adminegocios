@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Menu, X } from "lucide-react";
 // import { LanguageSelector } from "@/components/language-selector"; // Deshabilitado - sitio solo español
 import { BranchSelector } from "@/components/branch-selector";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface TopbarProps {
     dict: any;
@@ -28,6 +30,44 @@ export function Topbar({
     sidebarColor = "#1e293b"
 }: TopbarProps) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const pathname = usePathname();
+
+    // Close menu automatically on route change (navigation)
+    useEffect(() => {
+        setMobileMenuOpen(false);
+    }, [pathname]);
+
+    // Lock body scroll when mobile menu is open (MOBILE ONLY)
+    useEffect(() => {
+        // SSR safety check - only run in browser
+        if (typeof window === 'undefined') return;
+
+        if (mobileMenuOpen) {
+            // Save current scroll position and lock body
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
+            document.body.style.top = `-${window.scrollY}px`;
+        } else {
+            // Restore scroll position
+            const scrollY = document.body.style.top;
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+            document.body.style.top = '';
+            if (scrollY) {
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            }
+        }
+
+        return () => {
+            if (typeof window === 'undefined') return;
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+            document.body.style.top = '';
+        };
+    }, [mobileMenuOpen]);
 
     return (
         <>
@@ -59,40 +99,89 @@ export function Topbar({
                 </div>
             </div>
 
-            {/* Mobile Sidebar Overlay */}
-            {mobileMenuOpen && (
-                <div className="fixed inset-0 z-50 md:hidden">
-                    {/* Backdrop */}
-                    <div
-                        className="fixed inset-0 bg-black/50"
-                        onClick={() => setMobileMenuOpen(false)}
-                    />
-
-                    {/* Sidebar */}
-                    <div
-                        className="fixed inset-y-0 left-0 w-72 flex flex-col"
-                        style={{ backgroundColor: sidebarColor }}
-                    >
-                        {/* Close button */}
-                        <button
-                            className="absolute top-4 right-4 p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 z-10"
+            {/* Mobile Sidebar Overlay with Animation */}
+            <AnimatePresence>
+                {mobileMenuOpen && (
+                    <div className="fixed inset-0 z-50 md:hidden isolate">
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
                             onClick={() => setMobileMenuOpen(false)}
-                        >
-                            <X size={24} />
-                        </button>
-
-                        {/* Sidebar content */}
-                        <Sidebar
-                            dict={dict}
-                            serverBusinessType={serverBusinessType}
-                            serverRole={serverRole}
-                            serverLogoUrl={serverLogoUrl}
-                            serverLogoOrientation={serverLogoOrientation}
-                            serverLogoHeight={serverLogoHeight}
                         />
+
+                        {/* Sidebar Drawer */}
+                        <motion.div
+                            initial={{ x: "-100%" }}
+                            animate={{ x: "0%" }}
+                            exit={{ x: "-100%" }}
+                            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                            className="fixed inset-y-0 left-0 flex flex-col shadow-2xl z-50 bg-slate-900 border-r border-white/10"
+                            style={{
+                                backgroundColor: sidebarColor,
+                                width: '72vw',
+                                maxWidth: '280px'
+                            }}
+                        >
+                            {/* Close button - styled like dialog-close-button */}
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    console.log('Close button clicked');
+                                    setMobileMenuOpen(false);
+                                }}
+                                aria-label="Cerrar menú"
+                                style={{
+                                    position: 'absolute',
+                                    left: '20px',
+                                    top: '20px',
+                                    width: '32px',
+                                    height: '32px',
+                                    backgroundColor: '#ef4444',
+                                    color: 'white',
+                                    border: '2px solid white',
+                                    borderRadius: '9999px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    zIndex: 10000,
+                                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+                                    cursor: 'pointer',
+                                    padding: 0,
+                                }}
+                            >
+                                <X size={16} strokeWidth={3} />
+                            </button>
+
+                            {/* Sidebar content - forced scroll with dvh */}
+                            <div
+                                style={{
+                                    height: 'calc(100dvh - 60px)',
+                                    maxHeight: 'calc(100vh - 60px)',
+                                    marginTop: '60px',
+                                    overflowY: 'scroll',
+                                    overflowX: 'hidden',
+                                    WebkitOverflowScrolling: 'touch',
+                                }}
+                            >
+                                <Sidebar
+                                    dict={dict}
+                                    serverBusinessType={serverBusinessType}
+                                    serverRole={serverRole}
+                                    serverLogoUrl={serverLogoUrl}
+                                    serverLogoOrientation={serverLogoOrientation}
+                                    serverLogoHeight={serverLogoHeight}
+                                />
+                            </div>
+                        </motion.div>
                     </div>
-                </div>
-            )}
+                )}
+            </AnimatePresence>
         </>
     );
 }

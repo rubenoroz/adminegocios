@@ -6,6 +6,7 @@
 @import '../styles/advanced-components.css';
 @import '../styles/dashboard-executive.css';
 @import '../styles/modern-components.css';
+@import '../styles/mobile-overrides.css';
 
 * {
   box-sizing: border-box;

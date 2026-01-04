@@ -10,7 +10,7 @@ export function DiagnosisForm({ dict }: { dict: any }) {
             padding: '96px 40px'
         }}>
             {/* Banda grande con degradado */}
-            <div style={{
+            <div className="diagnosis-card" style={{
                 background: 'linear-gradient(to right, #2563eb, #4f46e5)',
                 borderRadius: '24px',
                 padding: '64px',

@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export function Hero({ dict }: { dict: any }) {
     return (
-        <section style={{
+        <section className="hero-section" style={{
             maxWidth: '1280px',
             margin: '0 auto',
             padding: '96px 40px',
@@ -14,7 +14,7 @@ export function Hero({ dict }: { dict: any }) {
             alignItems: 'center'
         }}>
             {/* Izquierda - Texto */}
-            <div>
+            <div className="hero-text">
                 <h1 style={{
                     fontSize: '48px',
                     fontWeight: 800,
@@ -38,7 +38,7 @@ export function Hero({ dict }: { dict: any }) {
                 </p>
 
                 {/* Botones en fila */}
-                <div style={{ marginTop: '40px', display: 'flex', gap: '16px' }}>
+                <div className="hero-buttons" style={{ marginTop: '40px', display: 'flex', gap: '16px' }}>
                     <Link href="#diagnostico">
                         <button style={{
                             padding: '16px 32px',

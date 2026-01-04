@@ -1,0 +1,115 @@
+/* Mobile & Tablet Overrides */
+/* Desktop is strictly ≥ 1024px and MUST NOT BE CHANGED */
+
+/* =========================================
+   TABLET (768px - 1023px)
+   ========================================= */
+@media (min-width: 768px) and (max-width: 1023px) {
+
+    /* Features Section - 2 Columns */
+    .features-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+/* =========================================
+   MOBILE (≤ 767px)
+   ========================================= */
+@media (max-width: 767px) {
+
+    /* General Layout */
+    section {
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+    }
+
+    /* Hero Section */
+    .hero-section {
+        padding-top: 120px !important;
+        /* Make space for fixed navbar if needed, or just visual breathing room */
+        padding-bottom: 60px !important;
+        grid-template-columns: 1fr !important;
+        gap: 40px !important;
+        text-align: center !important;
+    }
+
+    .hero-text h1 {
+        font-size: 36px !important;
+        line-height: 1.2 !important;
+    }
+
+    .hero-text p {
+        font-size: 16px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    .hero-buttons {
+        justify-content: center !important;
+        flex-direction: column !important;
+        width: 100% !important;
+    }
+
+    .hero-buttons button {
+        width: 100% !important;
+    }
+
+    /* Features Section - 1 Column */
+    .features-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Navbar */
+    /* Hide Desktop Elements */
+    .navbar-placeholder,
+    .navbar-actions {
+        display: none !important;
+    }
+
+    /* Reset logo position for mobile header if needed, 
+     but actually we will likely render a SEPARATE mobile logo 
+     and hide the desktop absolute one. 
+     Let's check the implementation plan: 
+     "Show: New Mobile Header (Logo + Toggle). Hide: Original" 
+  */
+
+    /* Hide the desktop absolute logo link on mobile */
+    .navbar-logo {
+        display: none !important;
+    }
+
+    /* Reset container styles */
+    .landing-navbar {
+        padding: 20px !important;
+        height: auto !important;
+        display: block !important;
+        /* Allow custom mobile layout */
+    }
+
+    /* Diagnosis Form */
+    .diagnosis-card {
+        padding: 32px 20px !important;
+    }
+
+    .diagnosis-card h2 {
+        font-size: 28px !important;
+    }
+
+    /* Show Mobile Controls */
+    .mobile-header-controls {
+        display: flex !important;
+    }
+}
+
+/* =========================================
+   RESPONSIVE (≤ 1023px)
+   ========================================= */
+@media (max-width: 1023px) {
+
+    /* Ensure containers don't overflow */
+    .container,
+    section {
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+    }
+}

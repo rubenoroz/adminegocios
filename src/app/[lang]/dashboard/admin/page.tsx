@@ -83,31 +83,33 @@ export default function AdminDashboardPage() {
 
     return (
         <div className="bg-slate-100 min-h-screen pb-16">
-            {/* HEADER */}
+            {/* HEADER - Responsive */}
             <div style={{ padding: 'var(--spacing-lg)', marginBottom: '48px' }}>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 mb-3">
+                        <h1 className="text-2xl lg:text-4xl font-bold tracking-tight text-gray-900 mb-2 lg:mb-3">
                             Panel de Super Administrador
                         </h1>
-                        <p className="text-muted-foreground text-lg">
+                        <p className="text-muted-foreground text-base lg:text-lg">
                             Gestiona todos los negocios y planes de la plataforma
                         </p>
                     </div>
-                    <button
-                        onClick={() => router.push("/dashboard/admin/businesses/new")}
-                        className="button-modern flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
-                    >
-                        <Plus size={18} />
-                        Nuevo Negocio
-                    </button>
+                    <div className="flex justify-end lg:justify-start">
+                        <button
+                            onClick={() => router.push("/dashboard/admin/businesses/new")}
+                            className="button-modern flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 py-2 px-4 text-xs lg:py-3 lg:px-6 lg:text-sm"
+                        >
+                            <Plus size={16} className="lg:w-[18px] lg:h-[18px]" />
+                            Nuevo Negocio
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            {/* ESTADÍSTICAS */}
+            {/* ESTADÍSTICAS - Responsive Grid */}
             {stats && (
                 <div style={{ padding: '0 var(--spacing-lg)', marginBottom: '40px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                         <StatCard
                             title="Total Negocios"
                             value={stats.totalBusinesses}
@@ -140,104 +142,142 @@ export default function AdminDashboardPage() {
                 </div>
             )}
 
-            {/* TABLA DE NEGOCIOS */}
+            {/* NEGOCIOS - Responsive Layout */}
             <section style={{ padding: '0 var(--spacing-lg)' }} className="pb-8">
-                <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                    <div style={{ padding: '24px', borderBottom: '1px solid #E2E8F0' }}>
-                        <h2 className="text-xl font-bold text-gray-900">Negocios Registrados</h2>
+                <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm overflow-hidden">
+                    <div className="p-4 lg:p-6 border-b border-slate-200">
+                        <h2 className="text-lg lg:text-xl font-bold text-gray-900">Negocios Registrados</h2>
                     </div>
 
                     {businesses.length === 0 ? (
-                        <div className="p-12 text-center">
-                            <p className="text-slate-500 text-lg">No hay negocios registrados</p>
+                        <div className="p-8 lg:p-12 text-center">
+                            <p className="text-slate-500 text-base lg:text-lg">No hay negocios registrados</p>
                         </div>
                     ) : (
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-slate-100 bg-slate-50">
-                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Negocio</th>
-                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Tipo</th>
-                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Plan</th>
-                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Uso (Cursos/Maestros/Alumnos)</th>
-                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Usuarios</th>
-                                    <th className="!text-left px-6 py-4 text-sm font-semibold text-slate-600">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                        <>
+                            {/* MOBILE/TABLET: Cards View */}
+                            <div className="lg:hidden divide-y divide-slate-100">
                                 {businesses.map((business) => (
-                                    <tr
-                                        key={business.id}
-                                        className="border-b border-gray-100 transition-colors hover:bg-slate-50"
-                                    >
-                                        <td className="px-6 py-4">
-                                            <div className="font-semibold text-slate-900">{business.name}</div>
-                                            <div className="text-sm text-slate-500">
-                                                {new Date(business.createdAt).toLocaleDateString()}
+                                    <div key={business.id} className="p-4">
+                                        <div className="flex items-start justify-between mb-3">
+                                            <div>
+                                                <h3 className="font-semibold text-slate-900">{business.name}</h3>
+                                                <p className="text-sm text-slate-500">
+                                                    {new Date(business.createdAt).toLocaleDateString()}
+                                                </p>
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4">
                                             <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
                                                 {business.type}
                                             </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {business.plan ? (
-                                                <div>
-                                                    <div className="font-medium text-slate-900">{business.plan.name}</div>
-                                                    <div className="text-sm text-slate-500">${business.plan.price}/mes</div>
-                                                </div>
-                                            ) : (
-                                                <span className="text-slate-400">Sin plan</span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm">
-                                                {business.coursesCount} / {business.teachersCount} / {business.studentsCount}
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+                                            <div className="bg-slate-50 rounded-lg p-2">
+                                                <span className="text-slate-500">Plan:</span>
+                                                <span className="font-medium text-slate-900 ml-1">
+                                                    {business.plan?.name || 'Sin plan'}
+                                                </span>
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm font-medium text-slate-900">
-                                                {business._count.users} usuarios
+                                            <div className="bg-slate-50 rounded-lg p-2">
+                                                <span className="text-slate-500">Usuarios:</span>
+                                                <span className="font-medium text-slate-900 ml-1">
+                                                    {business._count.users}
+                                                </span>
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex justify-center">
-                                                <button
-                                                    onClick={() => router.push(`/dashboard/admin/businesses/${business.id}`)}
-                                                    style={{
-                                                        display: 'inline-flex',
-                                                        alignItems: 'center',
-                                                        gap: '8px',
-                                                        padding: '10px 20px',
-                                                        borderRadius: '10px',
-                                                        backgroundColor: '#2563EB',
-                                                        color: 'white',
-                                                        fontSize: '14px',
-                                                        fontWeight: 600,
-                                                        border: 'none',
-                                                        cursor: 'pointer',
-                                                        transition: 'all 0.2s ease',
-                                                        boxShadow: '0 2px 8px rgba(37, 99, 235, 0.2)'
-                                                    }}
-                                                    onMouseEnter={(e) => {
-                                                        e.currentTarget.style.backgroundColor = '#1D4ED8';
-                                                        e.currentTarget.style.transform = 'translateY(-1px)';
-                                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.3)';
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.style.backgroundColor = '#2563EB';
-                                                        e.currentTarget.style.transform = 'translateY(0)';
-                                                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(37, 99, 235, 0.2)';
-                                                    }}
-                                                >
-                                                    Ver detalles
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                        </div>
+
+                                        <div className="text-xs text-slate-500 mb-3">
+                                            📚 {business.coursesCount} cursos · 👨‍🏫 {business.teachersCount} maestros · 👨‍🎓 {business.studentsCount} alumnos
+                                        </div>
+
+                                        <div className="flex flex-wrap gap-2 justify-end">
+                                            <button
+                                                onClick={() => router.push(`/dashboard/admin/businesses/${business.id}`)}
+                                                className="py-2 px-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white text-xs font-semibold rounded-lg transition-all"
+                                            >
+                                                Ver detalles
+                                            </button>
+                                            <button
+                                                onClick={() => {/* TODO: Open change plan modal */ }}
+                                                className="flex items-center gap-1 py-2 px-3 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                                            >
+                                                ✏️ Cambiar Plan
+                                            </button>
+                                            <button
+                                                onClick={() => {/* TODO: Open delete confirmation */ }}
+                                                className="flex items-center gap-1 py-2 px-3 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                                            >
+                                                🗑️ Eliminar
+                                            </button>
+                                        </div>
+                                    </div>
                                 ))}
-                            </tbody>
-                        </table>
+                            </div>
+
+                            {/* DESKTOP: Table View */}
+                            <table className="w-full hidden lg:table">
+                                <thead>
+                                    <tr className="border-b border-slate-100 bg-slate-50">
+                                        <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Negocio</th>
+                                        <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Tipo</th>
+                                        <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Plan</th>
+                                        <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Uso (Cursos/Maestros/Alumnos)</th>
+                                        <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Usuarios</th>
+                                        <th className="!text-left px-6 py-4 text-sm font-semibold text-slate-600">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {businesses.map((business) => (
+                                        <tr
+                                            key={business.id}
+                                            className="border-b border-gray-100 transition-colors hover:bg-slate-50"
+                                        >
+                                            <td className="px-6 py-4">
+                                                <div className="font-semibold text-slate-900">{business.name}</div>
+                                                <div className="text-sm text-slate-500">
+                                                    {new Date(business.createdAt).toLocaleDateString()}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                                    {business.type}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {business.plan ? (
+                                                    <div>
+                                                        <div className="font-medium text-slate-900">{business.plan.name}</div>
+                                                        <div className="text-sm text-slate-500">${business.plan.price}/mes</div>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-slate-400">Sin plan</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm">
+                                                    {business.coursesCount} / {business.teachersCount} / {business.studentsCount}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm font-medium text-slate-900">
+                                                    {business._count.users} usuarios
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex justify-center">
+                                                    <button
+                                                        onClick={() => router.push(`/dashboard/admin/businesses/${business.id}`)}
+                                                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all shadow-sm hover:shadow-md"
+                                                    >
+                                                        Ver detalles
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </>
                     )}
                 </div>
             </section>
@@ -262,6 +302,7 @@ function StatCard({ title, value, icon, bgColor, iconColor }: StatCardProps) {
                 padding: '24px',
                 boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
             }}
+            className="!p-4 lg:!p-6"
         >
             <div
                 style={{
@@ -275,13 +316,14 @@ function StatCard({ title, value, icon, bgColor, iconColor }: StatCardProps) {
                     justifyContent: 'center',
                     marginBottom: '16px'
                 }}
+                className="!w-10 !h-10 lg:!w-14 lg:!h-14 !mb-3 lg:!mb-4"
             >
-                {icon}
+                <span className="scale-75 lg:scale-100">{icon}</span>
             </div>
             <div style={{ fontSize: '14px', color: '#64748B', marginBottom: '4px', fontWeight: 500 }}>
                 {title}
             </div>
-            <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#1E293B' }}>
+            <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#1E293B' }} className="!text-xl lg:!text-3xl">
                 {value}
             </div>
         </div>

@@ -206,16 +206,16 @@ export function DataImporter() {
     };
 
     // Manual file selection handler (fallback for when react-dropzone fails)
+
     const handleManualFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-        console.log("📂 Manual file select triggered");
         const files = event.target.files;
         if (!files || files.length === 0) {
-            console.log("❌ No files selected");
+
             return;
         }
 
         const file = files[0];
-        console.log("✅ File selected:", file.name, file.type, file.size);
+
         setFile(file);
 
         const reader = new FileReader();
@@ -227,7 +227,7 @@ export function DataImporter() {
                 const sheet = workbook.Sheets[sheetName];
                 const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-                console.log("📊 Excel parsed, rows:", jsonData.length);
+
 
                 if (jsonData.length > 0) {
                     // Fix encoding for all string values
@@ -261,7 +261,6 @@ export function DataImporter() {
 
     // Handler to trigger manual file input
     const triggerFileInput = () => {
-        console.log("🖱️ Triggering file input");
         fileInputRef.current?.click();
     };
 
@@ -342,7 +341,7 @@ export function DataImporter() {
             if (match) newMapping[field.key] = match;
         });
 
-        console.log("🗺️ Auto-mapped columns:", newMapping);
+
         setMapping(newMapping);
     };
 
@@ -391,8 +390,6 @@ export function DataImporter() {
     });
 
     const handleImport = async () => {
-        console.log("🚀 handleImport called");
-        console.log("📍 selectedBranch:", selectedBranch);
 
         if (!selectedBranch?.businessId) {
             console.error("❌ No businessId found!");
@@ -400,7 +397,7 @@ export function DataImporter() {
             return;
         }
 
-        console.log("✅ Starting import for businessId:", selectedBranch.businessId);
+
         setStep("IMPORTING");
         let successCount = 0;
         let failedCount = 0;
@@ -442,9 +439,7 @@ export function DataImporter() {
             return item;
         }); // No filtramos nada, permitimos todo con rellenos
 
-        console.log("📋 Current mapping:", mapping);
-        console.log("📋 Headers:", headers);
-        console.log("📋 Sample processed data (first 2):", processedData.slice(0, 2));
+
 
         try {
             const batchSize = 50;
@@ -517,7 +512,7 @@ export function DataImporter() {
             const cleanLabel = config.label.replace(/[^a-zA-Z0-9]/g, '_');
             const fileName = `Plantilla_${cleanLabel}.xlsx`;
 
-            console.log("Generating Excel template:", fileName);
+
             XLSX.writeFile(wb, fileName);
         } catch (error) {
             console.error("Error generating Excel template:", error);

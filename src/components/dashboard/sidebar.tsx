@@ -58,12 +58,7 @@ export function Sidebar({
     const role = session?.user?.role || serverRole;
     const isLoading = status === "loading" && !serverBusinessType;
 
-    // Debug: Monitor session state
-    if (status === "authenticated") {
-        console.log("Sidebar: Session Loaded", { role, businessType, status });
-        console.log("🔍 DEBUG - Role normalizado:", role?.toUpperCase().trim());
-        console.log("🔍 DEBUG - ¿Es SUPERADMIN?", role?.toUpperCase().trim() === "SUPERADMIN");
-    }
+
 
     // Definir rutas con grupos y colores del nuevo sistema de diseño
     const allRoutes = [
@@ -285,10 +280,7 @@ export function Sidebar({
         return typeMatch && roleMatch;
     });
 
-    console.log("🔍 DEBUG - Total rutas filtradas:", routes.length);
-    console.log("🔍 DEBUG - Rutas de Super Admin:", routes.filter(r => r.group === "Super Admin").map(r => r.label));
-    console.log("🔍 DEBUG - Rutas de Servicios:", routes.filter(r => r.group === "Servicios").map(r => r.label));
-    console.log("🔍 DEBUG - allRoutes incluye Servicios:", allRoutes.some(r => r.label === "Servicios"));
+
 
     // Agrupar rutas
     const groupedRoutes = routes.reduce((acc, route) => {
@@ -307,10 +299,7 @@ export function Sidebar({
     const logoOrientation = branding.loading ? serverLogoOrientation : branding.logoOrientation;
     const logoHeight = branding.loading ? serverLogoHeight : branding.logoHeight;
 
-    // Debug logo
-    if (logoUrl) {
-        console.log("Sidebar: Rendering logo", { logoUrl, logoOrientation, logoHeight });
-    }
+
 
     return (
         <div className="sidebar flex flex-col h-full" style={{ backgroundColor: 'inherit' }}>
