@@ -293,7 +293,7 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                                             <th style={{ padding: '16px 24px', fontWeight: 600, textAlign: 'right' }}>Estado</th>
                                         </tr>
                                     </thead>
-                                    <tbody style={{ divideY: '1px', divideColor: '#F1F5F9' }}>
+                                    <tbody>
                                         {business.users.map((user, idx) => (
                                             <tr key={user.id} style={{ borderTop: idx > 0 ? '1px solid #F1F5F9' : 'none' }}>
                                                 <td style={{ padding: '16px 24px', color: '#0F172A', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '12px' }}>
