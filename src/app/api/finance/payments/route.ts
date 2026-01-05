@@ -22,7 +22,7 @@ export async function POST(req: Request) {
         // ZOD VALIDATION
         const result = paymentSchema.safeParse(body);
         if (!result.success) {
-            return NextResponse.json({ error: "VALIDATION_ERROR", message: result.error.errors[0].message }, { status: 400 });
+            return NextResponse.json({ error: "VALIDATION_ERROR", message: result.error.issues[0].message }, { status: 400 });
         }
 
         const { feeId, amount, method } = result.data;
