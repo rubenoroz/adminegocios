@@ -12,11 +12,11 @@ export async function GET(req: Request) {
         }
 
         const { searchParams } = new URL(req.url);
-        const businessId = searchParams.get("businessId");
-
-        if (!businessId) {
-            return new NextResponse("Missing businessId", { status: 400 });
+        // SECURITY: Force using the session's businessId, ignore the query param for security
+        if (!session.user.businessId) {
+            return new NextResponse("Unauthorized: No business linked", { status: 401 });
         }
+        const businessId = session.user.businessId;
 
         const employees = await prisma.employee.findMany({
             where: { businessId },
@@ -80,8 +80,11 @@ export async function POST(req: Request) {
             return new NextResponse("Missing required fields", { status: 400 });
         }
 
-        const employee = await prisma.employee.findUnique({
-            where: { id: employeeId }
+        const employee = await prisma.employee.findFirst({
+            where: {
+                id: employeeId,
+                businessId: session.user.businessId // SECURITY: Ensure ownership
+            }
         });
 
         if (!employee) {

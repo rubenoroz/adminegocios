@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Adminegocios</string>
+    <string name="title_activity_main">Adminegocios</string>
+    <string name="package_name">com.adminegocios.app</string>
+    <string name="custom_url_scheme">com.adminegocios.app</string>
+</resources>

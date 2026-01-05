@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+
+const paymentSchema = z.object({
+    feeId: z.string().min(1, "Fee ID required"),
+    amount: z.union([z.string(), z.number()]).transform((val) => parseFloat(val.toString())),
+    method: z.enum(["CASH", "CARD", "TRANSFER"]),
+});
 
 export async function POST(req: Request) {
     try {
@@ -11,14 +18,17 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { feeId, amount, method, businessId } = body;
 
-        if (!feeId || !amount || !method || !businessId) {
-            return NextResponse.json({ error: "MISSING_FIELDS", message: "Faltan campos requeridos" }, { status: 400 });
+        // ZOD VALIDATION
+        const result = paymentSchema.safeParse(body);
+        if (!result.success) {
+            return NextResponse.json({ error: "VALIDATION_ERROR", message: result.error.errors[0].message }, { status: 400 });
         }
 
-        const paymentAmount = parseFloat(amount);
-        if (isNaN(paymentAmount) || paymentAmount <= 0) {
+        const { feeId, amount, method } = result.data;
+        const businessId = session.user.businessId;
+
+        if (amount <= 0) {
             return NextResponse.json({ error: "INVALID_AMOUNT", message: "El monto del pago debe ser mayor a 0" }, { status: 400 });
         }
 
@@ -26,7 +36,7 @@ export async function POST(req: Request) {
         const payment = await prisma.studentPayment.create({
             data: {
                 studentFeeId: feeId,
-                amount: paymentAmount,
+                amount: amount,
                 method, // CASH, CARD, TRANSFER
                 date: new Date()
             }
@@ -36,9 +46,9 @@ export async function POST(req: Request) {
         await prisma.transaction.create({
             data: {
                 type: "INCOME",
-                amount: paymentAmount,
+                amount: amount,
                 description: `Pago de colegiatura/servicio`,
-                businessId,
+                businessId: businessId!, // Assert non-null as we checked session
                 studentPayment: {
                     connect: { id: payment.id }
                 }

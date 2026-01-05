@@ -19,7 +19,12 @@ export async function GET(req: Request) {
         if (status) where.status = status;
 
         const fees = await prisma.studentFee.findMany({
-            where,
+            where: {
+                ...where,
+                student: {
+                    businessId: session.user.businessId // SECURITY: Ensure student belongs to my business
+                }
+            },
             include: {
                 student: {
                     select: {
@@ -69,6 +74,18 @@ export async function POST(req: Request) {
 
         if (parseFloat(amount) < 0) {
             return NextResponse.json({ error: "INVALID_AMOUNT", message: "El monto no puede ser negativo" }, { status: 400 });
+        }
+
+        // SECURITY: Verify all students belong to the user's business
+        const count = await prisma.student.count({
+            where: {
+                id: { in: studentIds },
+                businessId: session.user.businessId
+            }
+        });
+
+        if (count !== studentIds.length) {
+            return NextResponse.json({ error: "UNAUTHORIZED", message: "Uno o más estudiantes no pertenecen a tu negocio" }, { status: 401 });
         }
 
         const fees = await Promise.all(
