@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, UserPlus, User, X, Check } from "lucide-react";
-import { useDebounce } from "@/hooks/use-debounce"; // Assuming this exists or I'll use simple timeout
+
 
 // Simple debounce impl inside component if hook doesn't exist
 function useLocalDebounce(value: string, delay: number) {
