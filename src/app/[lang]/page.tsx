@@ -36,7 +36,7 @@ export default async function Home({ params }: { params: Promise<{ lang: string 
           flexWrap: 'wrap',
           gap: '16px'
         }}>
-          <img src="/logo.svg" alt="ADMNegocios" style={{ height: '32px' }} />
+          <img src="/logo-footer.svg" alt="ADMNegocios" style={{ height: '32px' }} />
           <div style={{ display: 'flex', gap: '24px', fontSize: '14px', color: '#94a3b8' }}>
             <Link href="#">Privacidad</Link>
             <Link href="#">Términos</Link>

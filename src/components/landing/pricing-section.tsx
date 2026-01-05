@@ -57,7 +57,7 @@ export function PricingSection() {
             </div>
 
             <div className="w-full px-4 relative z-10">
-                <div className="text-center mb-32">
+                <div className="text-center" style={{ marginBottom: '60px' }}>
                     <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">
                         Planes Simples y Transparentes
                     </h2>
@@ -67,8 +67,8 @@ export function PricingSection() {
                 </div>
 
                 {/* Grid container - Force 4 columns using min-width and scroll if needed */}
-                <div className="overflow-x-auto pb-4 -mx-4 px-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full lg:min-w-[1200px]">
+                <div className="overflow-x-auto -mx-4 px-4 scrollbar-hide">
+                    <div className="flex flex-nowrap gap-4 w-full md:justify-center lg:justify-center items-stretch">
                         {plans.map((plan, index) => {
                             // Color palette matching Admin Panel
                             const colors = [
@@ -86,14 +86,15 @@ export function PricingSection() {
                                     whileInView={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.4, delay: index * 0.1 }}
                                     viewport={{ once: true }}
-                                    className="h-full"
+                                    className="min-w-[280px] md:min-w-[300px] flex-1 max-w-[350px]"
+                                    style={{ display: 'flex', flexDirection: 'column' }}
                                 >
                                     <div
                                         style={{
                                             backgroundColor: 'white',
                                             borderRadius: '24px',
                                             padding: '24px',
-                                            height: '100%',
+                                            flex: 1,
                                             display: 'flex',
                                             flexDirection: 'column',
                                             border: `2px solid ${color.ring}`,
@@ -130,7 +131,7 @@ export function PricingSection() {
                                         <h3 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1E293B', marginBottom: '8px' }}>
                                             {plan.name}
                                         </h3>
-                                        <p style={{ color: '#64748B', fontSize: '15px', marginBottom: '24px', lineHeight: '1.5', minHeight: '45px' }}>
+                                        <p style={{ color: '#64748B', fontSize: '15px', marginBottom: '24px', lineHeight: '1.5', minHeight: '72px' }}>
                                             {plan.description || "Sin descripción"}
                                         </p>
 

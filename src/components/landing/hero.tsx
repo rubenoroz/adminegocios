@@ -27,19 +27,13 @@ export function Hero({ dict }: { dict: any }) {
                     <span style={{ color: '#10b981' }}>sin complicaciones</span>
                 </h1>
 
-                <p style={{
-                    marginTop: '24px',
-                    fontSize: '18px',
-                    lineHeight: 1.6,
-                    color: '#94a3b8',
-                    maxWidth: '480px'
-                }}>
-                    Admnegocios centraliza la gestión de <strong style={{ color: '#f1f5f9' }}>escuelas, academias, tiendas y restaurantes</strong> en una sola plataforma clara y poderosa.
+                <p className="border mt-8 max-w-2xl mx-auto text-xl text-slate-400">
+                    Admnegocios centraliza la gestión de escuelas, tiendas, consultorios, contructoras, restaurantes y otros servicios en una sola plataforma clara y poderosa con visión global y control total.
                 </p>
 
                 {/* Botones en fila */}
-                <div className="hero-buttons" style={{ marginTop: '40px', display: 'flex', gap: '16px' }}>
-                    <Link href="#diagnostico">
+                <div className="hero-buttons" style={{ marginTop: '40px' }}>
+                    <Link href="/register">
                         <button style={{
                             padding: '16px 32px',
                             borderRadius: '8px',
@@ -47,24 +41,14 @@ export function Hero({ dict }: { dict: any }) {
                             color: 'white',
                             border: 'none',
                             cursor: 'pointer',
-                            fontSize: '16px',
-                            fontWeight: 500,
-                            boxShadow: '0 10px 25px -5px rgba(16, 185, 129, 0.4)'
+                            fontSize: '18px',
+                            fontWeight: 600,
+                            boxShadow: '0 10px 25px -5px rgba(16, 185, 129, 0.4)',
+                            transition: 'transform 0.2s',
                         }}>
-                            Hacer diagnóstico gratuito
+                            Crea tu cuenta gratis
                         </button>
                     </Link>
-                    <button style={{
-                        padding: '16px 24px',
-                        borderRadius: '8px',
-                        backgroundColor: 'transparent',
-                        color: '#94a3b8',
-                        border: '1px solid #1e3329',
-                        cursor: 'pointer',
-                        fontSize: '16px'
-                    }}>
-                        Ver cómo funciona
-                    </button>
                 </div>
             </div>
 

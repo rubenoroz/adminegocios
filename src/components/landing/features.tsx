@@ -7,7 +7,10 @@ export function Features({ dict }: { dict: any }) {
         { icon: GraduationCap, title: "Escuelas", description: "Control académico y administrativo.", bgColor: 'rgba(37, 99, 235, 0.15)', iconColor: '#3b82f6' },
         { icon: Store, title: "Tiendas", description: "Ventas, personal y reportes.", bgColor: 'rgba(16, 185, 129, 0.15)', iconColor: '#10b981' },
         { icon: Utensils, title: "Restaurantes", description: "Turnos, mesas y operación diaria.", bgColor: 'rgba(234, 88, 12, 0.15)', iconColor: '#f97316' },
-        { icon: LayoutDashboard, title: "Administración", description: "Visión global y control total.", bgColor: 'rgba(147, 51, 234, 0.15)', iconColor: '#a855f7' }
+        {
+            icon: LayoutDashboard, title: "Servicios",
+            description: "consultorios, constructoras y más...", bgColor: 'rgba(147, 51, 234, 0.15)', iconColor: '#a855f7'
+        }
     ];
 
     return (

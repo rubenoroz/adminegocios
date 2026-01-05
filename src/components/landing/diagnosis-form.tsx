@@ -15,7 +15,9 @@ export function DiagnosisForm({ dict }: { dict: any }) {
                 borderRadius: '24px',
                 padding: '64px',
                 textAlign: 'center',
-                boxShadow: '0 25px 50px -12px rgba(37, 99, 235, 0.35)'
+                boxShadow: '0 25px 50px -12px rgba(37, 99, 235, 0.35)',
+                maxWidth: '600px',
+                margin: '0 auto'
             }}>
                 {/* Título grande */}
                 <h2 style={{
@@ -24,7 +26,7 @@ export function DiagnosisForm({ dict }: { dict: any }) {
                     color: 'white',
                     margin: 0
                 }}>
-                    Descubre qué necesita tu negocio
+                    Prueba el sitio en su plan gratuito
                 </h2>
 
                 {/* Texto explicativo */}
@@ -37,7 +39,7 @@ export function DiagnosisForm({ dict }: { dict: any }) {
                     marginRight: 'auto',
                     lineHeight: 1.6
                 }}>
-                    Responde unas preguntas y obtén un diagnóstico personalizado de procesos, módulos y áreas de mejora.
+                    Explora todas las herramientas sin compromiso. Empieza hoy mismo a gestionar tu negocio de forma inteligente.
                 </p>
 
                 {/* Botón blanco */}
@@ -50,11 +52,12 @@ export function DiagnosisForm({ dict }: { dict: any }) {
                         color: '#1d4ed8',
                         border: 'none',
                         cursor: 'pointer',
-                        fontSize: '16px',
-                        fontWeight: 600,
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                        fontSize: '18px',
+                        fontWeight: 700,
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                        transition: 'transform 0.2s'
                     }}>
-                        Iniciar diagnóstico
+                        Crear tu cuenta
                     </button>
                 </Link>
             </div>

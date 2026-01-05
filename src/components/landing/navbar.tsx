@@ -48,19 +48,7 @@ export function Navbar({ dict }: { dict: any }) {
 
             {/* Desktop Actions */}
             <div className="navbar-actions" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                <Link href="#diagnostico">
-                    <button style={{
-                        padding: '8px 16px',
-                        borderRadius: '6px',
-                        backgroundColor: 'transparent',
-                        color: '#94a3b8',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '14px'
-                    }}>
-                        Diagnóstico
-                    </button>
-                </Link>
+
                 <Link href="/login">
                     <button style={{
                         padding: '8px 20px',
@@ -141,21 +129,6 @@ export function Navbar({ dict }: { dict: any }) {
                             zIndex: 100
                         }}
                     >
-                        <Link href="#diagnostico" onClick={() => setIsOpen(false)} style={{ width: '100%' }}>
-                            <button style={{
-                                width: '100%',
-                                padding: '12px',
-                                borderRadius: '8px',
-                                backgroundColor: 'rgba(255,255,255,0.05)',
-                                color: '#e2e8f0',
-                                border: 'none',
-                                cursor: 'pointer',
-                                fontSize: '16px',
-                                textAlign: 'center'
-                            }}>
-                                Diagnóstico
-                            </button>
-                        </Link>
                         <Link href="/login" onClick={() => setIsOpen(false)} style={{ width: '100%' }}>
                             <button style={{
                                 width: '100%',
