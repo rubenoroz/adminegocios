@@ -135,7 +135,7 @@ export default function SchoolPage() {
                             </div>
 
                             {/* Finance Sub-Tabs */}
-                            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '32px' }}>
                                 <button
                                     onClick={() => setFinanceSubTab("fees")}
                                     className={`button-modern flex items-center gap-2 ${financeSubTab === "fees"

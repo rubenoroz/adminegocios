@@ -11,10 +11,10 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+// Removed Select imports as they are replaced by PremiumSelect
 import { useBranch } from "@/context/branch-context";
 import { useToast } from "@/components/ui/use-toast";
-import { SimpleDropdown } from "@/components/ui/simple-dropdown";
+import { PremiumSelect } from "@/components/ui/premium-select";
 
 interface AssignFeeModalProps {
     open: boolean;
@@ -37,6 +37,9 @@ export function AssignFeeModal({ open, onOpenChange, onSuccess }: AssignFeeModal
     const [amount, setAmount] = useState("");
     const [dueDate, setDueDate] = useState("");
 
+    // Template selection state
+    const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+
     useEffect(() => {
         if (open && selectedBranch?.businessId) {
             fetchStudents();
@@ -57,6 +60,7 @@ export function AssignFeeModal({ open, onOpenChange, onSuccess }: AssignFeeModal
     };
 
     const handleTemplateSelect = (templateId: string) => {
+        setSelectedTemplateId(templateId);
         const template = templates.find(t => t.id === templateId);
         if (template) {
             setTitle(template.name);
@@ -87,6 +91,7 @@ export function AssignFeeModal({ open, onOpenChange, onSuccess }: AssignFeeModal
             onOpenChange(false);
             // Reset form
             setSelectedStudentId("");
+            setSelectedTemplateId("");
             setTitle("");
             setAmount("");
             setDueDate("");
@@ -100,64 +105,93 @@ export function AssignFeeModal({ open, onOpenChange, onSuccess }: AssignFeeModal
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Asignar Nuevo Cobro</DialogTitle>
-                    <DialogDescription>Crea un cargo manual para un estudiante.</DialogDescription>
+            <DialogContent className="max-w-[500px] p-0 overflow-hidden bg-white rounded-2xl border border-slate-100 shadow-2xl">
+                <DialogHeader className="px-6 pt-6 pb-2">
+                    <DialogTitle className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                        Asignar Nuevo Cobro
+                    </DialogTitle>
+                    <DialogDescription className="text-slate-500">
+                        Crea un cargo manual para un estudiante.
+                    </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4 py-4">
+                <div className="space-y-5 px-6 py-4">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Estudiante</label>
-                        <SimpleDropdown
-                            options={students.map(s => ({ value: s.id, label: `${s.firstName} ${s.lastName}` }))}
-                            onSelect={setSelectedStudentId}
-                            searchPlaceholder="Buscar alumno..."
-                            emptyMessage="No encontrado"
-                            trigger={
-                                <Button variant="outline" className="w-full justify-between text-left font-normal">
-                                    {selectedStudentId
-                                        ? students.find(s => s.id === selectedStudentId)?.firstName + " " + students.find(s => s.id === selectedStudentId)?.lastName
-                                        : "Seleccionar alumno"}
-                                </Button>
-                            }
+                        <label className="text-sm font-semibold text-slate-700">Estudiante</label>
+                        <PremiumSelect
+                            value={selectedStudentId}
+                            onValueChange={setSelectedStudentId}
+                            options={students.map(s => ({
+                                value: s.id,
+                                label: `${s.firstName} ${s.lastName}`,
+                                // image prop removed as it's not in the interface either
+                            }))}
+                            placeholder="Seleccionar alumno..."
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Usar Plantilla (Opcional)</label>
-                        <Select onValueChange={handleTemplateSelect}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar concepto..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {templates.map(t => (
-                                    <SelectItem key={t.id} value={t.id}>{t.name} - ${t.amount}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <label className="text-sm font-semibold text-slate-700">Usar Plantilla (Opcional)</label>
+                        <PremiumSelect
+                            value={selectedTemplateId}
+                            onValueChange={handleTemplateSelect}
+                            options={templates.map(t => ({
+                                value: t.id,
+                                label: `${t.name} - $${t.amount}`
+                            }))}
+                            placeholder="Seleccionar concepto..."
+                        />
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Concepto</label>
-                        <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ej. Colegiatura Enero" />
+                        <label className="text-sm font-semibold text-slate-700">Concepto</label>
+                        <Input
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder="Ej. Colegiatura Enero"
+                            className="modern-input"
+                        />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Monto</label>
-                            <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
+                            <label className="text-sm font-semibold text-slate-700">Monto</label>
+                            <Input
+                                type="number"
+                                value={amount}
+                                onChange={(e) => setAmount(e.target.value)}
+                                placeholder="0.00"
+                                className="modern-input"
+                            />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Fecha Límite</label>
-                            <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+                            <label className="text-sm font-semibold text-slate-700">Fecha Límite</label>
+                            <Input
+                                type="date"
+                                value={dueDate}
+                                onChange={(e) => setDueDate(e.target.value)}
+                                className="modern-input"
+                            />
                         </div>
                     </div>
                 </div>
 
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-                    <Button onClick={handleAssign} disabled={loading || !selectedStudentId || !title || !amount || !dueDate}>Asignar</Button>
+                <DialogFooter className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-end gap-3">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => onOpenChange(false)}
+                        className="button-modern !bg-white !text-slate-700 !border !border-slate-200 hover:!bg-slate-50 shadow-sm transition-all"
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        onClick={handleAssign}
+                        disabled={loading || !selectedStudentId || !title || !amount || !dueDate}
+                        className="button-modern bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md border-none"
+                    >
+                        {loading ? "Asignando..." : "Asignar Cobro"}
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

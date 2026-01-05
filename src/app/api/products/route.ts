@@ -41,6 +41,8 @@ export async function GET(req: Request) {
     }
 }
 
+import { checkLimit, incrementResourceCount } from "@/lib/plan-limits";
+
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
 
@@ -60,6 +62,19 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Business not found" }, { status: 404 });
         }
 
+        // VALIDAR LÍMITE DE PLAN
+        const limitCheck = await checkLimit(user.businessId, "inventory");
+
+        if (!limitCheck.allowed) {
+            return NextResponse.json({
+                error: "LIMIT_REACHED",
+                message: limitCheck.message,
+                limit: limitCheck.limit,
+                current: limitCheck.current,
+                planName: limitCheck.planName
+            }, { status: 403 });
+        }
+
         const product = await prisma.product.create({
             data: {
                 name,
@@ -76,6 +91,9 @@ export async function POST(req: Request) {
                 }
             }
         });
+
+        // Incrementar contador
+        await incrementResourceCount(user.businessId, "inventory");
 
         return NextResponse.json(product);
     } catch (error) {

@@ -85,7 +85,7 @@ export async function POST(req: Request) {
             }
         });
 
-        // Actualizar el monto restante de la orden
+        // Actualizar el monto restante de la orden y datos fiscales
         const newRemainingAmount = Math.max(0, order.remainingAmount - paymentAmount);
 
         // Si se pagó todo, marcar la orden como completada y actualizar mesa
@@ -95,6 +95,8 @@ export async function POST(req: Request) {
             where: { id: orderId },
             data: {
                 remainingAmount: newRemainingAmount,
+                customerId: body.customerId || undefined,
+                requiresInvoice: body.requiresInvoice || false,
                 ...(isFullyPaid ? { status: 'COMPLETED' } : {})
             }
         });

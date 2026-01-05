@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
+import { CustomerSelector } from "@/components/sales/customer-selector";
+import { CustomerFiscalModal } from "@/components/sales/customer-fiscal-modal";
 
 interface StudentPaymentModalProps {
     studentId: string | null;
@@ -78,6 +80,11 @@ export function StudentPaymentModal({
     const [teachers, setTeachers] = useState<any[]>([]);
     const [defaultTeacher, setDefaultTeacher] = useState<any>(null);
     const { toast } = useToast();
+
+    // Invoicing
+    const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
+    const [requiresInvoice, setRequiresInvoice] = useState(false);
+    const [isFiscalModalOpen, setIsFiscalModalOpen] = useState(false);
 
     // Fetch teachers with commission setup AND student's default teacher
     useEffect(() => {
@@ -177,6 +184,8 @@ export function StudentPaymentModal({
                     teacherCommission: commission?.teacherNet || null,
                     reserveAmount: commission?.reserveAmount || null,
                     schoolAmount: commission?.schoolAmount || null,
+                    customerId: selectedCustomer?.id,
+                    requiresInvoice: requiresInvoice,
                 }),
             });
 
@@ -408,6 +417,33 @@ export function StudentPaymentModal({
                                             Cancelar
                                         </button>
                                     </div>
+
+                                    {/* Invoicing Section - Full Width */}
+                                    <div className="col-span-full border-t pt-4 mt-2">
+                                        <div className="flex flex-col gap-2">
+                                            <span className="text-sm font-medium text-slate-700">Datos de Facturación (Opcional)</span>
+                                            <div className="flex flex-wrap items-center gap-4">
+                                                <div className="w-full md:w-auto md:flex-1 min-w-[200px]">
+                                                    <CustomerSelector
+                                                        selectedCustomer={selectedCustomer}
+                                                        onSelect={setSelectedCustomer}
+                                                        onNewCustomer={() => setIsFiscalModalOpen(true)}
+                                                    />
+                                                </div>
+                                                {selectedCustomer && (
+                                                    <label className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-100 transition-all">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={requiresInvoice}
+                                                            onChange={(e) => setRequiresInvoice(e.target.checked)}
+                                                            className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 border-gray-300"
+                                                        />
+                                                        <span className="text-sm font-medium text-slate-700">Requiere Factura</span>
+                                                    </label>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Commission breakdown */}
@@ -438,6 +474,11 @@ export function StudentPaymentModal({
                         )}
                     </div>
                 )}
+                <CustomerFiscalModal
+                    isOpen={isFiscalModalOpen}
+                    onClose={() => setIsFiscalModalOpen(false)}
+                    onSave={(customer) => setSelectedCustomer(customer)}
+                />
             </DialogContent>
         </Dialog>
     );

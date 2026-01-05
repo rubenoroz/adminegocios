@@ -67,10 +67,12 @@ export async function POST(
                 amount: paymentAmount,
                 method,
                 // Commission tracking
-                teacherId: teacherId || null,
                 teacherCommission: teacherCommission ? parseFloat(teacherCommission) : null,
                 reserveAmount: reserveAmount ? parseFloat(reserveAmount) : null,
                 schoolAmount: schoolAmount ? parseFloat(schoolAmount) : null,
+                // Invoicing
+                customerId: body.customerId || undefined,
+                requiresInvoice: body.requiresInvoice || false,
             },
         });
 

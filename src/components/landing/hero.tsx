@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 
-export function Hero({ dict }: { dict: any }) {
+export function Hero({ dict, lang }: { dict: any; lang: string }) {
+    const safeLang = lang?.split('/')[0] || 'es';
+    const registerPath = `/${safeLang}/register`;
+
     return (
         <section className="hero-section" style={{
             maxWidth: '1280px',
@@ -33,7 +36,7 @@ export function Hero({ dict }: { dict: any }) {
 
                 {/* Botones en fila */}
                 <div className="hero-buttons" style={{ marginTop: '40px' }}>
-                    <Link href="/register">
+                    <Link href={registerPath}>
                         <button style={{
                             padding: '16px 32px',
                             borderRadius: '8px',

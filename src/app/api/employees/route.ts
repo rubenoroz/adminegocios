@@ -91,19 +91,17 @@ export async function POST(req: Request) {
             connectedBranches = branchIds.map((id: string) => ({ id }));
         }
 
-        // VALIDAR LÍMITE DE PLAN (solo para maestros)
-        if (role === "TEACHER") {
-            const limitCheck = await checkLimit(user.businessId, "teachers");
+        // __VALIDAR LÍMITE DE PLAN (Global para empleados)__
+        const limitCheck = await checkLimit(user.businessId, "employees");
 
-            if (!limitCheck.allowed) {
-                return NextResponse.json({
-                    error: "LIMIT_REACHED",
-                    message: limitCheck.message,
-                    limit: limitCheck.limit,
-                    current: limitCheck.current,
-                    planName: limitCheck.planName
-                }, { status: 403 });
-            }
+        if (!limitCheck.allowed) {
+            return NextResponse.json({
+                error: "LIMIT_REACHED",
+                message: limitCheck.message,
+                limit: limitCheck.limit,
+                current: limitCheck.current,
+                planName: limitCheck.planName
+            }, { status: 403 });
         }
 
         const employee = await prisma.employee.create({
@@ -149,11 +147,6 @@ export async function POST(req: Request) {
             }
         } catch (userError) {
             console.error("Failed to auto-create user for employee:", userError);
-        }
-
-        // Incrementar contador si es maestro
-        if (role === "TEACHER") {
-            await incrementResourceCount(user.businessId, "teachers");
         }
 
         return NextResponse.json(employee);

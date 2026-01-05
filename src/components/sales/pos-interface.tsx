@@ -6,6 +6,8 @@ import { useSync } from "@/hooks/use-sync";
 import { Input } from "@/components/ui/input";
 import { Search, ShoppingCart, Trash2, Plus, Minus, Package, DollarSign, CreditCard, Banknote, X, Filter, Camera, ScanLine } from "lucide-react";
 import dynamic from "next/dynamic";
+import { CustomerSelector } from "@/components/sales/customer-selector";
+import { CustomerFiscalModal } from "@/components/sales/customer-fiscal-modal";
 
 const BarcodeScanner = dynamic(() => import("@/components/inventory/barcode-scanner").then(mod => mod.BarcodeScanner), { ssr: false });
 
@@ -20,6 +22,11 @@ export function POSInterface() {
     const [scannerOpen, setScannerOpen] = useState(false);
     const [scanFeedback, setScanFeedback] = useState<string | null>(null);
     const [stockWarning, setStockWarning] = useState<string | null>(null);
+
+    // Customer State
+    const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
+    const [requiresInvoice, setRequiresInvoice] = useState(false);
+    const [isFiscalModalOpen, setIsFiscalModalOpen] = useState(false);
 
     // USB Scanner listener - detects rapid keystrokes
     const barcodeBuffer = useRef("");
@@ -110,6 +117,16 @@ export function POSInterface() {
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [handleBarcodeScanned]);
 
+    const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
+    const [requiresInvoice, setRequiresInvoice] = useState(false);
+    const [isFiscalModalOpen, setIsFiscalModalOpen] = useState(false);
+
+    // Import components dynamically or statically? Static is fine here as they are small.
+    // Wait, I need to add imports at top. I can't add imports with replace_file_content safely if I don't target the top block too.
+    // I will do imports in a separate call or use a larger replacement chunk.
+
+    // ... logic ...
+
     const handleCheckout = async () => {
         if (items.length === 0) return;
         setLoading(true);
@@ -121,7 +138,9 @@ export function POSInterface() {
                 price: item.price
             })),
             total,
-            paymentMethod: "CASH"
+            paymentMethod: "CASH",
+            customerId: selectedCustomer?.id,
+            requiresInvoice: requiresInvoice
         };
 
         try {
@@ -129,6 +148,8 @@ export function POSInterface() {
                 await saveSaleOffline(saleData);
                 alert("Venta guardada localmente (Modo Offline)");
                 clearCart();
+                setSelectedCustomer(null);
+                setRequiresInvoice(false);
                 setLoading(false);
                 return;
             }
@@ -142,6 +163,8 @@ export function POSInterface() {
             if (res.ok) {
                 alert("Venta realizada con éxito");
                 clearCart();
+                setSelectedCustomer(null);
+                setRequiresInvoice(false);
             } else {
                 alert("Error al procesar la venta");
             }
@@ -150,10 +173,15 @@ export function POSInterface() {
             await saveSaleOffline(saleData);
             alert("Error de conexión. Venta guardada localmente.");
             clearCart();
+            setSelectedCustomer(null);
+            setRequiresInvoice(false);
         } finally {
             setLoading(false);
         }
     };
+
+    // ... render ...
+
 
     const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
 
@@ -387,7 +415,7 @@ export function POSInterface() {
             >
                 {/* Cart Header */}
                 <div style={{ padding: '16px', borderBottom: '1px solid #E2E8F0' }}>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 mb-4">
                         <div
                             style={{
                                 width: '40px',
@@ -406,7 +434,36 @@ export function POSInterface() {
                             <p className="text-sm text-slate-500">{items.length} productos</p>
                         </div>
                     </div>
+
+                    {/* Customer Selector */}
+                    <div className="space-y-2">
+                        <CustomerSelector
+                            selectedCustomer={selectedCustomer}
+                            onSelect={setSelectedCustomer}
+                            onNewCustomer={() => setIsFiscalModalOpen(true)}
+                        />
+                        {selectedCustomer && (
+                            <label className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-100 transition-all">
+                                <input
+                                    type="checkbox"
+                                    checked={requiresInvoice}
+                                    onChange={(e) => setRequiresInvoice(e.target.checked)}
+                                    className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 border-gray-300"
+                                />
+                                <span className="text-sm font-medium text-slate-700">Requiere Factura</span>
+                                {requiresInvoice && !selectedCustomer.taxId && (
+                                    <span className="text-xs text-amber-600 font-bold ml-auto">⚠️ Falta RFC</span>
+                                )}
+                            </label>
+                        )}
+                    </div>
                 </div>
+
+                <CustomerFiscalModal
+                    isOpen={isFiscalModalOpen}
+                    onClose={() => setIsFiscalModalOpen(false)}
+                    onSave={(customer) => setSelectedCustomer(customer)}
+                />
 
                 {/* Cart Items */}
                 <div className="flex-1 overflow-y-auto" style={{ padding: '16px' }}>

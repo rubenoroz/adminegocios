@@ -2,11 +2,15 @@ import { getDictionary } from "@/lib/dictionaries";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
 import Link from "next/link";
 import { BrandingSettings } from "@/components/settings/branding-settings";
+import { BusinessForm } from "@/components/settings/business-form";
 import { UserManagement } from "@/components/settings/user-management";
 import { PayrollSettings } from "@/components/settings/payroll-settings";
 import { AcademicSettings } from "@/components/settings/academic-settings";
@@ -76,26 +80,10 @@ export default async function SettingsPage({ params }: { params: Promise<{ lang:
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                     <div className="p-6 border-b border-slate-100 bg-slate-50/50">
                         <h3 className="font-bold text-lg text-slate-800">{t.businessInfo}</h3>
-                        <p className="text-sm text-slate-500">Información general de tu empresa</p>
+                        <p className="text-sm text-slate-500">Información general y datos fiscales</p>
                     </div>
-                    <div className="p-6 space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">{t.businessName}</label>
-                                <Input defaultValue={business?.name} disabled className="bg-slate-50" />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">{t.businessType}</label>
-                                <Input defaultValue={dict.businessTypes[business?.type?.toLowerCase() as keyof typeof dict.businessTypes] || business?.type} disabled className="bg-slate-50" />
-                            </div>
-                        </div>
-
-                        <div style={{ marginTop: '24px' }}>
-                            <Link href={`/${lang}/dashboard/settings/branches`} className="button-modern bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-800 hover:to-slate-700 inline-flex items-center gap-2" style={{ borderRadius: '8px' }}>
-                                <Settings className="h-4 w-4" />
-                                {t.manageBranches}
-                            </Link>
-                        </div>
+                    <div className="p-6">
+                        {business && <BusinessForm business={business} lang={lang} />}
                     </div>
                 </div>
 

@@ -1,5 +1,6 @@
 import { Hero } from "@/components/landing/hero";
 import { DiagnosisForm } from "@/components/landing/diagnosis-form";
+import { FaqSection } from "@/components/landing/faq-section";
 import { Features } from "@/components/landing/features";
 import { getDictionary } from "@/lib/dictionaries";
 import { Navbar } from "@/components/landing/navbar";
@@ -8,6 +9,7 @@ import { PricingSection } from "@/components/landing/pricing-section";
 
 export default async function Home({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
+  console.log('Landing Page PARAMS lang:', lang);
   const dict = await getDictionary(lang as any);
 
   return (
@@ -16,11 +18,12 @@ export default async function Home({ params }: { params: Promise<{ lang: string 
       background: 'linear-gradient(to bottom, #0a0f0d, #0d1510, #0a0f0d)',
       color: '#f1f5f9'
     }}>
-      <Navbar dict={dict.landing.nav} />
-      <Hero dict={dict.landing.hero} />
+      <Navbar dict={dict.landing.nav} lang={lang} />
+      <Hero dict={dict.landing.hero} lang={lang} />
       <Features dict={dict.landing.features} />
       <PricingSection />
       <DiagnosisForm dict={dict.landing.diagnosis} />
+      <FaqSection />
 
       {/* Footer */}
       <footer style={{

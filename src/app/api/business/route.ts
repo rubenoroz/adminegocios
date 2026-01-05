@@ -60,3 +60,35 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Internal Error" }, { status: 500 });
     }
 }
+
+export async function PATCH(req: Request) {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user?.businessId) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    try {
+        const body = await req.json();
+        console.log("[BUSINESS_PATCH] Payload:", body);
+        const { name, taxId, legalName, taxRegime, taxZipCode } = body;
+
+        // Basic validation could be improved
+
+        const business = await prisma.business.update({
+            where: { id: session.user.businessId },
+            data: {
+                ...(name && { name }),
+                ...(taxId !== undefined && { taxId }),
+                ...(legalName !== undefined && { legalName }),
+                ...(taxRegime !== undefined && { taxRegime }),
+                ...(taxZipCode !== undefined && { taxZipCode }),
+            }
+        });
+
+        return NextResponse.json(business);
+    } catch (error) {
+        console.error("[BUSINESS_PATCH]", error);
+        return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    }
+}

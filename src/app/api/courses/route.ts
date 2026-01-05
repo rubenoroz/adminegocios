@@ -198,7 +198,7 @@ export async function DELETE(req: Request) {
             });
 
             // Decrementar contador por cada curso eliminado
-            for (let i = 0; i < result.count; i++) {
+            for (let i = 0; i < deleted.count; i++) {
                 await decrementResourceCount(session.user.businessId!, "courses");
             }
 

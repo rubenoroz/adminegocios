@@ -103,6 +103,9 @@ export default function FinancePage() {
                 </div>
             </motion.div>
 
+            {/* SPACER */}
+            <div style={{ height: '64px' }} className="w-full" aria-hidden="true" />
+
             {/* TAB BUTTONS */}
             <div style={{ padding: '0 var(--spacing-lg)', marginBottom: '32px' }}>
                 <div style={{ display: 'flex', flexDirection: 'row', gap: '12px' }}>

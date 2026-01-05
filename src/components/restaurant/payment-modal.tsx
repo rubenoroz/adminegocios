@@ -4,6 +4,8 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CreditCard, Banknote, Users, CheckCircle, ArrowRight, Coins, Wallet } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { CustomerSelector } from "@/components/sales/customer-selector";
+import { CustomerFiscalModal } from "@/components/sales/customer-fiscal-modal";
 
 interface OrderItem {
     id: string;
@@ -60,6 +62,11 @@ export function PaymentModal({ order, tableName, onClose, onPaymentComplete }: P
     const [tipPercentage, setTipPercentage] = useState<number | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [currentOrder, setCurrentOrder] = useState(order);
+
+    // Customer & Fiscal Data
+    const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
+    const [requiresInvoice, setRequiresInvoice] = useState(false);
+    const [isFiscalModalOpen, setIsFiscalModalOpen] = useState(false);
 
     // Actualizar cuando cambia la orden
     useEffect(() => {
@@ -162,7 +169,9 @@ export function PaymentModal({ order, tableName, onClose, onPaymentComplete }: P
                     amount: payAmount,
                     method,
                     tip: tipAmount,
-                    guestName: selectedGuest !== 'Todos' ? selectedGuest : null
+                    guestName: selectedGuest !== 'Todos' ? selectedGuest : null,
+                    customerId: selectedCustomer?.id,
+                    requiresInvoice: requiresInvoice
                 })
             });
 
@@ -324,6 +333,34 @@ export function PaymentModal({ order, tableName, onClose, onPaymentComplete }: P
                             </div>
                         ) : (
                             <>
+                                {/* Customer Selection */}
+                                <div className="mb-6 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">
+                                        Cliente (Opcional)
+                                    </label>
+                                    <div className="space-y-2">
+                                        <CustomerSelector
+                                            selectedCustomer={selectedCustomer}
+                                            onSelect={setSelectedCustomer}
+                                            onNewCustomer={() => setIsFiscalModalOpen(true)}
+                                        />
+                                        {selectedCustomer && (
+                                            <label className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-100 cursor-pointer transition-all">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={requiresInvoice}
+                                                    onChange={(e) => setRequiresInvoice(e.target.checked)}
+                                                    className="w-4 h-4 text-violet-600 rounded focus:ring-violet-500 border-gray-300"
+                                                />
+                                                <span className="text-sm font-medium text-slate-700">Requiere Factura</span>
+                                                {requiresInvoice && !selectedCustomer.taxId && (
+                                                    <span className="text-xs text-amber-600 font-bold ml-auto">⚠️ Falta RFC</span>
+                                                )}
+                                            </label>
+                                        )}
+                                    </div>
+                                </div>
+
                                 {/* Payment Modes */}
                                 <div className="grid grid-cols-4 gap-2 mb-6">
                                     {[
@@ -336,8 +373,8 @@ export function PaymentModal({ order, tableName, onClose, onPaymentComplete }: P
                                             key={m.id}
                                             onClick={() => handleModeChange(m.id)}
                                             className={`p-3 rounded-xl flex flex-col items-center justify-center gap-1 text-xs font-medium transition-all ${paymentMode === m.id
-                                                    ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg'
-                                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg'
+                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                                 }`}
                                         >
                                             <m.icon size={18} />
@@ -419,8 +456,8 @@ export function PaymentModal({ order, tableName, onClose, onPaymentComplete }: P
                                                     key={pct}
                                                     onClick={() => handleTipChange(pct === 0 ? null : pct)}
                                                     className={`py-2 rounded-lg text-xs font-bold transition-colors ${(pct === 0 && tipPercentage === null && tipAmount === 0) || tipPercentage === pct
-                                                            ? 'bg-amber-500 text-white shadow-md'
-                                                            : 'bg-white text-amber-700 border border-amber-200 hover:bg-amber-100'
+                                                        ? 'bg-amber-500 text-white shadow-md'
+                                                        : 'bg-white text-amber-700 border border-amber-200 hover:bg-amber-100'
                                                         }`}
                                                 >
                                                     {pct === 0 ? 'No' : `${pct}%`}
@@ -456,8 +493,8 @@ export function PaymentModal({ order, tableName, onClose, onPaymentComplete }: P
                                                     key={m.id}
                                                     onClick={() => setMethod(m.id)}
                                                     className={`flex-1 py-3 rounded-xl text-sm font-bold border-2 transition-colors flex items-center justify-center gap-2 ${method === m.id
-                                                            ? 'border-violet-600 bg-violet-50 text-violet-700'
-                                                            : 'border-slate-100 text-slate-500 hover:border-slate-200'
+                                                        ? 'border-violet-600 bg-violet-50 text-violet-700'
+                                                        : 'border-slate-100 text-slate-500 hover:border-slate-200'
                                                         }`}
                                                 >
                                                     <m.icon size={16} />
@@ -494,6 +531,11 @@ export function PaymentModal({ order, tableName, onClose, onPaymentComplete }: P
                         )}
                     </div>
                 </div>
+                <CustomerFiscalModal
+                    isOpen={isFiscalModalOpen}
+                    onClose={() => setIsFiscalModalOpen(false)}
+                    onSave={(customer) => setSelectedCustomer(customer)}
+                />
             </motion.div>
         </div>
     );

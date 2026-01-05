@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { checkLimit } from "@/lib/plan-limits";
 
 export async function GET(
     req: Request,
@@ -39,6 +40,28 @@ export async function POST(
 
         const { moduleId } = await params;
         const { title, content } = await req.json();
+
+        // Obtener usuario para verificar businessId
+        const user = await prisma.user.findUnique({
+            where: { email: session.user.email }
+        });
+
+        if (!user?.businessId) {
+            return NextResponse.json({ error: "Business not found" }, { status: 404 });
+        }
+
+        // VALIDAR LÍMITE DE PLAN
+        const limitCheck = await checkLimit(user.businessId, "lessons");
+
+        if (!limitCheck.allowed) {
+            return NextResponse.json({
+                error: "LIMIT_REACHED",
+                message: limitCheck.message,
+                limit: limitCheck.limit,
+                current: limitCheck.current,
+                planName: limitCheck.planName
+            }, { status: 403 });
+        }
 
         const lastLesson = await prisma.lesson.findFirst({
             where: { moduleId },

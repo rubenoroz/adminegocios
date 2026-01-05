@@ -135,6 +135,12 @@ model Business {
   logoHeight       Int?     @default(64)
   gradingConfig    String?  // JSON string: { periods: [], passingGrade: 70 }
   
+  // Tax / Fiscal Data
+  taxId            String?  // RFC
+  legalName        String?  // Razón Social
+  taxRegime        String?  // Régimen Fiscal (Code or Name)
+  taxZipCode       String?  // CP Fiscal
+  
   // Plan and Limits
   planId      String?  @default("free")
   plan        Plan?    @relation(fields: [planId], references: [id])
@@ -247,6 +253,14 @@ model Customer {
   email       String?
   phone       String?
   
+  // Tax Data
+  taxId       String?  // RFC
+  legalName   String?  // Razón Social
+  taxRegime   String?
+  taxZipCode  String?
+  taxEmail    String?
+  cfdiUse     String?  // Uso de CFDI (G03, P01, etc.)
+  
   // Specific for schools
   studentId   String?  // Matricula
   
@@ -254,6 +268,8 @@ model Customer {
   business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   sales       Sale[]
   appointments Appointment[]
+  orders      Order[]
+  studentPayments StudentPayment[]
 }
 
 model Supplier {
@@ -265,6 +281,9 @@ model Supplier {
   address     String?
   category    String?
   createdAt   DateTime @default(now())
+  
+  // Tax Data
+  taxId       String?  // RFC
   
   businessId  String
   business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
@@ -341,6 +360,16 @@ model Appointment {
   
   branchId    String
   branch      Branch   @relation(fields: [branchId], references: [id])
+  
+  // Payment & Invoicing
+  price       Float?   // Price at the moment of appointment
+  paymentStatus String @default("PENDING") // PENDING, PAID
+  paymentMethod String? // CASH, CARD, TRANSFER
+  requiresInvoice Boolean @default(false)
+  
+  // Link to accounting
+  transactionId String? @unique
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
 }
 
 model Sale {
@@ -349,6 +378,12 @@ model Sale {
   total       Float
   status      String   @default("COMPLETED") // COMPLETED, PENDING, CANCELLED
   paymentMethod String? // CASH, CARD, TRANSFER
+  
+  // Invoicing
+  requiresInvoice Boolean @default(false)
+  invoiceStatus   String  @default("PENDING") // PENDING, GENERATED, CANCELLED
+  invoiceUrl      String? // PDF URL
+  invoiceXmlUrl   String? // XML URL
   
   branchId    String
   branch      Branch   @relation(fields: [branchId], references: [id])
@@ -425,6 +460,7 @@ model Transaction {
   
   // Optional relations for traceability
   saleId      String?
+  appointment Appointment?
   sale        Sale?    @relation(fields: [saleId], references: [id])
   expenseId   String?
   expense     Expense? @relation(fields: [expenseId], references: [id])
@@ -478,6 +514,12 @@ model Order {
   
   items       OrderItem[]
   payments    Payment[]
+
+  // Invoicing
+  requiresInvoice Boolean  @default(false)
+  
+  customerId  String?
+  customer    Customer? @relation(fields: [customerId], references: [id])
 }
 
 model OrderItem {
@@ -822,6 +864,12 @@ model StudentPayment {
   // Link to core accounting
   transactionId String? @unique
   transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  
+  // Invoicing
+  requiresInvoice Boolean  @default(false)
+  
+  customerId  String?
+  customer    Customer? @relation(fields: [customerId], references: [id])
 }
 
 model ScheduledPayment {

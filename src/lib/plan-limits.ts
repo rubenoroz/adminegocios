@@ -1,6 +1,6 @@
 import { prisma } from "./prisma";
 
-export type ResourceType = "courses" | "teachers" | "students" | "branches" | "inventory";
+export type ResourceType = "courses" | "teachers" | "students" | "branches" | "inventory" | "lessons" | "employees";
 
 export interface LimitCheckResult {
     allowed: boolean;
@@ -34,14 +34,73 @@ export async function checkLimit(
         throw new Error("No plan found");
     }
 
+    // Lógica especial para ramas (no tiene contador en Business)
+    if (resource === "branches") {
+        const current = await prisma.branch.count({ where: { businessId } });
+        const limit = plan.maxBranches;
+
+        if (limit === null) return { allowed: true, current, planName: plan.name, message: "Plan ilimitado" };
+
+        return {
+            allowed: current < limit,
+            limit,
+            current,
+            planName: plan.name,
+            message: current < limit ? `Puedes crear ${limit - current} más` : `Límite de ${limit} sucursales alcanzado`
+        };
+    }
+
+    // Lógica especial para empleados (usamos maxTeachers como límite general)
+    if (resource === "employees") {
+        const current = await prisma.employee.count({ where: { businessId } });
+        const limit = plan.maxTeachers;
+
+        if (limit === null) return { allowed: true, current, planName: plan.name, message: "Plan ilimitado" };
+
+        return {
+            allowed: current < limit,
+            limit,
+            current,
+            planName: plan.name,
+            message: current < limit ? `Puedes crear ${limit - current} más` : `Límite de ${limit} empleados alcanzado`
+        };
+    }
+
+    // Lógica especial para Lecciones (no tiene límite en Plan schema, hardcoded para FREE)
+    if (resource === "lessons") {
+        // Contar lecciones totales del negocio
+        const current = await prisma.lesson.count({
+            where: { module: { course: { businessId } } }
+        });
+
+        // Límite hardcoded para PLAN FREE
+        let limit = null;
+        if (plan.name === "FREE") {
+            limit = 3;
+        }
+
+        if (limit === null) return { allowed: true, current, planName: plan.name, message: "Plan ilimitado" };
+
+        return {
+            allowed: current < limit,
+            limit,
+            current,
+            planName: plan.name,
+            message: current < limit ? `Puedes crear ${limit - current} más` : `Límite de ${limit} lecciones alcanzado`
+        };
+    }
+
     // Mapear recurso a campo de límite y contador
-    const limits: Record<ResourceType, { max: keyof typeof plan; count: keyof typeof business }> = {
+    const limits: Record<string, { max: keyof typeof plan; count: keyof typeof business }> = {
         courses: { max: "maxCourses", count: "coursesCount" },
         teachers: { max: "maxTeachers", count: "teachersCount" },
         students: { max: "maxStudents", count: "studentsCount" },
-        branches: { max: "maxBranches", count: "coursesCount" }, // Usamos coursesCount temporalmente
         inventory: { max: "maxInventoryItems", count: "inventoryCount" }
     };
+
+    if (!limits[resource]) {
+        throw new Error(`Invalid resource type: ${resource}`);
+    }
 
     const { max, count } = limits[resource];
     const limit = plan[max] as number | null;
@@ -68,7 +127,7 @@ export async function checkLimit(
         planName: plan.name,
         message: allowed
             ? `Puedes crear ${limit - current} más`
-            : `Has alcanzado el límite de ${limit} ${resource}. Actualiza tu plan.`
+            : `Has alcanzado el límite de ${limit} ${resource === 'teachers' ? 'empleados/maestros' : resource}. Actualiza tu plan.`
     };
 }
 
@@ -79,15 +138,15 @@ export async function incrementResourceCount(
     businessId: string,
     resource: ResourceType
 ) {
-    const counters: Record<ResourceType, string> = {
+    const counters: Partial<Record<ResourceType, string>> = {
         courses: "coursesCount",
         teachers: "teachersCount",
         students: "studentsCount",
-        branches: "coursesCount", // temporal
         inventory: "inventoryCount"
     };
 
-    const field = counters[resource] as "coursesCount" | "teachersCount" | "studentsCount" | "inventoryCount";
+    const field = counters[resource];
+    if (!field) return; // Si no hay campo contador (ej: branches, lessons), no hacemos nada
 
     await prisma.business.update({
         where: { id: businessId },
@@ -106,15 +165,15 @@ export async function decrementResourceCount(
     businessId: string,
     resource: ResourceType
 ) {
-    const counters: Record<ResourceType, string> = {
+    const counters: Partial<Record<ResourceType, string>> = {
         courses: "coursesCount",
         teachers: "teachersCount",
         students: "studentsCount",
-        branches: "coursesCount", // temporal
         inventory: "inventoryCount"
     };
 
-    const field = counters[resource] as "coursesCount" | "teachersCount" | "studentsCount" | "inventoryCount";
+    const field = counters[resource];
+    if (!field) return;
 
     await prisma.business.update({
         where: { id: businessId },

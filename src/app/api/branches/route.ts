@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { checkLimit } from "@/lib/plan-limits";
 
 export async function GET(req: Request) {
     try {
@@ -39,6 +40,19 @@ export async function POST(req: Request) {
 
         if (!name) {
             return NextResponse.json({ error: "Name is required" }, { status: 400 });
+        }
+
+        // VALIDAR LÍMITE DE PLAN
+        const limitCheck = await checkLimit(session.user.businessId, "branches");
+
+        if (!limitCheck.allowed) {
+            return NextResponse.json({
+                error: "LIMIT_REACHED",
+                message: limitCheck.message,
+                limit: limitCheck.limit,
+                current: limitCheck.current,
+                planName: limitCheck.planName
+            }, { status: 403 });
         }
 
         const branch = await prisma.branch.create({

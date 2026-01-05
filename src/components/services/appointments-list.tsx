@@ -5,6 +5,9 @@ import { motion } from "framer-motion";
 import { Plus, Calendar, Clock, User, Phone, Filter, Check, X, Play, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { Banknote, CreditCard, Wallet } from "lucide-react";
+import { CustomerSelector } from "@/components/sales/customer-selector";
+import { CustomerFiscalModal } from "@/components/sales/customer-fiscal-modal";
 
 interface Appointment {
     id: string;
@@ -41,6 +44,14 @@ export function AppointmentsList() {
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [form, setForm] = useState({ serviceId: "", customerId: "", employeeId: "", startTime: "", notes: "" });
     const { toast } = useToast();
+
+    // Payment State
+    const [payOpen, setPayOpen] = useState(false);
+    const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+    const [paymentMethod, setPaymentMethod] = useState("CASH");
+    const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
+    const [requiresInvoice, setRequiresInvoice] = useState(false);
+    const [isFiscalModalOpen, setIsFiscalModalOpen] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -112,6 +123,46 @@ export function AppointmentsList() {
             toast({ title: `Estado actualizado a ${STATUS_CONFIG[status]?.label}` });
         } catch (error) {
             console.error(error);
+        }
+    };
+
+    const openPaymentModal = (apt: Appointment) => {
+        setSelectedAppointment(apt);
+        // Pre-select the appointment's customer
+        // We need to match the shape expected by CustomerSelector, or just pass id/name
+        // The API returns basic customer info, so we might need to fetch full details or just pass what we have
+        // But CustomerSelector expects full object or at least id/name to show.
+        // Let's assume the basic info is enough to start.
+        setSelectedCustomer(apt.customer ? { ...apt.customer, legalName: apt.customer.name, taxId: '' } : null);
+        setRequiresInvoice(false);
+        setPayOpen(true);
+    };
+
+    const handlePayment = async () => {
+        if (!selectedAppointment) return;
+
+        try {
+            const res = await fetch(`/api/appointments/${selectedAppointment.id}/pay`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    paymentMethod,
+                    customerId: selectedCustomer?.id,
+                    requiresInvoice
+                })
+            });
+
+            if (res.ok) {
+                toast({ title: "Cobro registrado correctamente" });
+                fetchData();
+                setPayOpen(false);
+                setSelectedAppointment(null);
+            } else {
+                toast({ title: "Error al registrar cobro", variant: "destructive" });
+            }
+        } catch (error) {
+            console.error(error);
+            toast({ title: "Error de conexión", variant: "destructive" });
         }
     };
 
@@ -283,6 +334,12 @@ export function AppointmentsList() {
                                         <Check size={16} color="#059669" />
                                     </button>
                                 )}
+                                {apt.status !== "CANCELLED" && (
+                                    <button onClick={() => openPaymentModal(apt)} title="Cobrar"
+                                        style={{ padding: '8px', borderRadius: '8px', backgroundColor: '#EFF6FF', border: 'none', cursor: 'pointer' }}>
+                                        <Banknote size={16} color="#3B82F6" />
+                                    </button>
+                                )}
                                 {apt.status !== "COMPLETED" && apt.status !== "CANCELLED" && (
                                     <button onClick={() => updateStatus(apt.id, "CANCELLED")} title="Cancelar"
                                         style={{ padding: '8px', borderRadius: '8px', backgroundColor: '#FEE2E2', border: 'none', cursor: 'pointer' }}>
@@ -302,6 +359,95 @@ export function AppointmentsList() {
                     </div>
                 )}
             </div>
+            {/* Payment Modal */}
+            <Dialog open={payOpen} onOpenChange={setPayOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Cobrar Cita</DialogTitle>
+                    </DialogHeader>
+                    {selectedAppointment && (
+                        <div className="space-y-4 py-4">
+                            <div className="bg-slate-50 p-4 rounded-lg flex justify-between items-center">
+                                <span className="text-slate-600">Total a Pagar:</span>
+                                <span className="text-2xl font-bold text-slate-900">${selectedAppointment.service.price}</span>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-slate-700">Método de Pago</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {[
+                                        { id: 'CASH', label: 'Efectivo', icon: Banknote },
+                                        { id: 'CARD', label: 'Tarjeta', icon: CreditCard },
+                                        { id: 'TRANSFER', label: 'Transfer', icon: Wallet },
+                                    ].map(m => (
+                                        <button
+                                            key={m.id}
+                                            onClick={() => setPaymentMethod(m.id)}
+                                            className={`p-2 rounded-lg border text-sm flex flex-col items-center gap-1 transition-all ${paymentMethod === m.id
+                                                    ? 'border-blue-600 bg-blue-50 text-blue-700 font-medium'
+                                                    : 'border-slate-200 hover:bg-slate-50'
+                                                }`}
+                                        >
+                                            <m.icon size={16} />
+                                            {m.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="border-t pt-4">
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <label className="text-sm font-medium text-slate-700">Datos Fiscales</label>
+                                        <button
+                                            onClick={() => setIsFiscalModalOpen(true)}
+                                            className="text-xs text-blue-600 hover:underline"
+                                        >
+                                            Actualizar Datos
+                                        </button>
+                                    </div>
+                                    <CustomerSelector
+                                        selectedCustomer={selectedCustomer}
+                                        onSelect={setSelectedCustomer}
+                                        onNewCustomer={() => setIsFiscalModalOpen(true)}
+                                    />
+                                    {selectedCustomer && (
+                                        <label className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-100 transition-all">
+                                            <input
+                                                type="checkbox"
+                                                checked={requiresInvoice}
+                                                onChange={(e) => setRequiresInvoice(e.target.checked)}
+                                                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+                                            />
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-medium text-slate-700">Requiere Factura</span>
+                                                {requiresInvoice && !selectedCustomer.taxId && (
+                                                    <span className="text-xs text-amber-600 font-bold">⚠️ Falta RFC</span>
+                                                )}
+                                            </div>
+                                        </label>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <button
+                            onClick={handlePayment}
+                            disabled={!selectedAppointment}
+                            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-blue-200"
+                        >
+                            Confirmar Cobro
+                        </button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <CustomerFiscalModal
+                isOpen={isFiscalModalOpen}
+                onClose={() => setIsFiscalModalOpen(false)}
+                onSave={(customer) => setSelectedCustomer(customer)}
+            />
         </div>
     );
 }

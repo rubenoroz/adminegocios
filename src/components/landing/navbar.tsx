@@ -6,7 +6,11 @@ import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export function Navbar({ dict }: { dict: any }) {
+export function Navbar({ dict, lang }: { dict: any; lang: string }) {
+    // Sanitize lang to ensure we don't duplicate paths if lang is polluted
+    const safeLang = lang?.split('/')[0] || 'es';
+    const loginPath = `/${safeLang}/login`;
+
     const [isOpen, setIsOpen] = useState(false);
 
     return (
@@ -15,7 +19,6 @@ export function Navbar({ dict }: { dict: any }) {
             margin: '0 auto',
             padding: '40px 40px',
             // On desktop we want flex. On mobile we might want block to handle absolute overlay. 
-            // But styling is handled largely via inline + CSS overrides. 
             // We'll keep default flex for desktop stability.
             display: 'flex',
             alignItems: 'center',
@@ -27,7 +30,7 @@ export function Navbar({ dict }: { dict: any }) {
             {/* ================= DESKTOP ELEMENTS (Hidden on Mobile via CSS) ================= */}
 
             {/* Logo Horizontal */}
-            <Link href="/" className="navbar-logo" style={{
+            <Link href={`/${lang}`} className="navbar-logo" style={{
                 display: 'flex',
                 alignItems: 'center',
                 position: 'absolute',
@@ -49,7 +52,7 @@ export function Navbar({ dict }: { dict: any }) {
             {/* Desktop Actions */}
             <div className="navbar-actions" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
 
-                <Link href="/login">
+                <Link href={loginPath}>
                     <button style={{
                         padding: '8px 20px',
                         borderRadius: '8px',
@@ -67,18 +70,9 @@ export function Navbar({ dict }: { dict: any }) {
             </div>
 
             {/* ================= MOBILE TOGGLE (Visible ONLY on Mobile via Tailwind/CSS) ================= */}
-
-            {/* 
-                We use a dedicated mobile header container that is HIDDEN on desktop 
-                and SHOWN on mobile. Since we can't touch desktop CSS, we use inline styles 
-                that hide it by default, and override via CSS? 
-                Actually, simpler: use Tailwind `hidden md:hidden` etc IF Tailwind is configured?
-                Since we can't rely on Tailwind for everything in this legacy structure, 
-                we'll use a specific class `mobile-header-controls` which we show only on mobile.
-            */}
             <div className="mobile-header-controls" style={{ display: 'none', width: '100%', alignItems: 'center', justifyContent: 'space-between' }}>
                 {/* Mobile Logo */}
-                <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
+                <Link href={`/${lang}`} style={{ display: 'flex', alignItems: 'center' }}>
                     <Image
                         src="/logo-horizontal.svg"
                         alt="ADMNegocios"
@@ -129,7 +123,7 @@ export function Navbar({ dict }: { dict: any }) {
                             zIndex: 100
                         }}
                     >
-                        <Link href="/login" onClick={() => setIsOpen(false)} style={{ width: '100%' }}>
+                        <Link href={loginPath} onClick={() => setIsOpen(false)} style={{ width: '100%' }}>
                             <button style={{
                                 width: '100%',
                                 padding: '12px',
