@@ -134,6 +134,19 @@
         width: 100% !important;
         justify-content: center !important;
     }
+
+    /* Pricing Cards - Stack vertically on mobile */
+    .pricing-cards-container {
+        flex-direction: column !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+    }
+
+    .pricing-cards-container>div {
+        min-width: unset !important;
+        width: 100% !important;
+        max-width: 400px !important;
+    }
 }
 
 /* =========================================
