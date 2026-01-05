@@ -117,9 +117,7 @@ export function POSInterface() {
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [handleBarcodeScanned]);
 
-    const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
-    const [requiresInvoice, setRequiresInvoice] = useState(false);
-    const [isFiscalModalOpen, setIsFiscalModalOpen] = useState(false);
+
 
     // Import components dynamically or statically? Static is fine here as they are small.
     // Wait, I need to add imports at top. I can't add imports with replace_file_content safely if I don't target the top block too.
