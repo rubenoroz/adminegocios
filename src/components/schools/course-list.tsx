@@ -67,6 +67,7 @@ export function CourseList() {
     // Edit states
     const [editOpen, setEditOpen] = useState(false);
     const [editingCourse, setEditingCourse] = useState<any>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     const fetchCourses = async () => {
         try {
@@ -199,6 +200,8 @@ export function CourseList() {
     };
 
     const handleCreate = async () => {
+        if (isSaving) return;
+        setIsSaving(true);
         try {
             const res = await fetch("/api/courses", {
                 method: "POST",
@@ -226,6 +229,8 @@ export function CourseList() {
             }
         } catch (error) {
             toast({ title: "Error al crear curso", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -459,7 +464,7 @@ export function CourseList() {
                                 <div className="grid gap-6 py-4">
                                     <ModernInput label="Nombre del Curso" value={newName} onChange={setNewName} />
                                     <div>
-                                        <label className="block text-sm font-medium mb-2">Descripción</label>
+                                        <label className="block text-sm font-medium mb-2">Descripción (Opcional)</label>
                                         <textarea
                                             value={newDescription}
                                             onChange={(e) => setNewDescription(e.target.value)}
@@ -468,50 +473,14 @@ export function CourseList() {
                                             rows={3}
                                         />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-6">
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">Profesor</label>
-                                            <PremiumSelect
-                                                value={newTeacherId}
-                                                onValueChange={setNewTeacherId}
-                                                placeholder="Seleccionar profesor..."
-                                                label="Seleccionar Profesor"
-                                                options={[
-                                                    { value: "none", label: "Sin asignar" },
-                                                    ...teachers.map((t) => ({ value: t.id, label: t.name }))
-                                                ]}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">Salón</label>
-                                            <PremiumSelect
-                                                value={newClassroomId}
-                                                onValueChange={setNewClassroomId}
-                                                placeholder="Seleccionar salón..."
-                                                label="Seleccionar Salón"
-                                                options={[
-                                                    { value: "none", label: "Sin asignar" },
-                                                    ...classrooms.map((c) => ({
-                                                        value: c.id,
-                                                        label: c.name + (c.branch ? ` (${c.branch.name})` : '')
-                                                    }))
-                                                ]}
-                                            />
-                                        </div>
-                                    </div>
-                                    <CourseScheduleSelector
-                                        value={newSchedules}
-                                        onChange={setNewSchedules}
-                                        classroomId={newClassroomId}
-                                        classroomName={classrooms.find(c => c.id === newClassroomId)?.name}
-                                        onConflictCheck={handleConflictCheck}
-                                    />
-
+                                    <p className="text-sm text-slate-500 bg-slate-50 p-3 rounded-lg">
+                                        💡 Profesores, salones y horarios se asignan desde el <strong>Calendario</strong> en la sección Académico.
+                                    </p>
                                 </div>
                                 <DialogFooter>
                                     <button
                                         onClick={handleCreate}
-                                        disabled={!newName}
+                                        disabled={!newName || isSaving}
                                         style={{
                                             padding: '12px 24px',
                                             borderRadius: '12px',
@@ -521,10 +490,14 @@ export function CourseList() {
                                             fontSize: '14px',
                                             fontWeight: 600,
                                             cursor: 'pointer',
-                                            opacity: !newName ? 0.5 : 1
+                                            opacity: (!newName || isSaving) ? 0.5 : 1,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px'
                                         }}
                                     >
-                                        Crear Curso
+                                        {isSaving && <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
+                                        {isSaving ? "Creando..." : "Crear Curso"}
                                     </button>
                                 </DialogFooter>
                             </DialogContent>

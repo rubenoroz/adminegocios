@@ -63,6 +63,7 @@ export function Reservations() {
     const [searchValue, setSearchValue] = useState("");
     const [filterStatus, setFilterStatus] = useState<string[]>([]);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -138,6 +139,8 @@ export function Reservations() {
 
     // Create reservation
     const handleCreate = async () => {
+        if (isSaving) return;
+        setIsSaving(true);
         try {
             const dateTime = new Date(`${formData.date}T${formData.time}`);
             const res = await fetch("/api/restaurant/reservations", {
@@ -176,6 +179,8 @@ export function Reservations() {
             }
         } catch (error) {
             toast({ title: "Error", description: "No se pudo crear la reservación", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -388,11 +393,12 @@ export function Reservations() {
                                 </button>
                                 <button
                                     onClick={handleCreate}
-                                    disabled={!formData.customerName || !formData.date || !formData.partySize}
-                                    className="button-modern gradient-orange"
-                                    style={{ opacity: (!formData.customerName || !formData.date || !formData.partySize) ? 0.5 : 1 }}
+                                    disabled={!formData.customerName || !formData.date || !formData.partySize || isSaving}
+                                    className="button-modern gradient-orange flex items-center gap-2"
+                                    style={{ opacity: (!formData.customerName || !formData.date || !formData.partySize || isSaving) ? 0.5 : 1 }}
                                 >
-                                    Crear Reservación
+                                    {isSaving && <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
+                                    {isSaving ? "Creando..." : "Crear Reservación"}
                                 </button>
                             </DialogFooter>
                         </DialogContent>

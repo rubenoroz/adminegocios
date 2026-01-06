@@ -50,6 +50,7 @@ export function StudentList() {
     // Estados para editar
     const [editOpen, setEditOpen] = useState(false);
     const [editingStudent, setEditingStudent] = useState<any>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     const handleOpenPayment = (student: any) => {
         setSelectedStudentForPayment({
@@ -60,6 +61,8 @@ export function StudentList() {
     };
 
     const handleCreate = async () => {
+        if (isSaving) return;
+        setIsSaving(true);
         try {
             if (!selectedBranch?.businessId) {
                 console.error("No business ID found");
@@ -84,6 +87,8 @@ export function StudentList() {
             });
         } catch (error) {
             console.error(error);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -376,9 +381,11 @@ export function StudentList() {
                             <DialogFooter>
                                 <button
                                     onClick={handleCreate}
-                                    className="button-modern bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600"
+                                    disabled={isSaving}
+                                    className="button-modern bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 disabled:opacity-50 flex items-center gap-2"
                                 >
-                                    Guardar Alumno
+                                    {isSaving && <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
+                                    {isSaving ? "Guardando..." : "Guardar Alumno"}
                                 </button>
                             </DialogFooter>
                         </DialogContent>

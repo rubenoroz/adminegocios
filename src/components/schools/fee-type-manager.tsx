@@ -61,6 +61,7 @@ export function FeeTypeManager() {
     const [newDesc, setNewDesc] = useState("");
     const [newAmount, setNewAmount] = useState("");
     const [assignDueDate, setAssignDueDate] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         fetchFeeTypes();
@@ -94,6 +95,8 @@ export function FeeTypeManager() {
     };
 
     const handleCreateFeeType = async () => {
+        if (isSaving) return;
+        setIsSaving(true);
         try {
             const res = await fetch("/api/schools/fees", {
                 method: "POST",
@@ -117,11 +120,14 @@ export function FeeTypeManager() {
             }
         } catch (error) {
             toast({ title: "Error", description: "Something went wrong", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
         }
     };
 
     const handleAssignFee = async () => {
-        if (!selectedFeeType || selectedStudents.length === 0 || !assignDueDate) return;
+        if (!selectedFeeType || selectedStudents.length === 0 || !assignDueDate || isSaving) return;
+        setIsSaving(true);
 
         try {
             const res = await fetch("/api/schools/fees/assign", {
@@ -146,6 +152,8 @@ export function FeeTypeManager() {
             }
         } catch (error) {
             toast({ title: "Error", description: "Something went wrong", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -197,7 +205,10 @@ export function FeeTypeManager() {
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button onClick={handleCreateFeeType}>Guardar</Button>
+                            <Button onClick={handleCreateFeeType} disabled={isSaving} className="flex items-center gap-2">
+                                {isSaving && <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
+                                {isSaving ? "Guardando..." : "Guardar"}
+                            </Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
@@ -310,8 +321,9 @@ export function FeeTypeManager() {
 
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsAssignOpen(false)}>Cancelar</Button>
-                        <Button onClick={handleAssignFee} disabled={selectedStudents.length === 0 || !assignDueDate}>
-                            Confirmar Asignación
+                        <Button onClick={handleAssignFee} disabled={selectedStudents.length === 0 || !assignDueDate || isSaving} className="flex items-center gap-2">
+                            {isSaving && <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
+                            {isSaving ? "Asignando..." : "Confirmar Asignación"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

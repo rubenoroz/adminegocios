@@ -1,0 +1,440 @@
+/* React Big Calendar Custom Styles */
+/* Overrides for react-big-calendar to match app design */
+/* Applies to both services and reservations calendars */
+
+.services-calendar-container .rbc-calendar,
+.reservations-calendar-container .rbc-calendar {
+    font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Toolbar */
+.services-calendar-container .rbc-toolbar,
+.reservations-calendar-container .rbc-toolbar {
+    margin-bottom: 20px;
+    padding: 0;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.services-calendar-container .rbc-toolbar button,
+.reservations-calendar-container .rbc-toolbar button {
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid #E2E8F0;
+    background-color: #F8FAFC;
+    color: #0F172A;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.services-calendar-container .rbc-toolbar button:hover,
+.reservations-calendar-container .rbc-toolbar button:hover {
+    background-color: #E2E8F0;
+}
+
+.services-calendar-container .rbc-toolbar button.rbc-active {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    border-color: transparent;
+}
+
+.reservations-calendar-container .rbc-toolbar button.rbc-active {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    border-color: transparent;
+}
+
+.services-calendar-container .rbc-toolbar-label,
+.reservations-calendar-container .rbc-toolbar-label {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0F172A;
+    text-transform: capitalize;
+}
+
+/* Header */
+.services-calendar-container .rbc-header,
+.reservations-calendar-container .rbc-header {
+    padding: 12px 8px;
+    font-weight: 600;
+    font-size: 13px;
+    color: #64748B;
+    background-color: #F8FAFC;
+    border-bottom: 1px solid #E2E8F0;
+    text-transform: capitalize;
+}
+
+.services-calendar-container .rbc-header+.rbc-header,
+.reservations-calendar-container .rbc-header+.rbc-header {
+    border-left: 1px solid #E2E8F0;
+}
+
+/* Day/Week view */
+.services-calendar-container .rbc-time-view,
+.reservations-calendar-container .rbc-time-view {
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.services-calendar-container .rbc-time-header-content,
+.reservations-calendar-container .rbc-time-header-content {
+    border-left: 1px solid #E2E8F0;
+}
+
+.services-calendar-container .rbc-time-content,
+.reservations-calendar-container .rbc-time-content {
+    border-top: 1px solid #E2E8F0;
+}
+
+.services-calendar-container .rbc-timeslot-group,
+.reservations-calendar-container .rbc-timeslot-group {
+    border-bottom: 1px solid #F1F5F9;
+    min-height: 60px;
+}
+
+.services-calendar-container .rbc-time-slot,
+.reservations-calendar-container .rbc-time-slot {
+    font-size: 12px;
+    color: #94A3B8;
+}
+
+.services-calendar-container .rbc-day-slot .rbc-time-slot,
+.reservations-calendar-container .rbc-day-slot .rbc-time-slot {
+    border-top: 1px solid #F1F5F9;
+}
+
+.services-calendar-container .rbc-time-gutter,
+.reservations-calendar-container .rbc-time-gutter {
+    background-color: #FAFAFA;
+}
+
+.services-calendar-container .rbc-label,
+.reservations-calendar-container .rbc-label {
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #64748B;
+    font-weight: 500;
+}
+
+/* Current time indicator */
+.services-calendar-container .rbc-current-time-indicator,
+.reservations-calendar-container .rbc-current-time-indicator {
+    background-color: #EF4444;
+    height: 2px;
+}
+
+.services-calendar-container .rbc-current-time-indicator::before,
+.reservations-calendar-container .rbc-current-time-indicator::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: -4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #EF4444;
+}
+
+/* Today highlight */
+.services-calendar-container .rbc-today {
+    background-color: #EFF6FF;
+}
+
+.reservations-calendar-container .rbc-today {
+    background-color: #FEF3C7;
+}
+
+/* Events */
+.services-calendar-container .rbc-event,
+.reservations-calendar-container .rbc-event {
+    border-radius: 6px !important;
+    border: none !important;
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+}
+
+.services-calendar-container .rbc-event:focus,
+.reservations-calendar-container .rbc-event:focus {
+    outline: 2px solid #3B82F6;
+    outline-offset: 2px;
+}
+
+.services-calendar-container .rbc-event-label,
+.reservations-calendar-container .rbc-event-label {
+    font-weight: 600;
+}
+
+.services-calendar-container .rbc-event-content,
+.reservations-calendar-container .rbc-event-content {
+    font-weight: 500;
+}
+
+/* Drag and drop */
+.services-calendar-container .rbc-addons-dnd .rbc-addons-dnd-resize-ns-icon,
+.services-calendar-container .rbc-addons-dnd .rbc-addons-dnd-resize-ew-icon,
+.reservations-calendar-container .rbc-addons-dnd .rbc-addons-dnd-resize-ns-icon,
+.reservations-calendar-container .rbc-addons-dnd .rbc-addons-dnd-resize-ew-icon {
+    display: none;
+}
+
+.services-calendar-container .rbc-addons-dnd-resizable,
+.reservations-calendar-container .rbc-addons-dnd-resizable {
+    position: relative;
+}
+
+.services-calendar-container .rbc-addons-dnd-resize-ns-anchor,
+.reservations-calendar-container .rbc-addons-dnd-resize-ns-anchor {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 8px;
+    cursor: ns-resize;
+}
+
+.services-calendar-container .rbc-addons-dnd-resize-ns-anchor:first-child,
+.reservations-calendar-container .rbc-addons-dnd-resize-ns-anchor:first-child {
+    top: 0;
+}
+
+.services-calendar-container .rbc-addons-dnd-resize-ns-anchor:last-child,
+.reservations-calendar-container .rbc-addons-dnd-resize-ns-anchor:last-child {
+    bottom: 0;
+}
+
+/* Selection slot - important for drag-to-create visual feedback */
+.services-calendar-container .rbc-slot-selection,
+.rbc-slot-selection {
+    background-color: rgba(59, 130, 246, 0.3) !important;
+    border: 2px dashed #3B82F6 !important;
+    border-radius: 6px;
+    z-index: 10 !important;
+    pointer-events: none !important;
+}
+
+.reservations-calendar-container .rbc-slot-selection {
+    background-color: rgba(245, 158, 11, 0.3) !important;
+    border: 2px dashed #f59e0b !important;
+}
+
+/* Selecting state - visual feedback while actively dragging */
+.services-calendar-container .rbc-slot-selecting,
+.rbc-slot-selecting {
+    cursor: crosshair !important;
+}
+
+.services-calendar-container .rbc-day-slot .rbc-selecting,
+.rbc-day-slot .rbc-selecting {
+    background-color: rgba(59, 130, 246, 0.15) !important;
+}
+
+.reservations-calendar-container .rbc-day-slot .rbc-selecting {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+}
+
+/* Time slot hover state for better visual feedback */
+.services-calendar-container .rbc-day-slot .rbc-time-slot:hover {
+    background-color: rgba(59, 130, 246, 0.08);
+}
+
+.reservations-calendar-container .rbc-day-slot .rbc-time-slot:hover {
+    background-color: rgba(245, 158, 11, 0.08);
+}
+
+/* Ensure the selection background is visible */
+.services-calendar-container .rbc-addons-dnd-drag-preview,
+.rbc-addons-dnd-drag-preview {
+    background-color: rgba(59, 130, 246, 0.2) !important;
+    border: 2px dashed #3B82F6 !important;
+    z-index: 100 !important;
+}
+
+.reservations-calendar-container .rbc-addons-dnd-drag-preview {
+    background-color: rgba(245, 158, 11, 0.2) !important;
+    border: 2px dashed #f59e0b !important;
+}
+
+/* Force all time slots to be interactive */
+.rbc-time-content,
+.rbc-day-slot,
+.rbc-time-slot {
+    pointer-events: auto !important;
+}
+
+/* Ensure calendar content is not blocked */
+.services-calendar-container .rbc-time-content,
+.reservations-calendar-container .rbc-time-content {
+    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* Fix for selection visibility across entire calendar */
+.rbc-slot-selection {
+    background-color: rgba(59, 130, 246, 0.3) !important;
+    border: 2px dashed #3B82F6 !important;
+    border-radius: 6px !important;
+    z-index: 10 !important;
+    position: absolute !important;
+}
+
+/* Critical fix: Ensure day slot containers don't block selection */
+.rbc-day-slot {
+    position: relative !important;
+}
+
+.rbc-day-slot .rbc-events-container {
+    pointer-events: none !important;
+}
+
+.rbc-day-slot .rbc-events-container .rbc-event {
+    pointer-events: auto !important;
+}
+
+/* CRITICAL FIX: Prevent scroll position offset issues during drag selection */
+.services-calendar-container .rbc-time-view,
+.reservations-calendar-container .rbc-time-view {
+    overflow: visible !important;
+}
+
+.services-calendar-container .rbc-time-content,
+.reservations-calendar-container .rbc-time-content {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    /* Force GPU layer to fix coordinate calculations */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+}
+
+/* Fix touch/mouse event handling for selection */
+.rbc-time-content>* {
+    pointer-events: auto !important;
+}
+
+/* Ensure proper stacking context for selection overlay */
+.rbc-day-slot .rbc-time-slot {
+    position: relative;
+    z-index: 1;
+}
+
+/* Make the background slot interactive and properly sized */
+.rbc-day-slot .rbc-day-bg {
+    pointer-events: auto !important;
+}
+
+/* Fix for the selection rectangle positioning */
+.rbc-addons-dnd .rbc-addons-dnd-row-body {
+    position: relative !important;
+}
+
+.rbc-addons-dnd-resizable {
+    position: relative !important;
+}
+
+/* Month view */
+.services-calendar-container .rbc-month-view,
+.reservations-calendar-container .rbc-month-view {
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.services-calendar-container .rbc-month-row,
+.reservations-calendar-container .rbc-month-row {
+    border-bottom: 1px solid #E2E8F0;
+}
+
+.services-calendar-container .rbc-month-row+.rbc-month-row,
+.reservations-calendar-container .rbc-month-row+.rbc-month-row {
+    border-top: none;
+}
+
+.services-calendar-container .rbc-date-cell,
+.reservations-calendar-container .rbc-date-cell {
+    padding: 8px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.services-calendar-container .rbc-date-cell.rbc-now,
+.reservations-calendar-container .rbc-date-cell.rbc-now {
+    color: #3B82F6;
+    font-weight: 700;
+}
+
+.services-calendar-container .rbc-off-range,
+.reservations-calendar-container .rbc-off-range {
+    color: #CBD5E1;
+}
+
+.services-calendar-container .rbc-off-range-bg,
+.reservations-calendar-container .rbc-off-range-bg {
+    background-color: #FAFAFA;
+}
+
+/* Show more link */
+.services-calendar-container .rbc-show-more,
+.reservations-calendar-container .rbc-show-more {
+    color: #3B82F6;
+    font-weight: 600;
+    font-size: 12px;
+    padding: 4px;
+}
+
+/* Agenda view */
+.services-calendar-container .rbc-agenda-view,
+.reservations-calendar-container .rbc-agenda-view {
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.services-calendar-container .rbc-agenda-table,
+.reservations-calendar-container .rbc-agenda-table {
+    border: none;
+}
+
+.services-calendar-container .rbc-agenda-date-cell,
+.services-calendar-container .rbc-agenda-time-cell,
+.reservations-calendar-container .rbc-agenda-date-cell,
+.reservations-calendar-container .rbc-agenda-time-cell {
+    padding: 12px 16px;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.services-calendar-container .rbc-agenda-event-cell,
+.reservations-calendar-container .rbc-agenda-event-cell {
+    padding: 12px 16px;
+}
+
+/* Resource view - column headers */
+.services-calendar-container .rbc-time-header-cell,
+.reservations-calendar-container .rbc-time-header-cell {
+    min-width: 100px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+
+    .services-calendar-container .rbc-toolbar,
+    .reservations-calendar-container .rbc-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .services-calendar-container .rbc-toolbar-label,
+    .reservations-calendar-container .rbc-toolbar-label {
+        order: -1;
+        text-align: center;
+        margin-bottom: 12px;
+    }
+
+    .services-calendar-container .rbc-btn-group,
+    .reservations-calendar-container .rbc-btn-group {
+        display: flex;
+        justify-content: center;
+    }
+}

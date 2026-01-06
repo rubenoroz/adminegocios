@@ -57,7 +57,8 @@ export async function GET(req: Request) {
                 );
 
                 if (classAtTime) {
-                    row.push(`${classAtTime.course.name}\n${classAtTime.room || ''}`);
+                    const courseName = classAtTime.course?.name || "Clase sin curso";
+                    row.push(`${courseName}\n${classAtTime.room || ''}`);
                 } else {
                     row.push("");
                 }

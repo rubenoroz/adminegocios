@@ -65,9 +65,9 @@ export default function DashboardPage() {
 
     // ACCESOS RÁPIDOS CON NAVEGACIÓN FUNCIONAL
     const quickActions = [
-        { icon: UserPlus, label: "Inscribir Alumno", href: `/${lang}/dashboard/students/new`, gradient: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)" },
-        { icon: BookOpen, label: "Crear Curso", href: `/${lang}/dashboard/courses/new`, gradient: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)" },
-        { icon: DollarSign, label: "Nuevo Cobro", href: `/${lang}/dashboard/finance/new`, gradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)" },
+        { icon: UserPlus, label: "Inscribir Alumno", href: `/${lang}/dashboard/students`, gradient: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)" },
+        { icon: BookOpen, label: "Crear Curso", href: `/${lang}/dashboard/courses`, gradient: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)" },
+        { icon: DollarSign, label: "Nuevo Cobro", href: `/${lang}/dashboard/finance`, gradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)" },
         { icon: FileText, label: "Reportes", href: `/${lang}/dashboard/reports`, gradient: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)" }
     ];
 

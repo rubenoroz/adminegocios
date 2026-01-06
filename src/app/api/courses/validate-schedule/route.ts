@@ -82,7 +82,7 @@ export async function POST(req: Request) {
         }
 
         if (conflicts.length > 0) {
-            const conflictingCourse = conflicts[0].course.name;
+            const conflictingCourse = conflicts[0].course?.name || "Clase sin curso";
             const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
             const conflictDay = dayNames[conflicts[0].dayOfWeek];
 

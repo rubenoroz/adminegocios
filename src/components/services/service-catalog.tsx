@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Plus, Edit2, Trash2, Clock, DollarSign, Palette, ToggleLeft, ToggleRight } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 
 interface Service {
@@ -138,6 +138,9 @@ export function ServiceCatalog() {
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>{editingService ? "Editar Servicio" : "Nuevo Servicio"}</DialogTitle>
+                            <DialogDescription>
+                                {editingService ? "Modifica los datos del servicio" : "Configura un nuevo servicio para tu catálogo"}
+                            </DialogDescription>
                         </DialogHeader>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px 0' }}>
                             <div>

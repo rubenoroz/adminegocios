@@ -76,6 +76,7 @@ export function TableManager() {
     // Form states
     const [newName, setNewName] = useState("");
     const [newCapacity, setNewCapacity] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
 
     // Occupy modal states
     const [occupyModal, setOccupyModal] = useState<{ open: boolean; table: Table | null }>({ open: false, table: null });
@@ -112,6 +113,8 @@ export function TableManager() {
     };
 
     const handleCreate = async () => {
+        if (isSaving) return;
+        setIsSaving(true);
         try {
             const res = await fetch("/api/restaurant/tables", {
                 method: "POST",
@@ -130,6 +133,8 @@ export function TableManager() {
             }
         } catch (error) {
             toast({ title: "Error al crear mesa", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -575,11 +580,12 @@ export function TableManager() {
                                     </button>
                                     <button
                                         onClick={handleCreate}
-                                        disabled={!newName || !newCapacity}
-                                        className="button-modern gradient-orange"
-                                        style={{ opacity: (!newName || !newCapacity) ? 0.5 : 1 }}
+                                        disabled={!newName || !newCapacity || isSaving}
+                                        className="button-modern gradient-orange flex items-center gap-2"
+                                        style={{ opacity: (!newName || !newCapacity || isSaving) ? 0.5 : 1 }}
                                     >
-                                        Crear Mesa
+                                        {isSaving && <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
+                                        {isSaving ? "Creando..." : "Crear Mesa"}
                                     </button>
                                 </DialogFooter>
                             </DialogContent>

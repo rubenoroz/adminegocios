@@ -411,6 +411,7 @@ model Employee {
   lastName    String
   email       String?
   phone       String?
+  color       String?  @default("#3B82F6") // Color for calendar display
   role        String   @default("STAFF") // MANAGER, ADMIN, TEACHER, STAFF
   
   // Payment configuration
@@ -607,6 +608,7 @@ model Student {
   scholarships Scholarship[]
   scheduledPayments ScheduledPayment[]
   parents     StudentParent[]
+  scheduleEnrollments ScheduleEnrollment[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -958,9 +960,11 @@ model ClassSchedule {
   startTime   String   // HH:mm format
   endTime     String   // HH:mm format
   room        String?  // Deprecated, use classroomId
+  title       String?  // Optional title for the schedule block
   
-  courseId    String
-  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  // Course is now optional - allows schedule-only blocks
+  courseId    String?
+  course      Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
   
   // Optional: Override default teacher for this specific class time
   teacherId   String?
@@ -974,11 +978,36 @@ model ClassSchedule {
   branchId    String?
   branch      Branch?  @relation(fields: [branchId], references: [id])
   
+  // Recurring date range
+  validFrom   DateTime?  // Start date for recurring class
+  validUntil  DateTime?  // End date for recurring class
+  
+  // Students enrolled in this specific schedule
+  enrollments ScheduleEnrollment[]
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([courseId])
   @@index([businessId])
+}
+
+// Student enrollment in specific schedules (not just courses)
+model ScheduleEnrollment {
+  id          String   @id @default(cuid())
+  
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  scheduleId  String
+  schedule    ClassSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  
+  status      String   @default("ACTIVE") // ACTIVE, DROPPED, COMPLETED
+  enrolledAt  DateTime @default(now())
+  
+  @@unique([studentId, scheduleId])
+  @@index([scheduleId])
+  @@index([studentId])
 }
 
 model Classroom {

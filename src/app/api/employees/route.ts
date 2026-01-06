@@ -74,7 +74,7 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
         // branchIds should be an array of strings
-        const { firstName, lastName, email, phone, role, salary, branchIds } = body;
+        const { firstName, lastName, email, phone, role, salary, branchIds, color } = body;
 
         const user = await prisma.user.findUnique({
             where: { email: session.user.email }
@@ -111,6 +111,7 @@ export async function POST(req: Request) {
                 email,
                 phone,
                 role,
+                color: color || "#3B82F6",
                 salary: salary ? parseFloat(salary) : null,
                 businessId: user.businessId,
                 branches: {

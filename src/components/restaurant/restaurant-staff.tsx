@@ -42,6 +42,7 @@ export function RestaurantStaff() {
         firstName: "", lastName: "", email: "", phone: "", role: "WAITER",
         paymentModel: "FIXED", salary: "", hourlyRate: ""
     });
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         fetchEmployees();
@@ -66,6 +67,8 @@ export function RestaurantStaff() {
     };
 
     const handleCreate = async () => {
+        if (isSaving) return;
+        setIsSaving(true);
         try {
             const res = await fetch("/api/employees", {
                 method: "POST",
@@ -89,6 +92,8 @@ export function RestaurantStaff() {
             }
         } catch (error) {
             toast({ title: "Error al crear empleado", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -203,8 +208,9 @@ export function RestaurantStaff() {
                             </div>
                             <DialogFooter style={{ gap: "12px" }}>
                                 <button onClick={() => setOpen(false)} className="filter-chip">Cancelar</button>
-                                <button onClick={handleCreate} disabled={!newEmployee.firstName || !newEmployee.lastName} className="button-modern gradient-orange" style={{ opacity: (!newEmployee.firstName || !newEmployee.lastName) ? 0.5 : 1 }}>
-                                    Guardar
+                                <button onClick={handleCreate} disabled={!newEmployee.firstName || !newEmployee.lastName || isSaving} className="button-modern gradient-orange flex items-center gap-2" style={{ opacity: (!newEmployee.firstName || !newEmployee.lastName || isSaving) ? 0.5 : 1 }}>
+                                    {isSaving && <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
+                                    {isSaving ? "Guardando..." : "Guardar"}
                                 </button>
                             </DialogFooter>
                         </DialogContent>

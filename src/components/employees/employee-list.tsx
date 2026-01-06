@@ -50,8 +50,11 @@ export function EmployeeList() {
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isDeletingBulk, setIsDeletingBulk] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     const handleCreate = async () => {
+        if (isSaving) return;
+        setIsSaving(true);
         try {
             await createEmployee(newEmployee);
             setOpen(false);
@@ -73,6 +76,8 @@ export function EmployeeList() {
             });
         } catch (error) {
             console.error(error);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -434,10 +439,11 @@ export function EmployeeList() {
                             <DialogFooter>
                                 <button
                                     onClick={handleCreate}
-                                    disabled={!newEmployee.firstName || !newEmployee.lastName}
-                                    className="button-modern bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:opacity-50"
+                                    disabled={!newEmployee.firstName || !newEmployee.lastName || isSaving}
+                                    className="button-modern bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:opacity-50 flex items-center gap-2"
                                 >
-                                    Guardar Empleado
+                                    {isSaving && <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
+                                    {isSaving ? "Guardando..." : "Guardar Empleado"}
                                 </button>
                             </DialogFooter>
                         </DialogContent>

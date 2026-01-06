@@ -18,6 +18,7 @@ export function CustomerList() {
     const [newCustomer, setNewCustomer] = useState({
         name: "", phone: "", email: "", notes: ""
     });
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         fetchCustomers();
@@ -41,9 +42,10 @@ export function CustomerList() {
     };
 
     const handleCreate = async () => {
-        if (!newCustomer.name) return;
+        if (!newCustomer.name || isSaving) return;
+        setIsSaving(true);
         try {
-            // Simulación
+            // Simulción
             const newId = Date.now().toString();
             setCustomers(prev => [...prev, { ...newCustomer, id: newId, totalPurchases: 0, lastPurchase: null }]);
             toast({ title: "Cliente agregado exitosamente" });
@@ -51,6 +53,8 @@ export function CustomerList() {
             setNewCustomer({ name: "", phone: "", email: "", notes: "" });
         } catch (error) {
             toast({ title: "Error al crear cliente", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -124,7 +128,10 @@ export function CustomerList() {
                             </div>
                             <DialogFooter style={{ gap: "12px" }}>
                                 <button onClick={() => setOpen(false)} className="filter-chip">Cancelar</button>
-                                <button onClick={handleCreate} disabled={!newCustomer.name} className="button-modern gradient-blue" style={{ opacity: !newCustomer.name ? 0.5 : 1 }}>Guardar</button>
+                                <button onClick={handleCreate} disabled={!newCustomer.name || isSaving} className="button-modern gradient-blue flex items-center gap-2" style={{ opacity: (!newCustomer.name || isSaving) ? 0.5 : 1 }}>
+                                    {isSaving && <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
+                                    {isSaving ? "Guardando..." : "Guardar"}
+                                </button>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>

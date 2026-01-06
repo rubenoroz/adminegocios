@@ -40,6 +40,7 @@ export function ServiceClients() {
     const [historyLoading, setHistoryLoading] = useState(false);
     const [form, setForm] = useState({ name: "", email: "", phone: "" });
     const { toast } = useToast();
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         fetchCustomers();
@@ -78,7 +79,8 @@ export function ServiceClients() {
     };
 
     const handleCreate = async () => {
-        if (!form.name) return;
+        if (!form.name || isSaving) return;
+        setIsSaving(true);
         try {
             const res = await fetch("/api/customers", {
                 method: "POST",
@@ -93,6 +95,8 @@ export function ServiceClients() {
             }
         } catch (error) {
             toast({ title: "Error", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -144,7 +148,10 @@ export function ServiceClients() {
                             </div>
                         </div>
                         <DialogFooter>
-                            <button onClick={handleCreate} disabled={!form.name} style={{ padding: '12px 24px', borderRadius: '8px', fontWeight: 600, background: '#10B981', color: 'white', border: 'none', cursor: 'pointer' }}>Crear Cliente</button>
+                            <button onClick={handleCreate} disabled={!form.name || isSaving} style={{ padding: '12px 24px', borderRadius: '8px', fontWeight: 600, background: '#10B981', color: 'white', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', opacity: (!form.name || isSaving) ? 0.5 : 1 }}>
+                                {isSaving && <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
+                                {isSaving ? "Creando..." : "Crear Cliente"}
+                            </button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>

@@ -44,6 +44,7 @@ export function AppointmentsList() {
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [form, setForm] = useState({ serviceId: "", customerId: "", employeeId: "", startTime: "", notes: "" });
     const { toast } = useToast();
+    const [isSaving, setIsSaving] = useState(false);
 
     // Payment State
     const [payOpen, setPayOpen] = useState(false);
@@ -90,6 +91,8 @@ export function AppointmentsList() {
             toast({ title: "Completa los campos requeridos", variant: "destructive" });
             return;
         }
+        if (isSaving) return;
+        setIsSaving(true);
 
         try {
             const res = await fetch("/api/appointments", {
@@ -109,6 +112,8 @@ export function AppointmentsList() {
             }
         } catch (error) {
             toast({ title: "Error al crear cita", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -255,9 +260,10 @@ export function AppointmentsList() {
                             </div>
                         </div>
                         <DialogFooter>
-                            <button onClick={handleCreate} disabled={!form.serviceId || !form.customerId || !form.startTime}
-                                style={{ padding: '12px 24px', borderRadius: '8px', fontWeight: 600, background: '#10B981', color: 'white', border: 'none', cursor: 'pointer' }}>
-                                Agendar Cita
+                            <button onClick={handleCreate} disabled={!form.serviceId || !form.customerId || !form.startTime || isSaving}
+                                style={{ padding: '12px 24px', borderRadius: '8px', fontWeight: 600, background: '#10B981', color: 'white', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', opacity: (!form.serviceId || !form.customerId || !form.startTime || isSaving) ? 0.5 : 1 }}>
+                                {isSaving && <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
+                                {isSaving ? "Agendando..." : "Agendar Cita"}
                             </button>
                         </DialogFooter>
                     </DialogContent>
@@ -384,8 +390,8 @@ export function AppointmentsList() {
                                             key={m.id}
                                             onClick={() => setPaymentMethod(m.id)}
                                             className={`p-2 rounded-lg border text-sm flex flex-col items-center gap-1 transition-all ${paymentMethod === m.id
-                                                    ? 'border-blue-600 bg-blue-50 text-blue-700 font-medium'
-                                                    : 'border-slate-200 hover:bg-slate-50'
+                                                ? 'border-blue-600 bg-blue-50 text-blue-700 font-medium'
+                                                : 'border-slate-200 hover:bg-slate-50'
                                                 }`}
                                         >
                                             <m.icon size={16} />

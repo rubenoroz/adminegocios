@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, ClipboardList, Wrench, Users, Briefcase, BarChart3 } from "lucide-react";
-import { ServicesCalendar } from "@/components/services/services-calendar";
+import { ServicesCalendarV2 } from "@/components/services/services-calendar-v2";
 import { AppointmentsList } from "@/components/services/appointments-list";
 import { ServiceCatalog } from "@/components/services/service-catalog";
 import { ServiceClients } from "@/components/services/service-clients";
@@ -70,7 +70,7 @@ export default function ServicesPage() {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
                 >
-                    {activeTab === "agenda" && <ServicesCalendar />}
+                    {activeTab === "agenda" && <ServicesCalendarV2 />}
                     {activeTab === "citas" && <AppointmentsList />}
                     {activeTab === "servicios" && <ServiceCatalog />}
                     {activeTab === "clientes" && <ServiceClients />}

@@ -58,7 +58,7 @@ export async function PATCH(
 
     try {
         const body = await req.json();
-        const { firstName, lastName, email, phone, role, paymentModel, salary, hourlyRate, commissionPercentage, reservePercentage, branchId, branchIds } = body;
+        const { firstName, lastName, email, phone, role, paymentModel, salary, hourlyRate, commissionPercentage, reservePercentage, branchId, branchIds, color } = body;
 
         const user = await prisma.user.findUnique({
             where: { email: session.user.email }
@@ -87,6 +87,7 @@ export async function PATCH(
         if (email !== undefined) updateData.email = email;
         if (phone !== undefined) updateData.phone = phone;
         if (role !== undefined) updateData.role = role;
+        if (color !== undefined) updateData.color = color;
         if (paymentModel !== undefined) updateData.paymentModel = paymentModel;
         if (salary !== undefined) updateData.salary = salary ? parseFloat(salary) : null;
         if (hourlyRate !== undefined) updateData.hourlyRate = hourlyRate ? parseFloat(hourlyRate) : null;

@@ -72,6 +72,7 @@ export function ScholarshipManager() {
     const [scholarshipName, setScholarshipName] = useState("");
     const [discountType, setDiscountType] = useState<"percentage" | "amount">("percentage");
     const [discountValue, setDiscountValue] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         fetchScholarships();
@@ -113,6 +114,8 @@ export function ScholarshipManager() {
             });
             return;
         }
+        if (isSaving) return;
+        setIsSaving(true);
 
         try {
             const payload: any = {
@@ -153,6 +156,8 @@ export function ScholarshipManager() {
                 description: "Ocurrió un error",
                 variant: "destructive"
             });
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -273,7 +278,10 @@ export function ScholarshipManager() {
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button onClick={handleCreateScholarship}>Asignar Beca</Button>
+                            <Button onClick={handleCreateScholarship} disabled={isSaving} className="flex items-center gap-2">
+                                {isSaving && <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
+                                {isSaving ? "Asignando..." : "Asignar Beca"}
+                            </Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>

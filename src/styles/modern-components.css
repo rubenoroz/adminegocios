@@ -379,6 +379,24 @@
     position: fixed;
     inset: 0;
     z-index: 50;
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* Ensure dialog overlay is not capturing events when closed */
+.dialog-overlay[data-state="closed"] {
+    pointer-events: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 /* ============================================

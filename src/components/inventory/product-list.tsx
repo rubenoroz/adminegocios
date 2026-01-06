@@ -31,8 +31,11 @@ export function ProductList() {
     const [newProduct, setNewProduct] = useState({ name: "", price: "", sku: "", category: "", quantity: "", supplierId: "" });
     const [isScannerOpen, setIsScannerOpen] = useState(false);
     const [suppliers, setSuppliers] = useState<any[]>([]);
+    const [isSaving, setIsSaving] = useState(false);
 
     const handleCreate = async () => {
+        if (isSaving) return;
+        setIsSaving(true);
         try {
             await createProduct(newProduct);
             setOpen(false);
@@ -41,6 +44,8 @@ export function ProductList() {
             setNewProduct({ name: "", price: "", sku: "", category: "", quantity: "", supplierId: "" });
         } catch (error) {
             toast({ title: "Error al crear producto", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -471,7 +476,7 @@ export function ProductList() {
                             <DialogFooter>
                                 <button
                                     onClick={handleCreate}
-                                    disabled={!newProduct.name || !newProduct.price}
+                                    disabled={!newProduct.name || !newProduct.price || isSaving}
                                     style={{
                                         padding: '12px 24px',
                                         borderRadius: '12px',
@@ -481,10 +486,14 @@ export function ProductList() {
                                         fontSize: '14px',
                                         fontWeight: 600,
                                         cursor: 'pointer',
-                                        opacity: (!newProduct.name || !newProduct.price) ? 0.5 : 1
+                                        opacity: (!newProduct.name || !newProduct.price || isSaving) ? 0.5 : 1,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
                                     }}
                                 >
-                                    Guardar Producto
+                                    {isSaving && <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
+                                    {isSaving ? "Guardando..." : "Guardar Producto"}
                                 </button>
                             </DialogFooter>
                         </DialogContent>

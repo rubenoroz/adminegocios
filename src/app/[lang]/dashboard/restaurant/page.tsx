@@ -4,7 +4,7 @@ import { useState } from "react";
 import { TableManager } from "@/components/restaurant/table-manager";
 import { KitchenDisplay } from "@/components/restaurant/kitchen-display";
 import { OrderHistory } from "@/components/restaurant/order-history";
-import { Reservations } from "@/components/restaurant/reservations";
+import { ReservationsCalendar } from "@/components/restaurant/reservations-calendar";
 import { RestaurantStaff } from "@/components/restaurant/restaurant-staff";
 import { motion, AnimatePresence } from "framer-motion";
 import { Utensils, ChefHat, Calendar, ClipboardList, Users } from "lucide-react";
@@ -55,7 +55,7 @@ export default function RestaurantPage() {
                     {activeTab === "tables" && <TableManager />}
                     {activeTab === "kitchen" && <KitchenDisplay />}
                     {activeTab === "orders" && <OrderHistory />}
-                    {activeTab === "reservations" && <Reservations />}
+                    {activeTab === "reservations" && <ReservationsCalendar />}
                     {activeTab === "staff" && <RestaurantStaff />}
                 </motion.div>
             </AnimatePresence>

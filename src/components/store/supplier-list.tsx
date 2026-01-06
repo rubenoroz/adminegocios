@@ -36,6 +36,7 @@ export function SupplierList() {
     const [quantity, setQuantity] = useState(1);
     const [orderNotes, setOrderNotes] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         fetchSuppliers();
@@ -57,7 +58,8 @@ export function SupplierList() {
     };
 
     const handleCreate = async () => {
-        if (!newSupplier.name) return;
+        if (!newSupplier.name || isSaving) return;
+        setIsSaving(true);
         try {
             const res = await fetch('/api/suppliers', {
                 method: 'POST',
@@ -72,6 +74,8 @@ export function SupplierList() {
             }
         } catch (error) {
             toast({ title: "Error al crear proveedor", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -249,7 +253,10 @@ export function SupplierList() {
                             </div>
                             <DialogFooter style={{ gap: "12px" }}>
                                 <button onClick={() => setOpen(false)} className="filter-chip">Cancelar</button>
-                                <button onClick={handleCreate} disabled={!newSupplier.name} className="button-modern gradient-purple" style={{ opacity: !newSupplier.name ? 0.5 : 1 }}>Guardar</button>
+                                <button onClick={handleCreate} disabled={!newSupplier.name || isSaving} className="button-modern gradient-purple flex items-center gap-2" style={{ opacity: (!newSupplier.name || isSaving) ? 0.5 : 1 }}>
+                                    {isSaving && <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
+                                    {isSaving ? "Guardando..." : "Guardar"}
+                                </button>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>

@@ -136,7 +136,7 @@ export default withAuth(
             },
         },
         pages: {
-            signIn: '/login', // NextAuth will handle locale redirect if needed or we fix path
+            signIn: '/es/login', // Use full path to prevent middleware from adding locale again
         },
     }
 );

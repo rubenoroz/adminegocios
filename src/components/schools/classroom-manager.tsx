@@ -34,6 +34,7 @@ export function ClassroomManager() {
 
     const [editingId, setEditingId] = useState<string | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [saving, setSaving] = useState(false);
 
 
     useEffect(() => {
@@ -75,6 +76,9 @@ export function ClassroomManager() {
             toast({ title: "El nombre es requerido", variant: "destructive" });
             return;
         }
+        if (saving) return; // Prevent double-clicks
+
+        setSaving(true);
 
         try {
             const url = editingId ? `/api/classrooms/${editingId}` : "/api/classrooms";
@@ -101,6 +105,8 @@ export function ClassroomManager() {
             }
         } catch (error) {
             toast({ title: "Error al guardar", variant: "destructive" });
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -214,10 +220,13 @@ export function ClassroomManager() {
                             </button>
                             <button
                                 onClick={handleSave}
-                                className="button-modern gradient-blue flex items-center gap-2 py-2.5 px-6 rounded-xl text-white font-bold shadow-md transition-all active:scale-95"
+                                disabled={saving}
+                                className="button-modern gradient-blue flex items-center gap-2 py-2.5 px-6 rounded-xl text-white font-bold shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {editingId ? <Save className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
-                                {editingId ? "Guardar cambios" : "Crear salón"}
+                                {saving ? (
+                                    <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+                                ) : editingId ? <Save className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+                                {saving ? "Guardando..." : editingId ? "Guardar cambios" : "Crear salón"}
                             </button>
                         </div>
                     </DialogContent>
