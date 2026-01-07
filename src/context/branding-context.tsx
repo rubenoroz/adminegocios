@@ -49,9 +49,13 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    // Use businessId as dependency instead of session to avoid refetching on session reference changes
+    const businessId = session?.user?.businessId;
+
     useEffect(() => {
         fetchBranding();
-    }, [session]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [businessId]);
 
     // Apply colors to CSS variables
     useEffect(() => {

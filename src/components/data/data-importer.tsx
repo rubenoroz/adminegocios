@@ -282,13 +282,17 @@ export function DataImporter() {
         return labels[selectedBranch.business.type] || "tu negocio";
     };
 
-    // Efecto para establecer el tipo inicial válido
+    // Efecto para establecer el tipo inicial válido (solo una vez)
     useEffect(() => {
+        // Solo establecer si no hay tipo seleccionado aún
+        if (importType) return;
+
         const types = availableTypes();
-        if (types.length > 0 && !types.includes(importType)) {
+        if (types.length > 0) {
             setImportType(types[0]);
         }
-    }, [selectedBranch]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handlePasteProcess = () => {
         if (!pasteData) return;

@@ -91,15 +91,19 @@ export function BranchProvider({ children }: { children: ReactNode }) {
     };
 
     // Modified useEffect to check for session and businessId
+    // Use businessId as dependency to avoid re-fetching when session object changes reference
+    const businessId = session?.user?.businessId;
+
     useEffect(() => {
-        if (status === "authenticated" && session?.user?.businessId) {
+        if (status === "authenticated" && businessId) {
             fetchBranches();
-        } else if (status === "authenticated" && !session?.user?.businessId) {
+        } else if (status === "authenticated" && !businessId) {
             console.warn("User has no businessId, skipping branch fetch.");
             setBranches([]);
             setLoading(false);
         }
-    }, [status, session]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [status, businessId]);
 
     const setSelectedBranch = (branch: Branch) => {
         setSelectedBranchState(branch);
