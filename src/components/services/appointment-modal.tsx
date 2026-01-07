@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { X, User, Briefcase, Clock, FileText, Search } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { MobileTimePicker } from "@/components/ui/mobile-time-picker";
 
 interface AppointmentModalProps {
     isOpen: boolean;
@@ -63,10 +65,17 @@ export function AppointmentModal({
     const [customerSearch, setCustomerSearch] = useState<string>("");
     const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
 
+    // Editable times for mobile
+    const [editableStartTime, setEditableStartTime] = useState<Date>(startTime);
+    const [editableEndTime, setEditableEndTime] = useState<Date>(endTime);
+    const isMobile = useIsMobile();
+
     // Fetch data on open
     useEffect(() => {
         if (isOpen) {
             fetchData();
+            setEditableStartTime(startTime);
+            setEditableEndTime(endTime);
             if (appointment) {
                 setSelectedService(appointment.service.id);
                 setSelectedCustomer(appointment.customer.id);
@@ -76,7 +85,7 @@ export function AppointmentModal({
                 resetForm();
             }
         }
-    }, [isOpen, appointment]);
+    }, [isOpen, appointment, startTime, endTime]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -127,8 +136,8 @@ export function AppointmentModal({
                 serviceId: selectedService,
                 customerId: selectedCustomer,
                 employeeId: selectedEmployee || null,
-                startTime: startTime.toISOString(),
-                endTime: endTime.toISOString(),
+                startTime: editableStartTime.toISOString(),
+                endTime: editableEndTime.toISOString(),
                 notes: notes || null,
                 status: "SCHEDULED",
             };
@@ -233,28 +242,14 @@ export function AppointmentModal({
                     </button>
                 </div>
 
-                {/* Time display */}
-                <div
-                    style={{
-                        backgroundColor: "#EFF6FF",
-                        borderRadius: "12px",
-                        padding: "16px",
-                        marginBottom: "24px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                    }}
-                >
-                    <Clock size={20} color="#3B82F6" />
-                    <div>
-                        <div style={{ fontSize: "14px", fontWeight: 600, color: "#1E40AF" }}>
-                            {format(startTime, "EEEE, d 'de' MMMM", { locale: es })}
-                        </div>
-                        <div style={{ fontSize: "13px", color: "#3B82F6" }}>
-                            {format(startTime, "HH:mm")} - {format(endTime, "HH:mm")}
-                        </div>
-                    </div>
-                </div>
+                {/* Time display - Always editable */}
+                <MobileTimePicker
+                    startTime={editableStartTime}
+                    endTime={editableEndTime}
+                    onStartTimeChange={setEditableStartTime}
+                    onEndTimeChange={setEditableEndTime}
+                    showDate={true}
+                />
 
                 {loading ? (
                     <div style={{ textAlign: "center", padding: "40px" }}>

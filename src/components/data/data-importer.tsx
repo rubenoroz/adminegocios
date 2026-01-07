@@ -74,11 +74,11 @@ const IMPORT_CONFIGS: Record<string, ImportConfig> = {
         fields: [
             { key: "name", label: "Nombre Completo", required: true, description: "Nombre y apellidos" },
             { key: "email", label: "Email", required: true, description: "Se usará para el acceso al sistema" },
-            { key: "phone", label: "Teléfono", required: false },
+            { key: "phone", label: "Teléfono", required: false, description: "Número de contacto" },
             { key: "hourlyRate", label: "Pago por Hora", required: false, description: "En formato numérico (ej: 150)" },
         ],
-        exampleData: "Nombre Completo\tEmail\tTeléfono\tPago por Hora\nProf. Ana García\tana@escuela.com\t555-1111\t200\nLic. Roberto Sánchez\troberto@escuela.com\t555-2222\t180",
-        tips: ["Se creará automáticamente una cuenta de usuario para cada maestro", "El email será su usuario de acceso"]
+        exampleData: "Nombre Completo\tEmail\tTeléfono\tPago por Hora\nProf. Ana García López\tana@escuela.com\t555-1111\t200\nLic. Roberto Sánchez Pérez\troberto@escuela.com\t555-2222\t180",
+        tips: ["Se creará una cuenta de usuario Y un registro de empleado automáticamente", "El email será su usuario de acceso", "El pago por hora se usará para calcular nómina"]
     },
     COURSES: {
         type: "COURSES",
@@ -108,12 +108,13 @@ const IMPORT_CONFIGS: Record<string, ImportConfig> = {
             { key: "name", label: "Nombre Producto", required: true },
             { key: "price", label: "Precio Venta", required: true, description: "Precio al público" },
             { key: "cost", label: "Costo", required: false, description: "Costo de compra/producción" },
-            { key: "sku", label: "SKU/Código", required: false, description: "Código único del producto" },
+            { key: "sku", label: "SKU/Código", required: false, description: "Código interno del producto" },
+            { key: "barcode", label: "Código de Barras", required: false, description: "Código de barras para escáner" },
             { key: "category", label: "Categoría", required: false },
             { key: "stock", label: "Stock Inicial", required: false, description: "Cantidad en inventario" },
         ],
-        exampleData: "Nombre Producto\tPrecio Venta\tCosto\tSKU\tCategoría\tStock Inicial\nCamiseta Polo\t299.00\t120.00\tPOLO001\tRopa\t50\nPantalón Mezclilla\t599.00\t280.00\tPANT002\tRopa\t30",
-        tips: ["El precio usa punto como decimal (299.00)", "El stock se actualizará en inventario automáticamente"]
+        exampleData: "Nombre Producto\tPrecio Venta\tCosto\tSKU\tCódigo de Barras\tCategoría\tStock Inicial\nCamiseta Polo\t299.00\t120.00\tPOLO001\t7501234567890\tRopa\t50\nPantalón Mezclilla\t599.00\t280.00\tPANT002\t7501234567891\tRopa\t30",
+        tips: ["El precio usa punto como decimal (299.00)", "El código de barras puede escanearse después para ventas rápidas", "El stock se actualizará en inventario automáticamente"]
     },
     CUSTOMERS: {
         type: "CUSTOMERS",
@@ -318,12 +319,31 @@ export function DataImporter() {
 
         // Alias mappings for common variations
         const aliases: Record<string, string[]> = {
+            // Student fields
             firstName: ['nombre', 'nombres', 'nombre(s)', 'first name', 'firstname', 'primer nombre'],
             lastName: ['apellido', 'apellidos', 'last name', 'lastname', 'segundo nombre'],
-            email: ['email', 'correo', 'e-mail', 'correo electrónico', 'mail'],
-            phone: ['telefono', 'teléfono', 'tel', 'celular', 'móvil', 'movil', 'phone'],
-            matricula: ['matricula', 'matrícula', 'id', 'código', 'codigo', 'clave'],
-            name: ['nombre', 'nombre completo', 'full name'],
+            matricula: ['matricula', 'matrícula', 'id alumno', 'código alumno', 'codigo alumno', 'clave alumno'],
+
+            // Common fields
+            email: ['email', 'correo', 'e-mail', 'correo electrónico', 'mail', 'correo electronico'],
+            phone: ['telefono', 'teléfono', 'tel', 'celular', 'móvil', 'movil', 'phone', 'número', 'numero'],
+            name: ['nombre', 'nombre completo', 'full name', 'cliente', 'producto', 'platillo'],
+            address: ['direccion', 'dirección', 'domicilio', 'address', 'calle'],
+
+            // Product fields
+            price: ['precio', 'precio venta', 'precio unitario', 'price', 'costo venta'],
+            cost: ['costo', 'costo compra', 'costo unitario', 'cost', 'precio compra'],
+            sku: ['sku', 'codigo', 'código', 'codigo interno', 'clave', 'id producto'],
+            barcode: ['codigo de barras', 'código de barras', 'barcode', 'upc', 'ean', 'codigo barras'],
+            category: ['categoria', 'categoría', 'category', 'tipo', 'grupo'],
+            stock: ['stock', 'inventario', 'cantidad', 'existencia', 'existencias', 'stock inicial'],
+
+            // Teacher/Course fields
+            hourlyRate: ['pago por hora', 'tarifa', 'hourly rate', 'pago hora', 'salario hora'],
+            gradeLevel: ['nivel', 'grado', 'nivel/grado', 'grade', 'level'],
+            schedule: ['horario', 'schedule', 'hora', 'horas'],
+            room: ['aula', 'salón', 'salon', 'room', 'aula/salón'],
+            description: ['descripcion', 'descripción', 'description', 'detalle', 'detalles'],
         };
 
         config.fields.forEach(field => {

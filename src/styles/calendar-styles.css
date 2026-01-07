@@ -54,21 +54,68 @@
     text-transform: capitalize;
 }
 
-/* Header */
+/* Header - Day columns (Lun, Mar, Mié, etc.) */
 .services-calendar-container .rbc-header,
 .reservations-calendar-container .rbc-header {
-    padding: 12px 8px;
-    font-weight: 600;
-    font-size: 13px;
-    color: #64748B;
-    background-color: #F8FAFC;
-    border-bottom: 1px solid #E2E8F0;
+    padding: 16px 8px;
+    font-weight: 700;
+    font-size: 15px;
+    color: #0F172A;
+    background: linear-gradient(to bottom, #ffffff 0%, #F8FAFC 100%);
+    border-bottom: 2px solid #E2E8F0;
     text-transform: capitalize;
+    text-align: center;
+}
+
+/* Today's column header highlighted */
+.services-calendar-container .rbc-header.rbc-today,
+.reservations-calendar-container .rbc-header.rbc-today {
+    background: linear-gradient(to bottom, #EFF6FF 0%, #DBEAFE 100%);
+    color: #1D4ED8;
+    border-bottom-color: #3B82F6;
+}
+
+.reservations-calendar-container .rbc-header.rbc-today {
+    background: linear-gradient(to bottom, #FEF3C7 0%, #FDE68A 100%);
+    color: #92400E;
+    border-bottom-color: #F59E0B;
 }
 
 .services-calendar-container .rbc-header+.rbc-header,
 .reservations-calendar-container .rbc-header+.rbc-header {
     border-left: 1px solid #E2E8F0;
+}
+
+/* Time header row (contains day columns) */
+.services-calendar-container .rbc-time-header,
+.reservations-calendar-container .rbc-time-header {
+    background-color: #FFFFFF;
+    border-bottom: 1px solid #E2E8F0;
+}
+
+/* The row showing day numbers (in week view) */
+.services-calendar-container .rbc-row-content .rbc-date-cell,
+.reservations-calendar-container .rbc-row-content .rbc-date-cell {
+    padding: 8px 12px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Button with date number in week/day header */
+.services-calendar-container .rbc-button-link,
+.reservations-calendar-container .rbc-button-link {
+    font-weight: 700;
+    font-size: 14px;
+    color: #0F172A;
+}
+
+/* Today's date button */
+.services-calendar-container .rbc-now .rbc-button-link {
+    color: #2563EB;
+}
+
+.reservations-calendar-container .rbc-now .rbc-button-link {
+    color: #D97706;
 }
 
 /* Day/Week view */

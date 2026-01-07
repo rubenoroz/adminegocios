@@ -252,6 +252,7 @@ model Customer {
   name        String
   email       String?
   phone       String?
+  address     String?  // Dirección del cliente
   
   // Tax Data
   taxId       String?  // RFC

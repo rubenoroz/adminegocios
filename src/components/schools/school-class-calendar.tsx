@@ -8,6 +8,8 @@ import { es } from "date-fns/locale";
 import { Plus, ChevronLeft, ChevronRight, CalendarDays, GraduationCap, Building } from "lucide-react";
 import { useBranch } from "@/context/branch-context";
 import { useToast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { MobileTimePicker } from "@/components/ui/mobile-time-picker";
 
 // Import styles
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -466,6 +468,11 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
     const [saving, setSaving] = useState(false);
     const [students, setStudents] = useState<Array<{ id: string; firstName: string; lastName: string }>>([]);
 
+    // Editable times for mobile
+    const [editableStartTime, setEditableStartTime] = useState<Date>(selectedSlot.start);
+    const [editableEndTime, setEditableEndTime] = useState<Date>(selectedSlot.end);
+    const isMobile = useIsMobile();
+
     // Fetch students
     useEffect(() => {
         if (businessId) {
@@ -510,8 +517,8 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
 
         setSaving(true);
         try {
-            const startTime = format(selectedSlot.start, "HH:mm");
-            const endTime = format(selectedSlot.end, "HH:mm");
+            const startTime = format(editableStartTime, "HH:mm");
+            const endTime = format(editableEndTime, "HH:mm");
 
             // Create one schedule per selected day
             const schedulePromises = selectedDays.map(dayOfWeek =>
@@ -592,21 +599,14 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
                     Nueva Clase Programada
                 </h3>
 
-                {/* Time Display */}
-                <div style={{
-                    backgroundColor: "#f1f5f9",
-                    padding: "12px 16px",
-                    borderRadius: "10px",
-                    marginBottom: "20px",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center"
-                }}>
-                    <span style={{ color: "#64748b", fontSize: "14px" }}>Horario:</span>
-                    <span style={{ fontWeight: 600, color: "#0f172a" }}>
-                        {format(selectedSlot.start, "EEEE d MMM, HH:mm", { locale: es })} - {format(selectedSlot.end, "HH:mm")}
-                    </span>
-                </div>
+                {/* Time Display - Always editable */}
+                <MobileTimePicker
+                    startTime={editableStartTime}
+                    endTime={editableEndTime}
+                    onStartTimeChange={setEditableStartTime}
+                    onEndTimeChange={setEditableEndTime}
+                    showDate={true}
+                />
 
                 {/* Course Select */}
                 <div style={{ marginBottom: "16px" }}>

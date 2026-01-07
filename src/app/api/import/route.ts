@@ -76,7 +76,7 @@ export async function POST(req: Request) {
                 }
             }
         } else if (type === "TEACHERS") {
-            // Logic for teachers (creating User accounts with TEACHER role)
+            // Logic for teachers (creating User accounts with TEACHER role AND Employee records)
             for (const item of data) {
                 try {
                     const existing = await prisma.user.findUnique({
@@ -84,10 +84,13 @@ export async function POST(req: Request) {
                     });
 
                     if (!existing) {
+                        // Parse name to extract first/last name
+                        const nameParts = (item.name || "").trim().split(" ");
+                        const firstName = nameParts[0] || "Maestro";
+                        const lastName = nameParts.slice(1).join(" ") || "";
+
                         // Create user with default password
-                        // Note: In a real app, we'd generate a random password and email it
-                        // Here we'll just create the record
-                        await prisma.user.create({
+                        const user = await prisma.user.create({
                             data: {
                                 name: item.name,
                                 email: item.email,
@@ -98,6 +101,22 @@ export async function POST(req: Request) {
                                 branchId: branchId || null
                             }
                         });
+
+                        // Also create Employee record for payroll
+                        await prisma.employee.create({
+                            data: {
+                                firstName,
+                                lastName,
+                                email: item.email,
+                                phone: item.phone || null,
+                                role: "TEACHER",
+                                hourlyRate: item.hourlyRate ? parseFloat(item.hourlyRate) : null,
+                                paymentModel: item.hourlyRate ? "HOURLY" : "FIXED",
+                                businessId,
+                                branches: branchId ? { connect: { id: branchId } } : undefined
+                            }
+                        });
+
                         success++;
                     } else {
                         failed++;
@@ -138,6 +157,7 @@ export async function POST(req: Request) {
                             price: parseFloat(item.price),
                             cost: item.cost ? parseFloat(item.cost) : null,
                             sku: item.sku || null,
+                            barcode: item.barcode || null,
                             category: item.category || null,
                             businessId
                         }
@@ -169,6 +189,7 @@ export async function POST(req: Request) {
                             name: item.name,
                             email: item.email || null,
                             phone: item.phone || null,
+                            address: item.address || null,
                             businessId
                         }
                     });
