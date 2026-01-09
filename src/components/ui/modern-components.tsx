@@ -52,6 +52,7 @@ interface ModernInputProps {
     placeholder?: string;
     required?: boolean;
     disabled?: boolean;
+    className?: string;
 }
 
 export function ModernInput({
@@ -61,13 +62,14 @@ export function ModernInput({
     onChange,
     placeholder = "",
     required = false,
-    disabled = false
+    disabled = false,
+    className = ""
 }: ModernInputProps) {
     return (
         <div className="modern-input-wrapper">
             <input
                 type={type}
-                className="modern-input"
+                className={`modern-input ${className}`}
                 value={value}
                 onChange={(e) => onChange?.(e.target.value)}
                 placeholder={placeholder}
