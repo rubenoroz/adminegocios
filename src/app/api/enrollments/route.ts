@@ -20,7 +20,7 @@ export async function POST(req: Request) {
         // Get course details for fee creation
         const course = await prisma.course.findUnique({
             where: { id: courseId },
-            select: { name: true, businessId: true }
+            select: { name: true, businessId: true, price: true }
         });
 
         // Create enrollments and fees for all students
