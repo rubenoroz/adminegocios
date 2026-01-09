@@ -45,7 +45,7 @@ export function ModernCard({ children, className = "", onClick }: ModernCardProp
 }
 
 interface ModernInputProps {
-    label: string;
+    label?: string;
     type?: string;
     value: string;
     onChange?: (value: string) => void;
@@ -76,9 +76,11 @@ export function ModernInput({
                 required={required}
                 disabled={disabled}
             />
-            <label className="modern-input-label">
-                {label}{required && " *"}
-            </label>
+            {label && (
+                <label className="modern-input-label">
+                    {label}{required && " *"}
+                </label>
+            )}
         </div>
     );
 }
