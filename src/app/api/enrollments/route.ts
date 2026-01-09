@@ -54,12 +54,12 @@ export async function POST(req: Request) {
                 await prisma.studentFee.create({
                     data: {
                         title: `Colegiatura ${currentMonth} - ${course?.name || 'Curso'}`,
-                        amount: 0, // Will be set when fee template is configured
+                        amount: course?.price || 0, // Monto automático basado en el curso
                         dueDate: dueDate,
                         status: "PENDING",
                         studentId: studentId,
                         courseId: courseId,
-                        originalAmount: 0,
+                        originalAmount: course?.price || 0,
                         discountApplied: 0,
                     }
                 });

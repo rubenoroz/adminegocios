@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Plus, Bell, Calendar, Megaphone, MessageSquare, Users, Send } from "lucide-react";
 import { useBranch } from "@/context/branch-context";
 import { format } from "date-fns";
@@ -158,120 +158,325 @@ export function CommunicationHub() {
                                 Nuevo Comunicado
                             </button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                                <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
-                                    Crear Comunicado
-                                </DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                    <Label>Tipo</Label>
-                                    <Select
-                                        value={newItem.type}
-                                        onValueChange={(v) => setNewItem({ ...newItem, type: v })}
-                                    >
-                                        <SelectTrigger className="w-full h-12 rounded-xl border-slate-200">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="ANNOUNCEMENT">Circular / Aviso</SelectItem>
-                                            <SelectItem value="EVENT">Evento Escolar</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                        <DialogContent style={{
+                            maxWidth: '560px',
+                            maxHeight: '90vh',
+                            padding: 0,
+                            borderRadius: '24px',
+                            overflow: 'hidden',
+                            border: 'none',
+                            display: 'flex',
+                            flexDirection: 'column'
+                        }}>
+                            <DialogTitle className="sr-only">Crear Nuevo Comunicado</DialogTitle>
+                            <DialogDescription className="sr-only">
+                                Formulario para crear una nueva circular o un evento escolar.
+                            </DialogDescription>
+                            {/* Gradient Header */}
+                            <div style={{
+                                background: newItem.type === "EVENT"
+                                    ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)'
+                                    : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                                padding: '28px 32px',
+                                color: 'white'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                    <div style={{
+                                        width: '56px',
+                                        height: '56px',
+                                        borderRadius: '16px',
+                                        backgroundColor: 'rgba(255,255,255,0.2)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}>
+                                        {newItem.type === "EVENT" ? <Calendar size={28} /> : <Megaphone size={28} />}
+                                    </div>
+                                    <div>
+                                        <h2 style={{ fontSize: '24px', fontWeight: 700, margin: 0 }}>
+                                            {newItem.type === "EVENT" ? "Nuevo Evento" : "Nueva Circular"}
+                                        </h2>
+                                        <p style={{ fontSize: '14px', opacity: 0.9, margin: 0, marginTop: '4px' }}>
+                                            {newItem.type === "EVENT" ? "Programa una actividad escolar" : "Comunica algo importante"}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Form Content */}
+                            <div style={{ padding: '28px 32px', display: 'flex', flexDirection: 'column', gap: '20px', flex: 1, overflowY: 'auto' }}>
+                                {/* Type Selector */}
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>
+                                        Tipo de Comunicado
+                                    </label>
+                                    <div style={{ display: 'flex', gap: '12px' }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setNewItem({ ...newItem, type: "ANNOUNCEMENT" })}
+                                            style={{
+                                                flex: 1,
+                                                padding: '14px 16px',
+                                                borderRadius: '12px',
+                                                border: newItem.type === "ANNOUNCEMENT" ? '2px solid #3b82f6' : '2px solid #e2e8f0',
+                                                background: newItem.type === "ANNOUNCEMENT" ? 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' : '#fff',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '10px',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                        >
+                                            <Megaphone size={20} color={newItem.type === "ANNOUNCEMENT" ? '#3b82f6' : '#94a3b8'} />
+                                            <span style={{ fontWeight: 600, color: newItem.type === "ANNOUNCEMENT" ? '#1e40af' : '#64748b' }}>
+                                                Circular / Aviso
+                                            </span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setNewItem({ ...newItem, type: "EVENT" })}
+                                            style={{
+                                                flex: 1,
+                                                padding: '14px 16px',
+                                                borderRadius: '12px',
+                                                border: newItem.type === "EVENT" ? '2px solid #059669' : '2px solid #e2e8f0',
+                                                background: newItem.type === "EVENT" ? 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)' : '#fff',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '10px',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                        >
+                                            <Calendar size={20} color={newItem.type === "EVENT" ? '#059669' : '#94a3b8'} />
+                                            <span style={{ fontWeight: 600, color: newItem.type === "EVENT" ? '#047857' : '#64748b' }}>
+                                                Evento Escolar
+                                            </span>
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label>Título</Label>
-                                    <Input
+                                {/* Title Input */}
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>
+                                        Título *
+                                    </label>
+                                    <input
+                                        type="text"
                                         value={newItem.title}
                                         onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
-                                        placeholder="Ej. Suspensión de clases"
-                                        className="h-12 rounded-xl"
+                                        placeholder="Ej. Suspensión de clases por día festivo"
+                                        style={{
+                                            width: '100%',
+                                            padding: '14px 16px',
+                                            borderRadius: '12px',
+                                            border: '2px solid #e2e8f0',
+                                            fontSize: '15px',
+                                            fontWeight: 500,
+                                            outline: 'none',
+                                            transition: 'border-color 0.2s ease'
+                                        }}
                                     />
                                 </div>
 
                                 {newItem.type === "ANNOUNCEMENT" ? (
                                     <>
-                                        <div className="space-y-2">
-                                            <Label>Contenido</Label>
-                                            <Textarea
+                                        {/* Content Textarea */}
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>
+                                                Mensaje
+                                            </label>
+                                            <textarea
                                                 value={newItem.content}
                                                 onChange={(e) => setNewItem({ ...newItem, content: e.target.value })}
-                                                placeholder="Escribe el mensaje aquí..."
-                                                rows={5}
-                                                className="rounded-xl"
+                                                placeholder="Escribe el contenido del comunicado..."
+                                                rows={4}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '14px 16px',
+                                                    borderRadius: '12px',
+                                                    border: '2px solid #e2e8f0',
+                                                    fontSize: '14px',
+                                                    resize: 'vertical',
+                                                    outline: 'none',
+                                                    fontFamily: 'inherit'
+                                                }}
                                             />
                                         </div>
-                                        <div className="space-y-2">
-                                            <Label>Prioridad</Label>
-                                            <Select
-                                                value={newItem.priority}
-                                                onValueChange={(v) => setNewItem({ ...newItem, priority: v })}
-                                            >
-                                                <SelectTrigger className="h-12 rounded-xl">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="LOW">Baja (Informativo)</SelectItem>
-                                                    <SelectItem value="MEDIUM">Media (Importante)</SelectItem>
-                                                    <SelectItem value="HIGH">Alta (Urgente)</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+
+                                        {/* Priority Pills */}
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>
+                                                Prioridad
+                                            </label>
+                                            <div style={{ display: 'flex', gap: '10px' }}>
+                                                {[
+                                                    { value: 'LOW', label: 'Baja', color: '#22c55e', bg: '#dcfce7' },
+                                                    { value: 'MEDIUM', label: 'Media', color: '#f59e0b', bg: '#fef3c7' },
+                                                    { value: 'HIGH', label: 'Urgente', color: '#ef4444', bg: '#fee2e2' }
+                                                ].map(p => (
+                                                    <button
+                                                        key={p.value}
+                                                        type="button"
+                                                        onClick={() => setNewItem({ ...newItem, priority: p.value })}
+                                                        style={{
+                                                            padding: '10px 18px',
+                                                            borderRadius: '20px',
+                                                            border: newItem.priority === p.value ? `2px solid ${p.color}` : '2px solid transparent',
+                                                            background: newItem.priority === p.value ? p.bg : '#f1f5f9',
+                                                            color: newItem.priority === p.value ? p.color : '#64748b',
+                                                            fontWeight: 600,
+                                                            fontSize: '13px',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.2s ease'
+                                                        }}
+                                                    >
+                                                        {p.label}
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
                                     </>
                                 ) : (
                                     <>
-                                        <div className="space-y-2">
-                                            <Label>Descripción</Label>
-                                            <Textarea
+                                        {/* Event Description */}
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>
+                                                Descripción
+                                            </label>
+                                            <textarea
                                                 value={newItem.description}
                                                 onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+                                                placeholder="Describe el evento..."
                                                 rows={3}
-                                                className="rounded-xl"
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '14px 16px',
+                                                    borderRadius: '12px',
+                                                    border: '2px solid #e2e8f0',
+                                                    fontSize: '14px',
+                                                    resize: 'vertical',
+                                                    outline: 'none',
+                                                    fontFamily: 'inherit'
+                                                }}
                                             />
                                         </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <Label>Inicio</Label>
-                                                <Input
+
+                                        {/* Date Inputs - Stacked */}
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                            <div>
+                                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>
+                                                    📅 Fecha y Hora de Inicio
+                                                </label>
+                                                <input
                                                     type="datetime-local"
                                                     value={newItem.startDate}
                                                     onChange={(e) => setNewItem({ ...newItem, startDate: e.target.value })}
-                                                    className="h-12 rounded-xl"
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '12px 14px',
+                                                        borderRadius: '12px',
+                                                        border: '2px solid #e2e8f0',
+                                                        fontSize: '14px',
+                                                        outline: 'none',
+                                                        boxSizing: 'border-box'
+                                                    }}
                                                 />
                                             </div>
-                                            <div className="space-y-2">
-                                                <Label>Fin</Label>
-                                                <Input
+                                            <div>
+                                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>
+                                                    📅 Fecha y Hora de Fin
+                                                </label>
+                                                <input
                                                     type="datetime-local"
                                                     value={newItem.endDate}
                                                     onChange={(e) => setNewItem({ ...newItem, endDate: e.target.value })}
-                                                    className="h-12 rounded-xl"
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '12px 14px',
+                                                        borderRadius: '12px',
+                                                        border: '2px solid #e2e8f0',
+                                                        fontSize: '14px',
+                                                        outline: 'none',
+                                                        boxSizing: 'border-box'
+                                                    }}
                                                 />
                                             </div>
                                         </div>
-                                        <div className="space-y-2">
-                                            <Label>Ubicación</Label>
-                                            <Input
+
+                                        {/* Location */}
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>
+                                                📍 Ubicación
+                                            </label>
+                                            <input
+                                                type="text"
                                                 value={newItem.location}
                                                 onChange={(e) => setNewItem({ ...newItem, location: e.target.value })}
                                                 placeholder="Ej. Auditorio Principal"
-                                                className="h-12 rounded-xl"
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '14px 16px',
+                                                    borderRadius: '12px',
+                                                    border: '2px solid #e2e8f0',
+                                                    fontSize: '15px',
+                                                    outline: 'none'
+                                                }}
                                             />
                                         </div>
                                     </>
                                 )}
                             </div>
-                            <DialogFooter>
+
+                            {/* Footer */}
+                            <div style={{
+                                padding: '20px 32px',
+                                borderTop: '1px solid #e2e8f0',
+                                display: 'flex',
+                                justifyContent: 'flex-end',
+                                gap: '12px',
+                                background: '#f8fafc'
+                            }}>
+                                <button
+                                    onClick={() => setIsCreateOpen(false)}
+                                    style={{
+                                        padding: '12px 24px',
+                                        borderRadius: '12px',
+                                        border: '2px solid #e2e8f0',
+                                        background: 'white',
+                                        fontSize: '14px',
+                                        fontWeight: 600,
+                                        color: '#64748b',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Cancelar
+                                </button>
                                 <button
                                     onClick={handleCreate}
                                     disabled={!newItem.title}
-                                    className="button-modern bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:opacity-50"
+                                    style={{
+                                        padding: '12px 28px',
+                                        borderRadius: '12px',
+                                        border: 'none',
+                                        background: newItem.type === "EVENT"
+                                            ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)'
+                                            : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                                        fontSize: '14px',
+                                        fontWeight: 600,
+                                        color: 'white',
+                                        cursor: newItem.title ? 'pointer' : 'not-allowed',
+                                        opacity: newItem.title ? 1 : 0.5,
+                                        boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                    }}
                                 >
+                                    <Send size={16} />
                                     Publicar
                                 </button>
-                            </DialogFooter>
+                            </div>
                         </DialogContent>
                     </Dialog>
                 </div>

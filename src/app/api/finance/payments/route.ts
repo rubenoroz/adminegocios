@@ -32,13 +32,116 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "INVALID_AMOUNT", message: "El monto del pago debe ser mayor a 0" }, { status: 400 });
         }
 
-        // 1. Create the Payment Record
+        // 1. Calculate Commission (if applicable)
+        let teacherCommission = 0;
+        let teacherId: string | null = null;
+        let reserveAmount = 0;
+        let schoolAmount = amount;
+
+        console.log(`[PAYMENT_DEBUG] Processing feeId: ${feeId}, amount: ${amount}`);
+
+        const feeData = await prisma.studentFee.findUnique({
+            where: { id: feeId },
+            include: {
+                course: {
+                    include: {
+                        teacher: {
+                            include: {
+                                employee: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        console.log(`[PAYMENT_DEBUG] Fee Data found:`, {
+            hasCourse: !!feeData?.course,
+            courseId: feeData?.course?.id,
+            hasTeacher: !!feeData?.course?.teacher,
+            teacherName: feeData?.course?.teacher?.name,
+            hasEmployee: !!feeData?.course?.teacher?.employee
+        });
+
+        // Helper to get Commission % and ID
+        const getTeacherCommissionData = (teacherUser: any): { id: string, pct: number, reservePct: number } | null => {
+            if (!teacherUser?.employee) return null;
+            const emp = teacherUser.employee;
+            if (emp.paymentModel === 'COMMISSION' || emp.paymentModel === 'MIXED') {
+                return {
+                    id: emp.id,
+                    pct: emp.commissionPercentage || 0,
+                    reservePct: emp.reservePercentage || 0
+                };
+            }
+            return null;
+        };
+
+        let commissionData = null;
+
+        // 1. Try to find teacher via Schedule (Group) Enrollment
+        if (feeData?.studentId && feeData?.courseId) {
+            const groupEnrollment = await prisma.scheduleEnrollment.findFirst({
+                where: {
+                    studentId: feeData.studentId,
+                    status: 'ACTIVE',
+                    schedule: {
+                        courseId: feeData.courseId
+                    }
+                },
+                include: {
+                    schedule: {
+                        include: {
+                            teacher: {
+                                include: { employee: true }
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (groupEnrollment?.schedule?.teacher) {
+                console.log(`[PAYMENT_DEBUG] Found Group Teacher: ${groupEnrollment.schedule.teacher.name}`);
+                commissionData = getTeacherCommissionData(groupEnrollment.schedule.teacher);
+            }
+        }
+
+        // 2. Fallback to Course Main Teacher if no group teacher found
+        if (!commissionData && feeData?.course?.teacher) {
+            console.log(`[PAYMENT_DEBUG] Using Course Main Teacher: ${feeData.course.teacher.name}`);
+            commissionData = getTeacherCommissionData(feeData.course.teacher);
+        }
+
+        if (commissionData) {
+            teacherId = commissionData.id;
+            console.log(`[PAYMENT_DEBUG] Teacher ID for commission: ${teacherId}, %: ${commissionData.pct}`);
+
+            if (commissionData.pct > 0) {
+                teacherCommission = amount * (commissionData.pct / 100);
+                console.log(`[PAYMENT_DEBUG] Commission calculated: ${teacherCommission}`);
+            }
+
+            if (commissionData.reservePct > 0 && teacherCommission > 0) {
+                reserveAmount = teacherCommission * (commissionData.reservePct / 100);
+                console.log(`[PAYMENT_DEBUG] Reserve calculated: ${reserveAmount}`);
+            }
+        } else {
+            console.log(`[PAYMENT_DEBUG] No commissionable teacher found via Group or Course`);
+        }
+
+        schoolAmount = amount - teacherCommission;
+
+        // Create the Payment Record
         const payment = await prisma.studentPayment.create({
             data: {
                 studentFeeId: feeId,
                 amount: amount,
                 method, // CASH, CARD, TRANSFER
-                date: new Date()
+                date: new Date(),
+                teacherId,
+                teacherCommission,
+                reserveAmount,
+                schoolAmount
             }
         });
 

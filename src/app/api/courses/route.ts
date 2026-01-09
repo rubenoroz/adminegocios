@@ -12,7 +12,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { name, description, teacherId, schedules, classroomId, branchIds } = body;
+        const { name, description, teacherId, schedules, classroomId, branchIds, price, color } = body;
 
         if (!name) {
             return NextResponse.json({
@@ -50,6 +50,8 @@ export async function POST(req: Request) {
                     teacherId: teacherId || null,
                     classroomId: classroomId || null,
                     businessId: session.user.businessId!,
+                    color: color || "#3B82F6",
+                    price: price ? parseFloat(price) : 0,
                     branches: {
                         connect: connectedBranches
                     }
@@ -131,6 +133,7 @@ export async function GET(req: Request) {
                 description: true,
                 gradeLevel: true,
                 schedule: true,
+                price: true,
                 // color: true, // Commenting out to fix lint error if types are not synced
                 room: true,
                 teacher: {
@@ -153,6 +156,7 @@ export async function GET(req: Request) {
                 _count: {
                     select: {
                         enrollments: true, // Keep direct enrollments just in case
+                        grades: true, // Count grades to know if course has been evaluated
                     },
                 },
             },
@@ -177,8 +181,10 @@ export async function GET(req: Request) {
 
             return {
                 ...course,
+                hasGrades: course._count.grades > 0, // True if course has any grades
                 _count: {
-                    enrollments: totalEnrollments
+                    enrollments: totalEnrollments,
+                    grades: course._count.grades
                 },
                 // Build a summary of schedules for UI if needed, or remove to save bandwidth
                 // Removing heavy schedule data from response as it's not needed for the list view

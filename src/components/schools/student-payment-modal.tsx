@@ -28,8 +28,8 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2 } from "lucide-react";
-import { CustomerSelector } from "@/components/sales/customer-selector";
+import { Loader2, Plus, DollarSign, CreditCard, FileText } from "lucide-react";
+
 import { CustomerFiscalModal } from "@/components/sales/customer-fiscal-modal";
 
 interface StudentPaymentModalProps {
@@ -85,6 +85,30 @@ export function StudentPaymentModal({
     const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
     const [requiresInvoice, setRequiresInvoice] = useState(false);
     const [isFiscalModalOpen, setIsFiscalModalOpen] = useState(false);
+
+    // Billing Profiles
+    const [billingProfiles, setBillingProfiles] = useState<any[]>([]);
+
+
+    // Fetch billing profiles when modal opens
+    useEffect(() => {
+        if (isOpen && studentId) {
+            fetchBillingProfiles();
+        }
+    }, [isOpen, studentId]);
+
+    const fetchBillingProfiles = async () => {
+        if (!studentId) return;
+        try {
+            const res = await fetch(`/api/students/${studentId}/billing-profiles`);
+            if (res.ok) {
+                const data = await res.json();
+                setBillingProfiles(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch billing profiles", error);
+        }
+    };
 
     // Fetch teachers with commission setup AND student's default teacher
     useEffect(() => {
@@ -166,12 +190,42 @@ export function StudentPaymentModal({
         }
     };
 
+    const handleNewCustomerSave = async (customer: any) => {
+        setIsFiscalModalOpen(false);
+        setSelectedCustomer(customer);
+        setRequiresInvoice(true);
+
+        // Auto-link to student
+        if (studentId && customer.id) {
+            try {
+                await fetch(`/api/students/${studentId}/billing-profiles`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ customerId: customer.id })
+                });
+                fetchBillingProfiles(); // Refresh list
+            } catch (error) {
+                console.error("Failed to link profile", error);
+            }
+        }
+    };
+
     const handlePayment = async () => {
         if (!payingFeeId || !paymentAmount || !studentId) return;
 
         const commission = calculateCommission();
 
         try {
+            // 1. If we have a selected customer (not from profile list originally), make sure it's linked for future
+            if (selectedCustomer && selectedCustomer.id) {
+                // Optimistically link in background, don't await
+                fetch(`/api/students/${studentId}/billing-profiles`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ customerId: selectedCustomer.id })
+                }).then(() => fetchBillingProfiles()).catch(e => console.error(e));
+            }
+
             const res = await fetch(`/api/students/${studentId}/fees`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -340,18 +394,133 @@ export function StudentPaymentModal({
                                             type="number"
                                             value={paymentAmount}
                                             onChange={(e) => setPaymentAmount(e.target.value)}
+                                            className="h-11 rounded-xl bg-white border-slate-200"
                                         />
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Método de Pago</Label>
                                         <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                                            <SelectTrigger>
+                                            <SelectTrigger
+                                                className="select-trigger-purple"
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '10px',
+                                                    padding: '10px 18px',
+                                                    background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                                                    border: 'none',
+                                                    borderRadius: '14px',
+                                                    color: 'white',
+                                                    fontWeight: 600,
+                                                    fontSize: '14px',
+                                                    cursor: 'pointer',
+                                                    boxShadow: '0 4px 15px rgba(139, 92, 246, 0.35)',
+                                                    height: '44px'
+                                                }}
+                                            >
                                                 <SelectValue />
                                             </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="CASH">Efectivo</SelectItem>
-                                                <SelectItem value="CARD">Tarjeta</SelectItem>
-                                                <SelectItem value="TRANSFER">Transferencia</SelectItem>
+                                            <SelectContent
+                                                style={{
+                                                    background: 'white',
+                                                    borderRadius: '20px',
+                                                    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                                                    padding: '12px',
+                                                    border: 'none',
+                                                    minWidth: '260px',
+                                                    zIndex: 10001
+                                                }}
+                                            >
+                                                {/* Purple Header */}
+                                                <div style={{
+                                                    fontSize: '11px',
+                                                    textTransform: 'uppercase',
+                                                    color: '#8b5cf6',
+                                                    fontWeight: 700,
+                                                    letterSpacing: '0.5px',
+                                                    padding: '8px 12px',
+                                                    marginBottom: '4px'
+                                                }}>
+                                                    Método de Pago
+                                                </div>
+                                                <SelectItem value="CASH"
+                                                    style={{
+                                                        borderRadius: '14px',
+                                                        marginBottom: '4px',
+                                                        padding: '12px 14px',
+                                                        cursor: 'pointer',
+                                                        border: 'none'
+                                                    }}
+                                                    className="focus:bg-slate-50 data-[state=checked]:bg-[rgba(139,92,246,0.1)] data-[state=checked]:text-[#8b5cf6]"
+                                                >
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                        <div style={{
+                                                            width: '32px',
+                                                            height: '32px',
+                                                            borderRadius: '10px',
+                                                            background: '#10b981',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            color: 'white'
+                                                        }}>
+                                                            <DollarSign size={16} />
+                                                        </div>
+                                                        <span style={{ fontWeight: 500, fontSize: '14px', color: '#475569' }}>Efectivo</span>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="CARD"
+                                                    style={{
+                                                        borderRadius: '14px',
+                                                        marginBottom: '4px',
+                                                        padding: '12px 14px',
+                                                        cursor: 'pointer',
+                                                        border: 'none'
+                                                    }}
+                                                    className="focus:bg-slate-50 data-[state=checked]:bg-[rgba(139,92,246,0.1)] data-[state=checked]:text-[#8b5cf6]"
+                                                >
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                        <div style={{
+                                                            width: '32px',
+                                                            height: '32px',
+                                                            borderRadius: '10px',
+                                                            background: '#3b82f6',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            color: 'white'
+                                                        }}>
+                                                            <CreditCard size={16} />
+                                                        </div>
+                                                        <span style={{ fontWeight: 500, fontSize: '14px', color: '#475569' }}>Tarjeta</span>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="TRANSFER"
+                                                    style={{
+                                                        borderRadius: '14px',
+                                                        marginBottom: '4px',
+                                                        padding: '12px 14px',
+                                                        cursor: 'pointer',
+                                                        border: 'none'
+                                                    }}
+                                                    className="focus:bg-slate-50 data-[state=checked]:bg-[rgba(139,92,246,0.1)] data-[state=checked]:text-[#8b5cf6]"
+                                                >
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                        <div style={{
+                                                            width: '32px',
+                                                            height: '32px',
+                                                            borderRadius: '10px',
+                                                            background: '#8b5cf6',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            color: 'white'
+                                                        }}>
+                                                            <FileText size={16} />
+                                                        </div>
+                                                        <span style={{ fontWeight: 500, fontSize: '14px', color: '#475569' }}>Transferencia</span>
+                                                    </div>
+                                                </SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -387,7 +556,10 @@ export function StudentPaymentModal({
                                                     value={selectedTeacherId || "_none"}
                                                     onValueChange={(val) => setSelectedTeacherId(val === "_none" ? "" : val)}
                                                 >
-                                                    <SelectTrigger style={{ width: 'auto', paddingRight: '8px' }}>
+                                                    <SelectTrigger
+                                                        className="h-[44px] rounded-[14px] bg-white border-none shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition-all"
+                                                        style={{ width: 'auto', paddingRight: '12px', fontSize: '14px', color: '#1e293b' }}
+                                                    >
                                                         <SelectValue placeholder="Sin comisión" />
                                                     </SelectTrigger>
                                                     <SelectContent>
@@ -420,27 +592,157 @@ export function StudentPaymentModal({
 
                                     {/* Invoicing Section - Full Width */}
                                     <div className="col-span-full border-t pt-4 mt-2">
-                                        <div className="flex flex-col gap-2">
-                                            <span className="text-sm font-medium text-slate-700">Datos de Facturación (Opcional)</span>
+                                        <div className="flex flex-col gap-3">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm font-medium text-slate-700">Datos de Facturación (Opcional)</span>
+                                                <button
+                                                    onClick={() => setIsFiscalModalOpen(true)}
+                                                    className="button-modern-sm button-modern-sm-blue flex items-center gap-2"
+                                                    style={{ height: '44px', paddingLeft: '16px', paddingRight: '16px' }}
+                                                >
+                                                    <Plus className="w-4 h-4" />
+                                                    Nuevo Cliente
+                                                </button>
+                                            </div>
+
                                             <div className="flex flex-wrap items-center gap-4">
                                                 <div className="w-full md:w-auto md:flex-1 min-w-[200px]">
-                                                    <CustomerSelector
-                                                        selectedCustomer={selectedCustomer}
-                                                        onSelect={setSelectedCustomer}
-                                                        onNewCustomer={() => setIsFiscalModalOpen(true)}
-                                                    />
+                                                    {billingProfiles.length > 0 ? (
+                                                        <div className="flex items-center gap-3">
+                                                            <Select
+                                                                value={selectedCustomer?.id || ""}
+                                                                onValueChange={(val) => {
+                                                                    const profile = billingProfiles.find(p => p.id === val);
+                                                                    setSelectedCustomer(profile || null);
+                                                                    if (profile) setRequiresInvoice(true);
+                                                                }}
+                                                            >
+                                                                <SelectTrigger
+                                                                    className="select-trigger-purple"
+                                                                    style={{
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        gap: '10px',
+                                                                        padding: '10px 18px',
+                                                                        background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                                                                        border: 'none',
+                                                                        borderRadius: '14px',
+                                                                        color: 'white',
+                                                                        fontWeight: 600,
+                                                                        fontSize: '14px',
+                                                                        cursor: 'pointer',
+                                                                        boxShadow: '0 4px 15px rgba(139, 92, 246, 0.35)',
+                                                                        minWidth: '200px'
+                                                                    }}
+                                                                >
+                                                                    <SelectValue placeholder="Seleccionar RFC..." />
+                                                                </SelectTrigger>
+                                                                <SelectContent
+                                                                    style={{
+                                                                        background: 'white',
+                                                                        borderRadius: '20px',
+                                                                        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                                                                        padding: '12px',
+                                                                        border: 'none',
+                                                                        minWidth: '280px',
+                                                                        zIndex: 10001
+                                                                    }}
+                                                                >
+                                                                    {/* Purple Header like BranchSelector */}
+                                                                    <div style={{
+                                                                        fontSize: '11px',
+                                                                        textTransform: 'uppercase',
+                                                                        color: '#8b5cf6',
+                                                                        fontWeight: 700,
+                                                                        letterSpacing: '0.5px',
+                                                                        padding: '8px 12px',
+                                                                        marginBottom: '4px'
+                                                                    }}>
+                                                                        Seleccionar Perfil
+                                                                    </div>
+                                                                    {billingProfiles.map((profile) => (
+                                                                        <SelectItem
+                                                                            key={profile.id}
+                                                                            value={profile.id}
+                                                                            style={{
+                                                                                borderRadius: '14px',
+                                                                                marginBottom: '4px',
+                                                                                padding: '12px 14px',
+                                                                                cursor: 'pointer',
+                                                                                border: 'none'
+                                                                            }}
+                                                                            className="focus:bg-slate-50 data-[state=checked]:bg-[rgba(139,92,246,0.1)] data-[state=checked]:text-[#8b5cf6]"
+                                                                        >
+                                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                                                {/* Icon box like BranchSelector */}
+                                                                                <div style={{
+                                                                                    width: '32px',
+                                                                                    height: '32px',
+                                                                                    borderRadius: '10px',
+                                                                                    background: '#8b5cf6',
+                                                                                    display: 'flex',
+                                                                                    alignItems: 'center',
+                                                                                    justifyContent: 'center',
+                                                                                    color: 'white'
+                                                                                }}>
+                                                                                    <FileText size={16} />
+                                                                                </div>
+                                                                                <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+                                                                                    <span style={{ fontWeight: 500, fontSize: '14px', color: '#475569' }}>
+                                                                                        {profile.legalName || profile.name}
+                                                                                    </span>
+                                                                                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                                                                                        {profile.taxId}
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                            {selectedCustomer && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setSelectedCustomer(null);
+                                                                        setRequiresInvoice(false);
+                                                                    }}
+                                                                    style={{
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center',
+                                                                        width: '44px',
+                                                                        height: '44px',
+                                                                        borderRadius: '14px',
+                                                                        background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                                                                        border: 'none',
+                                                                        color: 'white',
+                                                                        cursor: 'pointer',
+                                                                        boxShadow: '0 4px 15px rgba(239, 68, 68, 0.35)',
+                                                                        transition: 'all 0.2s ease'
+                                                                    }}
+                                                                    title="Quitar perfil seleccionado"
+                                                                >
+                                                                    ✕
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-sm text-slate-500 italic py-2">
+                                                            No hay perfiles guardados. Crea uno nuevo.
+                                                        </p>
+                                                    )}
                                                 </div>
-                                                {selectedCustomer && (
-                                                    <label className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-100 transition-all">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={requiresInvoice}
-                                                            onChange={(e) => setRequiresInvoice(e.target.checked)}
-                                                            className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 border-gray-300"
-                                                        />
-                                                        <span className="text-sm font-medium text-slate-700">Requiere Factura</span>
-                                                    </label>
-                                                )}
+
+                                                <label className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-100 transition-all select-none">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={requiresInvoice}
+                                                        onChange={(e) => setRequiresInvoice(e.target.checked)}
+                                                        className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 border-gray-300"
+                                                    />
+                                                    <span className="text-sm font-medium text-slate-700">Requiere Factura</span>
+                                                </label>
                                             </div>
                                         </div>
                                     </div>
@@ -477,7 +779,7 @@ export function StudentPaymentModal({
                 <CustomerFiscalModal
                     isOpen={isFiscalModalOpen}
                     onClose={() => setIsFiscalModalOpen(false)}
-                    onSave={(customer) => setSelectedCustomer(customer)}
+                    onSave={handleNewCustomerSave}
                 />
             </DialogContent>
         </Dialog>

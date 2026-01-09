@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useBranch } from "@/context/branch-context";
-import { Calendar as CalendarIcon, BookOpen, Users, Award } from "lucide-react";
+import { Calendar as CalendarIcon, BookOpen, Users, Award, TrendingUp } from "lucide-react";
 import { GradesTable } from "@/components/schools/grades-table";
 import { ModernKpiCard } from "@/components/ui/modern-kpi-card";
 import { ModernFilterBar } from "@/components/ui/modern-filter-bar";
@@ -20,6 +20,7 @@ export function GradesManager() {
     const [selectedPeriod, setSelectedPeriod] = useState<string>(currentMonth);
     const [searchValue, setSearchValue] = useState("");
     const [filterPeriod, setFilterPeriod] = useState<string[]>([currentMonth]);
+    const [courseAverage, setCourseAverage] = useState<number | null>(null);
 
     useEffect(() => {
         if (selectedBranch?.businessId) {
@@ -37,6 +38,28 @@ export function GradesManager() {
             }
         } catch (error) {
             console.error("Error fetching courses", error);
+        }
+    };
+
+    // Fetch course average when a course is selected
+    useEffect(() => {
+        if (selectedCourseId && selectedPeriod) {
+            fetchCourseAverage();
+        } else {
+            setCourseAverage(null);
+        }
+    }, [selectedCourseId, selectedPeriod]);
+
+    const fetchCourseAverage = async () => {
+        try {
+            const res = await fetch(`/api/grades/average?courseId=${selectedCourseId}&period=${selectedPeriod}`);
+            if (res.ok) {
+                const data = await res.json();
+                setCourseAverage(data.average);
+            }
+        } catch (error) {
+            console.error("Error fetching course average", error);
+            setCourseAverage(null);
         }
     };
 
@@ -80,7 +103,13 @@ export function GradesManager() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     <ModernKpiCard title="Total Cursos" value={totalCourses.toString()} icon={BookOpen} gradientClass="gradient-courses" subtitle="Cursos activos" />
                     <ModernKpiCard title="Total Alumnos" value={totalStudents.toString()} icon={Users} gradientClass="gradient-students" subtitle="Inscritos en cursos" />
-                    <ModernKpiCard title="Periodo Actual" value={selectedPeriod ? periodLabels[selectedPeriod] : "Todo el Año"} icon={CalendarIcon} gradientClass="gradient-finance" subtitle="Evaluación activa" />
+                    <ModernKpiCard
+                        title="Promedio Grupal"
+                        value={courseAverage !== null ? courseAverage.toFixed(1) : "--"}
+                        icon={TrendingUp}
+                        gradientClass="gradient-finance"
+                        subtitle={selectedCourseId ? courses.find(c => c.id === selectedCourseId)?.name || "Selecciona un curso" : "Selecciona un curso"}
+                    />
                     <ModernKpiCard title="Cursos Evaluados" value={coursesWithGrades.toString()} icon={Award} gradientClass="gradient-employees" subtitle="Con calificaciones" />
                 </div>
             </motion.div>

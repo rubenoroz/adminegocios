@@ -12,6 +12,7 @@ import { CommunicationHub } from "@/components/schools/communication-hub";
 import { FeesList } from "@/components/finance/fees-list";
 import { FeeTemplatesManager } from "@/components/finance/fee-templates-manager";
 import { CommissionsManager } from "@/components/schools/commissions-manager";
+import { BillingProfilesManager } from "@/components/settings/billing-profiles-manager";
 import { SchoolClassCalendar } from "@/components/schools/school-class-calendar";
 import { GroupsList } from "@/components/schools/groups-list";
 import { ModernKpiCard } from "@/components/ui/modern-kpi-card";
@@ -20,12 +21,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
     BookOpen, Users, UserCheck, Award, Clock, Briefcase, Megaphone,
     DollarSign, Wallet, AlertCircle, TrendingUp, CalendarDays,
-    GraduationCap, Settings, LucideIcon, UsersRound
+    GraduationCap, Settings, LucideIcon, UsersRound, FileText
 } from "lucide-react";
 
 // Section and SubTab types
 type SectionType = "academico" | "alumnos" | "administracion";
-type SubTabType = "courses" | "groups" | "calendario" | "students" | "parents" | "grades" | "attendance" | "staff" | "communication" | "finance" | "commissions";
+type SubTabType = "courses" | "groups" | "calendario" | "students" | "parents" | "grades" | "attendance" | "staff" | "communication" | "finance" | "commissions" | "billing";
 
 interface SubTab {
     id: SubTabType;
@@ -71,6 +72,7 @@ const sections: Section[] = [
             { id: "communication", label: "Comunicación", icon: Megaphone },
             { id: "finance", label: "Finanzas", icon: DollarSign },
             { id: "commissions", label: "Comisiones", icon: TrendingUp },
+            { id: "billing", label: "Facturación", icon: FileText },
         ]
     }
 ];
@@ -89,10 +91,34 @@ export default function SchoolPage() {
     const [activeSubTab, setActiveSubTab] = useState<SubTabType>(subTabFromUrl);
     const [financeSubTab, setFinanceSubTab] = useState<"fees" | "templates">("fees");
     const [financeStats, setFinanceStats] = useState({ collected: 0, pending: 0, overdue: 0, total: 0 });
+    const [enableParentsModule, setEnableParentsModule] = useState(true);
 
-    // Get current section's sub-tabs
+    // Fetch business settings to check if parents module is enabled
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const res = await fetch("/api/business/settings");
+                if (res.ok) {
+                    const data = await res.json();
+                    setEnableParentsModule(data.enableParentsModule ?? true);
+                }
+            } catch (error) {
+                console.error("Failed to fetch business settings", error);
+            }
+        };
+        fetchSettings();
+    }, []);
+
+    // Get current section's sub-tabs (filter parents if disabled)
     const currentSection = useMemo(() => sections.find(s => s.id === activeSection)!, [activeSection]);
-    const currentSubTabs = currentSection.subTabs;
+    const currentSubTabs = useMemo(() => {
+        return currentSection.subTabs.filter(tab => {
+            if (tab.id === "parents" && !enableParentsModule) {
+                return false;
+            }
+            return true;
+        });
+    }, [currentSection, enableParentsModule]);
 
     // When section changes, set first sub-tab as active
     useEffect(() => {
@@ -209,7 +235,7 @@ export default function SchoolPage() {
                     {activeSubTab === "finance" && (
                         <div className="space-y-6">
                             {/* Finance KPIs */}
-                            <div className="store-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
                                 <ModernKpiCard
                                     title="Cobrado este Mes"
                                     value={`$${financeStats.collected.toLocaleString()}`}
@@ -272,6 +298,11 @@ export default function SchoolPage() {
                         </div>
                     )}
                     {activeSubTab === "commissions" && <CommissionsManager />}
+                    {activeSubTab === "billing" && (
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-4 lg:p-6">
+                            <BillingProfilesManager />
+                        </div>
+                    )}
                 </motion.div>
             </AnimatePresence>
         </div>

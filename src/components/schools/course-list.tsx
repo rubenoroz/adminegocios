@@ -66,6 +66,7 @@ export function CourseList() {
     const [newSchedules, setNewSchedules] = useState<any[]>([]);
     const [newClassroomId, setNewClassroomId] = useState("");
     const [newBranchIds, setNewBranchIds] = useState<string[]>([]);
+    const [newPrice, setNewPrice] = useState("");
 
     // Edit states
     const [editOpen, setEditOpen] = useState(false);
@@ -241,7 +242,8 @@ export function CourseList() {
                     teacherId: newTeacherId === "none" ? null : newTeacherId || null,
                     classroomId: newClassroomId === "none" ? null : newClassroomId || null,
                     schedules: newSchedules,
-                    branchIds: newBranchIds
+                    branchIds: newBranchIds,
+                    price: newPrice
                 }),
             });
 
@@ -255,6 +257,7 @@ export function CourseList() {
                 setNewSchedules([]);
                 setNewClassroomId("");
                 setNewBranchIds([]);
+                setNewPrice("");
             }
         } catch (error) {
             toast({ title: "Error al crear curso", variant: "destructive" });
@@ -294,7 +297,8 @@ export function CourseList() {
                 body: JSON.stringify({
                     name: editingCourse.name,
                     description: editingCourse.description,
-                    color: editingCourse.color || "#3B82F6"
+                    color: editingCourse.color || "#3B82F6",
+                    price: editingCourse.price
                 })
             });
 
@@ -500,6 +504,20 @@ export function CourseList() {
                                             className="w-full px-4 py-3 rounded-xl border-2 border-border focus:border-blue-600 focus:outline-none transition-colors resize-none"
                                             rows={3}
                                         />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Costo Mensual</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                                            <ModernInput
+                                                type="number"
+                                                placeholder="0.00"
+                                                value={newPrice}
+                                                onChange={(val) => setNewPrice(val)}
+                                                className="pl-7"
+                                            />
+                                        </div>
+                                        <p className="text-xs text-slate-500">Se usará para generar los cobros automáticos.</p>
                                     </div>
                                     <p className="text-sm text-slate-500 bg-slate-50 p-3 rounded-lg">
                                         💡 Profesores, salones y horarios se asignan desde el <strong>Calendario</strong> en la sección Académico.
@@ -887,6 +905,7 @@ export function CourseList() {
                                 <div className="flex flex-col">
                                     <span className="font-bold text-white text-lg leading-tight">CURSOS SELECCIONADOS</span>
                                     <span className="text-xs text-indigo-300 font-medium">Gestionar selección múltiple</span>
+                                    <span className="text-xs text-indigo-300 font-medium">Gestionar selección múltiple</span>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3 pr-2">
@@ -931,6 +950,20 @@ export function CourseList() {
                             value={editingCourse?.description || ""}
                             onChange={(val) => setEditingCourse({ ...editingCourse, description: val })}
                         />
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700">Costo Mensual</label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                                <ModernInput
+                                    type="number"
+                                    placeholder="0.00"
+                                    value={editingCourse?.price || ""}
+                                    onChange={(val) => setEditingCourse({ ...editingCourse, price: val })}
+                                    className="pl-7"
+                                />
+                            </div>
+                        </div>
 
                         <div className="pt-4 border-t border-slate-100">
                             <label className="block text-sm font-medium mb-2">Color del Curso</label>

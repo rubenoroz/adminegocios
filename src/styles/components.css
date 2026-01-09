@@ -169,6 +169,29 @@
     /* Scroll horizontal y vertical */
 }
 
+/* Dialog with p-0 class - removes internal padding for custom layouts */
+.dialog-content.p-0 {
+    padding: 0 !important;
+    gap: 0 !important;
+}
+
+/* Force white text on purple gradient select triggers */
+[style*="linear-gradient(135deg, #8b5cf6"] span,
+[style*="linear-gradient(135deg, #8b5cf6"] [data-placeholder] {
+    color: white !important;
+}
+
+/* Purple select trigger - forces all child text to be white */
+.select-trigger-purple,
+.select-trigger-purple * {
+    color: white !important;
+}
+
+.select-trigger-purple svg {
+    color: white !important;
+    stroke: white !important;
+}
+
 /* Modal sizes */
 .dialog-content.max-w-4xl {
     max-width: 56rem !important;

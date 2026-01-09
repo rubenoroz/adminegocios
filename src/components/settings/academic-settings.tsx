@@ -123,7 +123,6 @@ export function AcademicSettings() {
                 </p>
             </div>
 
-            {/* Info note */}
             <div style={{
                 padding: '12px 16px',
                 backgroundColor: '#F0F9FF',

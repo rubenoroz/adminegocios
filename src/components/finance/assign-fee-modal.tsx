@@ -1,20 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-// Removed Select imports as they are replaced by PremiumSelect
+import { X, DollarSign, User, FileText, Calendar, Loader2 } from "lucide-react";
 import { useBranch } from "@/context/branch-context";
 import { useToast } from "@/components/ui/use-toast";
-import { PremiumSelect } from "@/components/ui/premium-select";
 
 interface AssignFeeModalProps {
     open: boolean;
@@ -36,16 +25,54 @@ export function AssignFeeModal({ open, onOpenChange, onSuccess }: AssignFeeModal
     const [title, setTitle] = useState("");
     const [amount, setAmount] = useState("");
     const [dueDate, setDueDate] = useState("");
-
-    // Template selection state
     const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+
+    // Calculate default due date based on payment settings
+    const calculateDefaultDueDate = (paymentDay: number, graceDays: number) => {
+        const today = new Date();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+
+        let dueDateDay = Math.min(28, paymentDay + graceDays);
+        let dueMonth = currentMonth;
+        let dueYear = currentYear;
+
+        if (today.getDate() > dueDateDay) {
+            dueMonth += 1;
+            if (dueMonth > 11) {
+                dueMonth = 0;
+                dueYear += 1;
+            }
+        }
+
+        const dueDateObj = new Date(dueYear, dueMonth, dueDateDay);
+        return dueDateObj.toISOString().split('T')[0];
+    };
 
     useEffect(() => {
         if (open && selectedBranch?.businessId) {
             fetchStudents();
             fetchTemplates();
+            fetchPaymentSettings();
         }
     }, [open, selectedBranch]);
+
+    const fetchPaymentSettings = async () => {
+        try {
+            const res = await fetch('/api/business/settings');
+            if (res.ok) {
+                const data = await res.json();
+                const paymentDay = data.defaultPaymentDay ?? 1;
+                const graceDays = data.paymentGraceDays ?? 5;
+                const defaultDate = calculateDefaultDueDate(paymentDay, graceDays);
+                setDueDate(defaultDate);
+            }
+        } catch (error) {
+            console.error("Error fetching payment settings:", error);
+            const fallbackDate = calculateDefaultDueDate(1, 5);
+            setDueDate(fallbackDate);
+        }
+    };
 
     const fetchStudents = async () => {
         if (!selectedBranch?.id) return;
@@ -103,97 +130,336 @@ export function AssignFeeModal({ open, onOpenChange, onSuccess }: AssignFeeModal
         }
     };
 
+    const handleClose = () => {
+        onOpenChange(false);
+        setSelectedStudentId("");
+        setSelectedTemplateId("");
+        setTitle("");
+        setAmount("");
+    };
+
+    if (!open) return null;
+
+    const selectedStudent = students.find(s => s.id === selectedStudentId);
+    const canSubmit = selectedStudentId && title && amount && dueDate;
+
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-[500px] p-0 overflow-hidden bg-white rounded-2xl border border-slate-100 shadow-2xl">
-                <DialogHeader className="px-6 pt-6 pb-2">
-                    <DialogTitle className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                        Asignar Nuevo Cobro
-                    </DialogTitle>
-                    <DialogDescription className="text-slate-500">
-                        Crea un cargo manual para un estudiante.
-                    </DialogDescription>
-                </DialogHeader>
+        <div
+            style={{
+                position: 'fixed',
+                inset: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                backdropFilter: 'blur(4px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 50,
+                padding: '20px'
+            }}
+            onClick={handleClose}
+        >
+            <div
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                    backgroundColor: 'white',
+                    borderRadius: '24px',
+                    width: '100%',
+                    maxWidth: '480px',
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                    overflow: 'hidden'
+                }}
+            >
+                {/* Header */}
+                <div style={{
+                    padding: '24px',
+                    background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                    color: 'white'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                            <h2 style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>
+                                💰 Cargo Manual
+                            </h2>
+                            <p style={{ fontSize: '14px', opacity: 0.9, margin: '4px 0 0' }}>
+                                Crea un cobro extraordinario para un estudiante
+                            </p>
+                        </div>
+                        <button
+                            onClick={handleClose}
+                            style={{
+                                background: 'rgba(255,255,255,0.2)',
+                                border: 'none',
+                                borderRadius: '10px',
+                                padding: '8px',
+                                cursor: 'pointer',
+                                color: 'white'
+                            }}
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
+                </div>
 
-                <div className="space-y-5 px-6 py-4">
-                    <div className="space-y-2">
-                        <label className="text-sm font-semibold text-slate-700">Estudiante</label>
-                        <PremiumSelect
+                {/* Body */}
+                <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {/* Student Select */}
+                    <div>
+                        <label style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: '#475569',
+                            marginBottom: '8px'
+                        }}>
+                            <User size={14} />
+                            Estudiante
+                        </label>
+                        <select
                             value={selectedStudentId}
-                            onValueChange={setSelectedStudentId}
-                            options={students.map(s => ({
-                                value: s.id,
-                                label: `${s.firstName} ${s.lastName}`,
-                                // image prop removed as it's not in the interface either
-                            }))}
-                            placeholder="Seleccionar alumno..."
-                        />
+                            onChange={(e) => setSelectedStudentId(e.target.value)}
+                            style={{
+                                width: '100%',
+                                padding: '12px 16px',
+                                borderRadius: '12px',
+                                border: '2px solid #E2E8F0',
+                                fontSize: '14px',
+                                fontWeight: 500,
+                                color: selectedStudentId ? '#1E293B' : '#94A3B8',
+                                backgroundColor: '#F8FAFC',
+                                cursor: 'pointer',
+                                outline: 'none',
+                                transition: 'border-color 0.2s'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = '#3B82F6'}
+                            onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
+                        >
+                            <option value="">Seleccionar alumno...</option>
+                            {students.map(s => (
+                                <option key={s.id} value={s.id}>
+                                    {s.firstName} {s.lastName} {s.matricula ? `(${s.matricula})` : ''}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-semibold text-slate-700">Usar Plantilla (Opcional)</label>
-                        <PremiumSelect
+                    {/* Template Select */}
+                    <div>
+                        <label style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: '#475569',
+                            marginBottom: '8px'
+                        }}>
+                            <FileText size={14} />
+                            Plantilla (Opcional)
+                        </label>
+                        <select
                             value={selectedTemplateId}
-                            onValueChange={handleTemplateSelect}
-                            options={templates.map(t => ({
-                                value: t.id,
-                                label: `${t.name} - $${t.amount}`
-                            }))}
-                            placeholder="Seleccionar concepto..."
-                        />
+                            onChange={(e) => handleTemplateSelect(e.target.value)}
+                            style={{
+                                width: '100%',
+                                padding: '12px 16px',
+                                borderRadius: '12px',
+                                border: '2px solid #E2E8F0',
+                                fontSize: '14px',
+                                fontWeight: 500,
+                                color: selectedTemplateId ? '#1E293B' : '#94A3B8',
+                                backgroundColor: '#F8FAFC',
+                                cursor: 'pointer',
+                                outline: 'none',
+                                transition: 'border-color 0.2s'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = '#3B82F6'}
+                            onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
+                        >
+                            <option value="">Seleccionar concepto...</option>
+                            {templates.map(t => (
+                                <option key={t.id} value={t.id}>
+                                    {t.name} - ${t.amount.toLocaleString('es-MX')}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-semibold text-slate-700">Concepto</label>
-                        <Input
+                    {/* Title */}
+                    <div>
+                        <label style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: '#475569',
+                            marginBottom: '8px'
+                        }}>
+                            <FileText size={14} />
+                            Concepto
+                        </label>
+                        <input
+                            type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            placeholder="Ej. Colegiatura Enero"
-                            className="modern-input"
+                            placeholder="Ej. Material extra, Uniforme, etc."
+                            style={{
+                                width: '100%',
+                                padding: '12px 16px',
+                                borderRadius: '12px',
+                                border: '2px solid #E2E8F0',
+                                fontSize: '14px',
+                                fontWeight: 500,
+                                backgroundColor: '#F8FAFC',
+                                outline: 'none',
+                                transition: 'border-color 0.2s'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = '#3B82F6'}
+                            onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-700">Monto</label>
-                            <Input
+                    {/* Amount and Date Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <div>
+                            <label style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                color: '#475569',
+                                marginBottom: '8px'
+                            }}>
+                                <DollarSign size={14} />
+                                Monto
+                            </label>
+                            <input
                                 type="number"
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
                                 placeholder="0.00"
-                                className="modern-input"
+                                style={{
+                                    width: '100%',
+                                    padding: '12px 16px',
+                                    borderRadius: '12px',
+                                    border: '2px solid #E2E8F0',
+                                    fontSize: '14px',
+                                    fontWeight: 600,
+                                    backgroundColor: '#F8FAFC',
+                                    outline: 'none',
+                                    transition: 'border-color 0.2s'
+                                }}
+                                onFocus={(e) => e.target.style.borderColor = '#3B82F6'}
+                                onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-700">Fecha Límite</label>
-                            <Input
+                        <div>
+                            <label style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                color: '#475569',
+                                marginBottom: '8px'
+                            }}>
+                                <Calendar size={14} />
+                                Fecha Límite
+                            </label>
+                            <input
                                 type="date"
                                 value={dueDate}
                                 onChange={(e) => setDueDate(e.target.value)}
-                                className="modern-input"
+                                style={{
+                                    width: '100%',
+                                    padding: '12px 16px',
+                                    borderRadius: '12px',
+                                    border: '2px solid #E2E8F0',
+                                    fontSize: '14px',
+                                    fontWeight: 500,
+                                    backgroundColor: '#F8FAFC',
+                                    outline: 'none',
+                                    transition: 'border-color 0.2s'
+                                }}
+                                onFocus={(e) => e.target.style.borderColor = '#3B82F6'}
+                                onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
                             />
                         </div>
                     </div>
+
+                    {/* Info note */}
+                    <div style={{
+                        padding: '12px 16px',
+                        backgroundColor: '#FEF3C7',
+                        borderRadius: '12px',
+                        fontSize: '13px',
+                        color: '#92400E'
+                    }}>
+                        💡 <strong>Tip:</strong> Este modal es para cobros extraordinarios. Las mensualidades se generan automáticamente desde el botón "Generar Cobros del Mes".
+                    </div>
                 </div>
 
-                <DialogFooter className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-end gap-3">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() => onOpenChange(false)}
-                        className="button-modern !bg-white !text-slate-700 !border !border-slate-200 hover:!bg-slate-50 shadow-sm transition-all"
+                {/* Footer */}
+                <div style={{
+                    padding: '20px 24px',
+                    backgroundColor: '#F8FAFC',
+                    borderTop: '1px solid #E2E8F0',
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: '12px'
+                }}>
+                    <button
+                        onClick={handleClose}
+                        style={{
+                            padding: '12px 24px',
+                            borderRadius: '12px',
+                            border: '2px solid #E2E8F0',
+                            backgroundColor: 'white',
+                            color: '#64748B',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                        }}
                     >
                         Cancelar
-                    </Button>
-                    <Button
+                    </button>
+                    <button
                         onClick={handleAssign}
-                        disabled={loading || !selectedStudentId || !title || !amount || !dueDate}
-                        className="button-modern bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md border-none"
+                        disabled={!canSubmit || loading}
+                        style={{
+                            padding: '12px 24px',
+                            borderRadius: '12px',
+                            border: 'none',
+                            background: canSubmit ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : '#CBD5E1',
+                            color: 'white',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            cursor: canSubmit && !loading ? 'pointer' : 'not-allowed',
+                            boxShadow: canSubmit ? '0 4px 15px rgba(16, 185, 129, 0.35)' : 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            transition: 'all 0.2s'
+                        }}
                     >
-                        {loading ? "Asignando..." : "Asignar Cobro"}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                        {loading ? (
+                            <>
+                                <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                                Asignando...
+                            </>
+                        ) : (
+                            <>
+                                <DollarSign size={16} />
+                                Asignar Cobro
+                            </>
+                        )}
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 }

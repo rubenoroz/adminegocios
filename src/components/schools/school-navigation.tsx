@@ -1,13 +1,14 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { BookOpen, Users, UserCheck, Award, Clock, Briefcase, Megaphone, UsersRound } from "lucide-react";
 
-const tabs = [
+const allTabs = [
     { id: "courses", label: "Cursos", icon: BookOpen, path: "/dashboard/courses" },
     { id: "groups", label: "Grupos", icon: UsersRound, path: "/dashboard/groups" },
     { id: "students", label: "Alumnos", icon: Users, path: "/dashboard/students" },
-    { id: "parents", label: "Padres", icon: UserCheck, path: "/dashboard/parents" },
+    { id: "parents", label: "Padres", icon: UserCheck, path: "/dashboard/parents", requiresParentsModule: true },
     { id: "grades", label: "Calificaciones", icon: Award, path: "/dashboard/grades" },
     { id: "attendance", label: "Asistencia", icon: Clock, path: "/dashboard/attendance" },
     { id: "staff", label: "Personal", icon: Briefcase, path: "/dashboard/employees" },
@@ -17,6 +18,32 @@ const tabs = [
 export function SchoolNavigation() {
     const pathname = usePathname();
     const router = useRouter();
+    const [enableParentsModule, setEnableParentsModule] = useState(true);
+
+    // Fetch business settings
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const res = await fetch("/api/business/settings");
+                if (res.ok) {
+                    const data = await res.json();
+                    console.log("📝 [SchoolNavigation] Settings received:", data);
+                    setEnableParentsModule(data.enableParentsModule ?? true);
+                }
+            } catch (error) {
+                console.error("Failed to fetch business settings", error);
+            }
+        };
+        fetchSettings();
+    }, []);
+
+    // Filter tabs based on settings
+    const tabs = allTabs.filter(tab => {
+        if (tab.requiresParentsModule && !enableParentsModule) {
+            return false;
+        }
+        return true;
+    });
 
     // Extract lang from pathname (e.g., /es/dashboard/courses -> es)
     const lang = pathname?.split('/')[1] || 'es';

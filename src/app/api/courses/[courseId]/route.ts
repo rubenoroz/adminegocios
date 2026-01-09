@@ -23,6 +23,7 @@ export async function GET(
                 description: true,
                 gradeLevel: true,
                 schedule: true,
+                price: true,
                 // color: true, // Commenting out to fix lint error if types are not synced
                 room: true,
                 teacher: {
@@ -139,7 +140,7 @@ export async function PATCH(
 
         const { courseId } = await params;
         const body = await req.json();
-        const { name, description, teacherId, schedule, room, classroomId } = body;
+        const { name, description, teacherId, schedule, room, classroomId, price } = body;
 
         // Build update data
         const updateData: any = {};
@@ -150,6 +151,10 @@ export async function PATCH(
         if (room !== undefined) updateData.room = room;
         if (classroomId !== undefined) updateData.classroomId = classroomId || null;
         if (body.color !== undefined) updateData.color = body.color;
+        if (price !== undefined) {
+            const parsed = parseFloat(price);
+            updateData.price = isNaN(parsed) ? 0 : parsed;
+        }
 
         const course = await prisma.course.update({
             where: { id: courseId },

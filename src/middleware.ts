@@ -30,7 +30,7 @@ function getLocale(request: any): string {
     return match(languages, locales, defaultLocale);
 }
 
-export default withAuth(
+const authMiddleware = withAuth(
     function middleware(req) {
         const response = NextResponse.next();
         const { pathname } = req.nextUrl;
@@ -140,6 +140,28 @@ export default withAuth(
         },
     }
 );
+
+export default async function middleware(req: any, event: any) {
+    try {
+        return await authMiddleware(req, event);
+    } catch (error) {
+        // If session is corrupted (JSON parsing error in NextAuth), logout/redirect
+        console.error("Middleware Error (likely corrupted session):", error);
+
+        // Force redirect to login which effectively ignores the bad cookie for this request
+        // Ideally we would delete the cookie but we can't easily modify the response in catch before returning it
+        // A simple redirect usually creates a new response
+        const url = req.nextUrl.clone();
+        url.pathname = '/es/login';
+        const response = NextResponse.redirect(url);
+
+        // Attempt to clear common auth cookies
+        response.cookies.delete('next-auth.session-token');
+        response.cookies.delete('__Secure-next-auth.session-token');
+
+        return response;
+    }
+}
 
 export const config = {
     matcher: [

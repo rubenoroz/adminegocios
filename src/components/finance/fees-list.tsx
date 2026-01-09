@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Filter, MoreHorizontal, DollarSign, CheckCircle2, Clock, AlertCircle, Plus, X, ChevronDown } from "lucide-react";
+import { Search, Filter, MoreHorizontal, DollarSign, CheckCircle2, Clock, AlertCircle, Plus, X, ChevronDown, Trash } from "lucide-react";
 import {
     Table,
     TableBody,
@@ -28,6 +28,7 @@ import { es } from "date-fns/locale";
 
 import { PaymentModal } from "./payment-modal";
 import { AssignFeeModal } from "./assign-fee-modal";
+import { GenerateFeesModal } from "./generate-fees-modal";
 
 export function FeesList() {
     const { selectedBranch } = useBranch();
@@ -39,6 +40,7 @@ export function FeesList() {
     const [selectedFee, setSelectedFee] = useState<any>(null);
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
     const [isAssignOpen, setIsAssignOpen] = useState(false);
+    const [isGenerateOpen, setIsGenerateOpen] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
@@ -72,6 +74,25 @@ export function FeesList() {
 
     const handleAssignSuccess = () => {
         fetchFees();
+    };
+
+    const handleDelete = async (feeId: string) => {
+        if (!confirm("¿Estás seguro de que deseas eliminar este cobro?")) return;
+
+        try {
+            const res = await fetch(`/api/finance/fees/${feeId}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                fetchFees();
+            } else {
+                const data = await res.json();
+                alert(data.error || "Error al eliminar");
+            }
+        } catch (error) {
+            console.error("Error deleting fee:", error);
+        }
     };
 
     // Derived state for filtering
@@ -124,8 +145,15 @@ export function FeesList() {
                     )}
                     <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
                 </button>
-                <button onClick={() => setIsAssignOpen(true)} className="finance-new-btn button-modern bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 flex items-center gap-2 shrink-0" style={{ borderRadius: '8px' }}>
-                    <Plus className="h-4 w-4" /> Nuevo Cobro
+                <button
+                    onClick={() => setIsGenerateOpen(true)}
+                    className="button-modern bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 flex items-center gap-2 shrink-0"
+                    style={{ borderRadius: '8px' }}
+                >
+                    <Clock className="h-4 w-4" /> Generar Mensualidades
+                </button>
+                <button onClick={() => setIsAssignOpen(true)} className="finance-new-btn button-modern bg-gradient-to-r from-slate-600 to-slate-500 hover:from-slate-700 hover:to-slate-600 flex items-center gap-2 shrink-0" style={{ borderRadius: '8px' }}>
+                    <Plus className="h-4 w-4" /> Cobro Manual
                 </button>
             </div>
 
@@ -252,21 +280,33 @@ export function FeesList() {
                                         {getStatusBadge(fee.status)}
                                     </TableCell>
                                     <TableCell className="text-center">
-                                        {fee.status !== 'PAID' ? (
-                                            <button
-                                                onClick={() => handleOpenPayment(fee)}
-                                                className="button-modern bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 flex items-center gap-2 mx-auto"
-                                                style={{ borderRadius: '8px', padding: '8px 16px', fontSize: '13px' }}
-                                            >
-                                                <DollarSign className="w-4 h-4" />
-                                                Registrar Pago
-                                            </button>
-                                        ) : (
-                                            <span className="text-emerald-600 font-semibold flex items-center gap-1 justify-center">
-                                                <CheckCircle2 className="w-4 h-4" />
-                                                Completado
-                                            </span>
-                                        )}
+                                        <div className="flex items-center justify-center gap-2">
+                                            {fee.status !== 'PAID' ? (
+                                                <button
+                                                    onClick={() => handleOpenPayment(fee)}
+                                                    className="button-modern bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 flex items-center gap-2"
+                                                    style={{ borderRadius: '8px', padding: '8px 16px', fontSize: '13px' }}
+                                                >
+                                                    <DollarSign className="w-4 h-4" />
+                                                    Registrar Pago
+                                                </button>
+                                            ) : (
+                                                <span className="text-emerald-600 font-semibold flex items-center gap-1 justify-center">
+                                                    <CheckCircle2 className="w-4 h-4" />
+                                                    Completado
+                                                </span>
+                                            )}
+
+                                            {paidAmount === 0 && (
+                                                <button
+                                                    onClick={() => handleDelete(fee.id)}
+                                                    className="group relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-300 hover:scale-110 hover:shadow-[0_4px_12px_rgba(239,68,68,0.25)] bg-white border border-slate-200 hover:border-red-200 hover:bg-gradient-to-br hover:from-red-50 hover:to-white active:scale-95"
+                                                    title="Eliminar Cobro"
+                                                >
+                                                    <Trash className="w-4 h-4 text-slate-400 group-hover:text-red-500 transition-colors duration-300" />
+                                                </button>
+                                            )}
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             );
@@ -292,6 +332,12 @@ export function FeesList() {
             <AssignFeeModal
                 open={isAssignOpen}
                 onOpenChange={setIsAssignOpen}
+                onSuccess={handleAssignSuccess}
+            />
+
+            <GenerateFeesModal
+                open={isGenerateOpen}
+                onOpenChange={setIsGenerateOpen}
                 onSuccess={handleAssignSuccess}
             />
         </div>

@@ -20,9 +20,10 @@ interface CustomerSelectorProps {
     onSelect: (customer: any) => void;
     selectedCustomer: any | null;
     onNewCustomer: () => void;
+    showNewButtonLabel?: boolean;
 }
 
-export function CustomerSelector({ onSelect, selectedCustomer, onNewCustomer }: CustomerSelectorProps) {
+export function CustomerSelector({ onSelect, selectedCustomer, onNewCustomer, showNewButtonLabel = false }: CustomerSelectorProps) {
     const [searchTerm, setSearchTerm] = useState("");
     const [isOpen, setIsOpen] = useState(false);
     const [customers, setCustomers] = useState<any[]>([]);
@@ -89,11 +90,12 @@ export function CustomerSelector({ onSelect, selectedCustomer, onNewCustomer }: 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onFocus={() => { if (customers.length > 0) setIsOpen(true); }}
-                        className="pl-9 bg-white"
+                        className="pl-9 bg-white h-11 rounded-xl border-slate-200"
                     />
                 </div>
-                <Button onClick={onNewCustomer} className="bg-slate-800 text-white hover:bg-slate-700" title="Nuevo Cliente">
+                <Button onClick={onNewCustomer} className="h-11 rounded-xl bg-slate-900 text-white hover:bg-slate-800" title="Nuevo Cliente">
                     <UserPlus className="h-4 w-4" />
+                    {showNewButtonLabel && <span className="ml-2">Nuevo</span>}
                 </Button>
             </div>
 

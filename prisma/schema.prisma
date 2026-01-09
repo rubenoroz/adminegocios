@@ -158,6 +158,13 @@ model Business {
   expenseReservePercentage  Float?   @default(0) // % for unexpected expenses
   benefitsReservePercentage Float?   @default(0) // % for benefits/aguinaldo
   
+  // School payment settings
+  defaultPaymentDay  Int  @default(1)  // Default day of month for student payments (1-28)
+  paymentGraceDays   Int  @default(5)  // Days after payment day before marking as overdue
+  
+  // School feature toggles
+  enableParentsModule  Boolean  @default(true)  // Show/hide Parents section (for schools with minors)
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -274,6 +281,9 @@ model Customer {
   appointments Appointment[]
   orders      Order[]
   studentPayments StudentPayment[]
+  
+  // Billing Profiles (Many-to-Many)
+  students    Student[]
 }
 
 model Supplier {
@@ -619,6 +629,10 @@ model Student {
   parents     StudentParent[]
   scheduleEnrollments ScheduleEnrollment[]
   
+  // Payment scheduling
+  paymentDay      Int?      // Individual payment day (1-28), overrides business default
+  enrollmentDate  DateTime  @default(now())  // When student enrolled
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
@@ -627,6 +641,8 @@ model Student {
   @@index([businessId])
   @@index([matricula])
   @@index([lastName, firstName])
+  
+  billingProfiles Customer[]
 }
 
 model Course {
@@ -638,6 +654,7 @@ model Course {
   room        String?  // e.g., "Room 101" (deprecated, use classroomId)
   status      String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
   color       String?  @default("#3B82F6") // Hex color for calendar
+  price       Float?   @default(0) // Monto de la colegiatura asociado a este curso
   
   businessId  String
   business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)

@@ -15,7 +15,8 @@ export async function GET(
 
         const { courseId } = await params;
 
-        const enrollments = await prisma.enrollment.findMany({
+        // 1. Get students from direct course Enrollments
+        const courseEnrollments = await prisma.enrollment.findMany({
             where: {
                 courseId,
                 status: 'ACTIVE'
@@ -30,14 +31,49 @@ export async function GET(
                         status: true
                     }
                 }
-            },
-            orderBy: {
-                student: { lastName: 'asc' }
             }
         });
 
-        // Flatten structure for the frontend
-        const students = enrollments.map(e => e.student);
+        // 2. Get students from ClassSchedule (groups) enrollments for this course
+        const scheduleEnrollments = await prisma.scheduleEnrollment.findMany({
+            where: {
+                schedule: {
+                    courseId
+                },
+                status: 'ACTIVE'
+            },
+            include: {
+                student: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                        matricula: true,
+                        status: true
+                    }
+                }
+            }
+        });
+
+        // Combine and deduplicate students by ID
+        const studentMap = new Map<string, any>();
+
+        courseEnrollments.forEach(e => {
+            if (e.student) {
+                studentMap.set(e.student.id, e.student);
+            }
+        });
+
+        scheduleEnrollments.forEach(e => {
+            if (e.student) {
+                studentMap.set(e.student.id, e.student);
+            }
+        });
+
+        // Convert to array and sort by lastName
+        const students = Array.from(studentMap.values()).sort((a, b) =>
+            a.lastName.localeCompare(b.lastName)
+        );
 
         return NextResponse.json(students);
     } catch (error) {

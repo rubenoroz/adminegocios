@@ -25,6 +25,7 @@ export async function GET(req: Request) {
 
         const { searchParams } = new URL(req.url);
         const query = searchParams.get("query");
+        const includeStudents = searchParams.get("includeStudents") === "true";
 
         const where: any = {
             businessId: session.user.businessId
@@ -42,7 +43,17 @@ export async function GET(req: Request) {
         const customers = await prisma.customer.findMany({
             where,
             orderBy: { name: 'asc' },
-            take: 20
+            take: includeStudents ? 100 : 20,
+            include: includeStudents ? {
+                students: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                        matricula: true
+                    }
+                }
+            } : undefined
         });
 
         return NextResponse.json(customers);

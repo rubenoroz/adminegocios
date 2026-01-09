@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Save, Building2 } from "lucide-react";
+import { Loader2, Save, Building2, GraduationCap, Calendar, Clock } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useRouter } from "next/navigation";
 
 interface BusinessFormProps {
@@ -16,6 +17,9 @@ interface BusinessFormProps {
         legalName?: string | null;
         taxRegime?: string | null;
         taxZipCode?: string | null;
+        enableParentsModule?: boolean;
+        defaultPaymentDay?: number;
+        paymentGraceDays?: number;
     };
     lang: string;
 }
@@ -35,7 +39,10 @@ export function BusinessForm({ business, lang }: BusinessFormProps) {
         taxId: business.taxId || "",
         legalName: business.legalName || "",
         taxRegime: business.taxRegime || "",
-        taxZipCode: business.taxZipCode || ""
+        taxZipCode: business.taxZipCode || "",
+        enableParentsModule: business.enableParentsModule ?? true,
+        defaultPaymentDay: business.defaultPaymentDay ?? 1,
+        paymentGraceDays: business.paymentGraceDays ?? 5
     });
 
     const [isDirty, setIsDirty] = useState(false);
@@ -46,7 +53,10 @@ export function BusinessForm({ business, lang }: BusinessFormProps) {
             formData.taxId !== (business.taxId || "") ||
             formData.legalName !== (business.legalName || "") ||
             formData.taxRegime !== (business.taxRegime || "") ||
-            formData.taxZipCode !== (business.taxZipCode || "");
+            formData.taxZipCode !== (business.taxZipCode || "") ||
+            formData.enableParentsModule !== (business.enableParentsModule ?? true) ||
+            formData.defaultPaymentDay !== (business.defaultPaymentDay ?? 1) ||
+            formData.paymentGraceDays !== (business.paymentGraceDays ?? 5);
         setIsDirty(isChanged);
     }, [formData, business]);
 
@@ -156,6 +166,94 @@ export function BusinessForm({ business, lang }: BusinessFormProps) {
                     </div>
                 </div>
             </div>
+
+            {/* School Settings - Only show for SCHOOL type */}
+            {business.type === "SCHOOL" && (
+                <div className="border-t border-slate-100 pt-8 mb-12">
+                    <h4 className="flex items-center gap-2 font-semibold text-slate-800 mb-6">
+                        <GraduationCap className="h-4 w-4 text-purple-600" />
+                        Configuración de Escuela
+                    </h4>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <div>
+                                <p className="font-medium text-slate-800">Módulo de Padres/Tutores</p>
+                                <p className="text-sm text-slate-500">
+                                    Activa esta opción si tu escuela atiende a menores de edad y necesitas gestionar contacto con padres.
+                                </p>
+                            </div>
+                            <Switch
+                                checked={formData.enableParentsModule}
+                                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, enableParentsModule: checked }))}
+                            />
+                        </div>
+
+                        {/* Payment Configuration */}
+                        <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div style={{
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: '10px',
+                                    background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <Calendar className="h-4 w-4 text-white" />
+                                </div>
+                                <div>
+                                    <p className="font-medium text-slate-800">Configuración de Pagos</p>
+                                    <p className="text-sm text-slate-500">Define cuándo vencen las mensualidades</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-sm font-medium text-slate-700 flex items-center gap-2 mb-2">
+                                        <Calendar className="h-3 w-3" />
+                                        Día de Pago
+                                    </label>
+                                    <Input
+                                        type="number"
+                                        min={1}
+                                        max={28}
+                                        value={formData.defaultPaymentDay}
+                                        onChange={(e) => setFormData(prev => ({
+                                            ...prev,
+                                            defaultPaymentDay: Math.min(28, Math.max(1, parseInt(e.target.value) || 1))
+                                        }))}
+                                        className="bg-white"
+                                    />
+                                    <p className="text-xs text-slate-500 mt-1">Día del mes (1-28)</p>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-slate-700 flex items-center gap-2 mb-2">
+                                        <Clock className="h-3 w-3" />
+                                        Días de Gracia
+                                    </label>
+                                    <Input
+                                        type="number"
+                                        min={0}
+                                        max={30}
+                                        value={formData.paymentGraceDays}
+                                        onChange={(e) => setFormData(prev => ({
+                                            ...prev,
+                                            paymentGraceDays: Math.min(30, Math.max(0, parseInt(e.target.value) || 0))
+                                        }))}
+                                        className="bg-white"
+                                    />
+                                    <p className="text-xs text-slate-500 mt-1">Días antes de marcar como vencido</p>
+                                </div>
+                            </div>
+
+                            <div className="mt-3 p-3 bg-white rounded-lg text-sm text-purple-700">
+                                📅 Los pagos se marcan vencidos a partir del día <strong>{Math.min(28, formData.defaultPaymentDay + formData.paymentGraceDays)}</strong> de cada mes.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Unified Footer Actions */}
             <div className="flex items-center justify-between w-full pt-10 mt-4 border-t border-slate-100">

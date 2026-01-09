@@ -241,7 +241,7 @@ export function StudentList() {
     // Calculate stats - treat null/undefined status as ACTIVE
     const totalStudents = activeStudents.length;
     const activeCount = activeStudents.filter(s => s.status === "ACTIVE" || !s.status).length;
-    const totalBalance = activeStudents.reduce((sum, s) => sum + (s.balance || 0), 0);
+    const overdueStudentsCount = activeStudents.filter(s => (s.overdueCount || 0) > 0).length;
     const scholarshipCount = activeStudents.filter(s => s.hasScholarship).length;
 
     // Table columns
@@ -424,11 +424,11 @@ export function StudentList() {
                         subtitle="Estudiantes activos"
                     />
                     <ModernKpiCard
-                        title="Saldo Total"
-                        value={`$${totalBalance.toLocaleString()}`}
-                        icon={DollarSign}
+                        title="Pendientes de Pago"
+                        value={overdueStudentsCount.toString()}
+                        icon={AlertCircle}
                         gradientClass="gradient-finance"
-                        subtitle="MXN"
+                        subtitle="Alumnos con pagos vencidos"
                     />
                     <ModernKpiCard
                         title="Becados"
@@ -761,7 +761,9 @@ export function StudentList() {
                                         borderTop: '2px solid rgba(255,255,255,0.5)',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        justifyContent: 'space-between'
+                                        justifyContent: 'space-between',
+                                        flexWrap: 'wrap',
+                                        gap: '12px'
                                     }}>
                                         <div>
                                             <div style={{

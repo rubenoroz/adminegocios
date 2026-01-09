@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useBranch } from "@/context/branch-context";
-import { Calendar as CalendarIcon, BookOpen, Users, UserCheck, Clock } from "lucide-react";
+import { Calendar as CalendarIcon, BookOpen, Users, TrendingUp, Clock, AlertTriangle, Award } from "lucide-react";
 import { AttendanceTaker } from "@/components/schools/attendance-taker";
 import { ModernKpiCard } from "@/components/ui/modern-kpi-card";
 import { ModernFilterBar } from "@/components/ui/modern-filter-bar";
@@ -16,11 +16,27 @@ export function AttendanceManager() {
     const [searchValue, setSearchValue] = useState("");
     const [filterCourse, setFilterCourse] = useState<string[]>([]);
 
+    // Attendance stats
+    const [stats, setStats] = useState({
+        totalAttendanceRate: null as number | null,
+        courseAttendanceRate: null as number | null,
+        studentsAtRisk: 0,
+        perfectCourses: 0
+    });
+
     useEffect(() => {
         if (selectedBranch?.businessId) {
             fetchCourses();
+            fetchAttendanceStats();
         }
     }, [selectedBranch]);
+
+    // Refetch stats when course selection changes
+    useEffect(() => {
+        if (selectedBranch?.businessId) {
+            fetchAttendanceStats();
+        }
+    }, [selectedCourseId]);
 
     const fetchCourses = async () => {
         if (!selectedBranch?.businessId) return;
@@ -32,6 +48,23 @@ export function AttendanceManager() {
             }
         } catch (error) {
             console.error("Error fetching courses", error);
+        }
+    };
+
+    const fetchAttendanceStats = async () => {
+        if (!selectedBranch?.businessId) return;
+        try {
+            let url = `/api/attendance/stats?businessId=${selectedBranch.businessId}&period=month`;
+            if (selectedCourseId) {
+                url += `&courseId=${selectedCourseId}`;
+            }
+            const res = await fetch(url);
+            if (res.ok) {
+                const data = await res.json();
+                setStats(data);
+            }
+        } catch (error) {
+            console.error("Error fetching attendance stats", error);
         }
     };
 
@@ -52,10 +85,6 @@ export function AttendanceManager() {
 
         return matchesSearch && matchesFilter;
     });
-
-    // Format today's date
-    const today = new Date();
-    const formattedDate = today.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
     return (
         <div className="bg-slate-100 pb-16">
@@ -90,10 +119,34 @@ export function AttendanceManager() {
                 variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } }}
             >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <ModernKpiCard title="Total Cursos" value={totalCourses.toString()} icon={BookOpen} gradientClass="gradient-courses" subtitle="Cursos activos" />
-                    <ModernKpiCard title="Total Alumnos" value={totalStudents.toString()} icon={Users} gradientClass="gradient-students" subtitle="Inscritos en cursos" />
-                    <ModernKpiCard title="Fecha Actual" value={formattedDate.split(',')[0]} icon={CalendarIcon} gradientClass="gradient-finance" subtitle={formattedDate.split(',').slice(1).join(',')} />
-                    <ModernKpiCard title="Curso Seleccionado" value={selectedCourseId ? courses.find(c => c.id === selectedCourseId)?.name || "-" : "Ninguno"} icon={UserCheck} gradientClass="gradient-employees" subtitle="Tomar asistencia" />
+                    <ModernKpiCard
+                        title="% Asistencia Total"
+                        value={stats.totalAttendanceRate !== null ? `${stats.totalAttendanceRate}%` : "--"}
+                        icon={TrendingUp}
+                        gradientClass="gradient-courses"
+                        subtitle="Este mes"
+                    />
+                    <ModernKpiCard
+                        title="% Asistencia Curso"
+                        value={stats.courseAttendanceRate !== null ? `${stats.courseAttendanceRate}%` : "--"}
+                        icon={Users}
+                        gradientClass="gradient-students"
+                        subtitle={selectedCourseId ? courses.find(c => c.id === selectedCourseId)?.name || "Selecciona un curso" : "Selecciona un curso"}
+                    />
+                    <ModernKpiCard
+                        title="Alumnos en Riesgo"
+                        value={stats.studentsAtRisk.toString()}
+                        icon={AlertTriangle}
+                        gradientClass="gradient-employees"
+                        subtitle="+20% ausentismo"
+                    />
+                    <ModernKpiCard
+                        title="Cursos Perfectos"
+                        value={stats.perfectCourses.toString()}
+                        icon={Award}
+                        gradientClass="gradient-finance"
+                        subtitle="100% esta semana"
+                    />
                 </div>
             </motion.div>
 
@@ -170,7 +223,7 @@ export function AttendanceManager() {
                     <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-200/60">
                         <div className="flex items-center gap-3 p-6 border-b border-slate-100">
                             <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center">
-                                <UserCheck className="w-5 h-5 text-green-600" />
+                                <Users className="w-5 h-5 text-green-600" />
                             </div>
                             <div>
                                 <h3 className="text-lg font-bold text-slate-800">

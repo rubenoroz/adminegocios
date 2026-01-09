@@ -34,6 +34,15 @@ export function SchoolStaff() {
     });
     const [isSaving, setIsSaving] = useState(false);
 
+    // Edit state
+    const [editOpen, setEditOpen] = useState(false);
+    const [editingEmployee, setEditingEmployee] = useState<any>(null);
+
+    // Access Management State
+    const [accessModalOpen, setAccessModalOpen] = useState(false);
+    const [accessEmployee, setAccessEmployee] = useState<any>(null);
+    const [tempCreds, setTempCreds] = useState<{ email: string, pass: string } | null>(null);
+
     useEffect(() => {
         fetchEmployees();
     }, [selectedBranch]);
@@ -98,6 +107,91 @@ export function SchoolStaff() {
             fetchEmployees();
         } catch (error) {
             toast({ title: "Error al eliminar", variant: "destructive" });
+        }
+    };
+
+    const openEditModal = (emp: any) => {
+        setEditingEmployee({
+            ...emp,
+            salary: emp.salary?.toString() || "",
+            commissionPercentage: emp.commissionPercentage?.toString() || ""
+        });
+        setEditOpen(true);
+    };
+
+    const handleUpdate = async () => {
+        if (!editingEmployee || isSaving) return;
+        setIsSaving(true);
+        try {
+            const res = await fetch(`/api/employees/${editingEmployee.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    firstName: editingEmployee.firstName,
+                    lastName: editingEmployee.lastName,
+                    email: editingEmployee.email,
+                    phone: editingEmployee.phone,
+                    role: editingEmployee.role,
+                    paymentModel: editingEmployee.paymentModel,
+                    salary: editingEmployee.salary ? parseFloat(editingEmployee.salary) : null,
+                    commissionPercentage: editingEmployee.commissionPercentage ? parseFloat(editingEmployee.commissionPercentage) : null
+                })
+            });
+            if (res.ok) {
+                toast({ title: "Personal actualizado exitosamente" });
+                setEditOpen(false);
+                setEditingEmployee(null);
+                fetchEmployees();
+            } else {
+                const error = await res.json();
+                toast({ title: "Error: " + (error.message || "No se pudo actualizar"), variant: "destructive" });
+            }
+        } catch (error) {
+            toast({ title: "Error al actualizar", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleGrantAccess = async (emp: any, reset = false) => {
+        if (!emp.email) {
+            toast({ title: "El empleado necesita un email para tener acceso", variant: "destructive" });
+            return;
+        }
+
+        // If they already have access and not resetting, open management modal
+        if (emp.userId && !reset) {
+            setAccessEmployee(emp);
+            setAccessModalOpen(true);
+            setTempCreds(null);
+            return;
+        }
+
+        if (!reset && !confirm(`¿Crear cuenta de acceso para ${emp.firstName}?`)) return;
+        if (reset && !confirm(`¿Estás seguro de restablecer la contraseña de ${emp.firstName}? El usuario anterior dejará de funcionar.`)) return;
+
+        try {
+            const res = await fetch(`/api/employees/${emp.id}/access`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ reset })
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                if (data.isNewUser || data.passwordReset) {
+                    setAccessEmployee(emp);
+                    setTempCreds({ email: emp.email, pass: data.tempPassword });
+                    setAccessModalOpen(true);
+                } else {
+                    toast({ title: "Cuenta vinculada exitosamente" });
+                    fetchEmployees();
+                }
+            } else {
+                toast({ title: "Error: " + data.message, variant: "destructive" });
+            }
+        } catch (error) {
+            toast({ title: "Error al otorgar acceso", variant: "destructive" });
         }
     };
 
@@ -303,17 +397,58 @@ export function SchoolStaff() {
                                                 {emp.paymentModel === "COMMISSION" ? "Comisión" : emp.paymentModel === "MIXED" ? "Mixto" : "Salario"}
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={() => handleDelete(emp.id)}
-                                            style={{
-                                                width: "36px", height: "36px", borderRadius: "10px",
-                                                backgroundColor: "white", border: "none",
-                                                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                                                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
-                                            }}
-                                        >
-                                            <Trash2 size={16} color="#ef4444" />
-                                        </button>
+                                        <div style={{ display: "flex", gap: "8px" }}>
+                                            {/* Access Button Group */}
+                                            <button
+                                                onClick={() => handleGrantAccess(emp)}
+                                                title={emp.userId ? "Gestionar Acceso" : "Dar Acceso al Sistema"}
+                                                style={{
+                                                    padding: "0 12px", height: "36px", borderRadius: "10px",
+                                                    backgroundColor: emp.userId ? "#f0fdf4" : "#fffbeb",
+                                                    border: emp.userId ? "1px solid #bbf7d0" : "1px solid #fde68a",
+                                                    display: "flex", alignItems: "center", gap: "6px",
+                                                    cursor: "pointer",
+                                                    transition: "all 0.2s"
+                                                }}
+                                            >
+                                                {emp.userId ? (
+                                                    <>
+                                                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#16a34a" }} />
+                                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#166534" }}>Activo</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Key size={14} color="#d97706" />
+                                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#b45309" }}>Dar Acceso</span>
+                                                    </>
+                                                )}
+                                            </button>
+
+                                            <div style={{ width: "1px", height: "24px", background: "#cbd5e1", margin: "auto 4px" }} />
+
+                                            <button
+                                                onClick={() => openEditModal(emp)}
+                                                style={{
+                                                    width: "36px", height: "36px", borderRadius: "10px",
+                                                    backgroundColor: "white", border: "1px solid #e2e8f0",
+                                                    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                                                    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
+                                                }}
+                                            >
+                                                <Edit size={16} color={colors.accent} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(emp.id)}
+                                                style={{
+                                                    width: "36px", height: "36px", borderRadius: "10px",
+                                                    backgroundColor: "white", border: "1px solid #e2e8f0",
+                                                    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                                                    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
+                                                }}
+                                            >
+                                                <Trash2 size={16} color="#ef4444" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </motion.div>
                             );
@@ -321,6 +456,341 @@ export function SchoolStaff() {
                     </div>
                 )}
             </section>
-        </div>
+
+
+            {/* Edit Modal */}
+            < Dialog open={editOpen} onOpenChange={setEditOpen} >
+                <DialogContent style={{
+                    maxWidth: '560px',
+                    maxHeight: '90vh',
+                    padding: 0,
+                    borderRadius: '24px',
+                    overflow: 'hidden',
+                    border: 'none',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}>
+                    {/* Header */}
+                    <div style={{
+                        background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                        padding: '24px 32px',
+                        color: 'white'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <div style={{
+                                width: '52px',
+                                height: '52px',
+                                borderRadius: '14px',
+                                backgroundColor: 'rgba(255,255,255,0.2)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '20px',
+                                fontWeight: 'bold'
+                            }}>
+                                {editingEmployee?.firstName?.[0]}{editingEmployee?.lastName?.[0]}
+                            </div>
+                            <div>
+                                <DialogTitle style={{ fontSize: '22px', fontWeight: 700, margin: 0 }}>Editar Personal</DialogTitle>
+                                <p style={{ fontSize: '14px', opacity: 0.9, margin: 0, marginTop: '2px' }}>
+                                    {editingEmployee?.firstName} {editingEmployee?.lastName}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Form */}
+                    {editingEmployee && (
+                        <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, overflowY: 'auto' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>Nombre</label>
+                                    <input
+                                        type="text"
+                                        value={editingEmployee.firstName}
+                                        onChange={(e) => setEditingEmployee({ ...editingEmployee, firstName: e.target.value })}
+                                        style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '2px solid #e2e8f0', fontSize: '14px', fontWeight: 500, outline: 'none', boxSizing: 'border-box' }}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>Apellido</label>
+                                    <input
+                                        type="text"
+                                        value={editingEmployee.lastName}
+                                        onChange={(e) => setEditingEmployee({ ...editingEmployee, lastName: e.target.value })}
+                                        style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '2px solid #e2e8f0', fontSize: '14px', fontWeight: 500, outline: 'none', boxSizing: 'border-box' }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>Email</label>
+                                <input
+                                    type="email"
+                                    value={editingEmployee.email || ''}
+                                    onChange={(e) => setEditingEmployee({ ...editingEmployee, email: e.target.value })}
+                                    style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '2px solid #e2e8f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                                />
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>Teléfono</label>
+                                <input
+                                    type="tel"
+                                    value={editingEmployee.phone || ''}
+                                    onChange={(e) => setEditingEmployee({ ...editingEmployee, phone: e.target.value })}
+                                    style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '2px solid #e2e8f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                                />
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>Rol</label>
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                    {SCHOOL_ROLES.map(role => (
+                                        <button
+                                            key={role}
+                                            type="button"
+                                            onClick={() => setEditingEmployee({ ...editingEmployee, role })}
+                                            style={{
+                                                padding: '10px 16px',
+                                                borderRadius: '12px',
+                                                border: editingEmployee.role === role ? '2px solid #059669' : '2px solid #e2e8f0',
+                                                background: editingEmployee.role === role ? '#d1fae5' : '#fff',
+                                                color: editingEmployee.role === role ? '#059669' : '#64748b',
+                                                fontWeight: 600,
+                                                fontSize: '13px',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            {roleLabels[role]}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>Modelo de Pago</label>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    {[
+                                        { value: 'FIXED', label: 'Salario Fijo' },
+                                        { value: 'COMMISSION', label: 'Comisión' },
+                                        { value: 'MIXED', label: 'Mixto' }
+                                    ].map(p => (
+                                        <button
+                                            key={p.value}
+                                            type="button"
+                                            onClick={() => setEditingEmployee({ ...editingEmployee, paymentModel: p.value })}
+                                            style={{
+                                                padding: '10px 16px',
+                                                borderRadius: '12px',
+                                                border: editingEmployee.paymentModel === p.value ? '2px solid #3b82f6' : '2px solid #e2e8f0',
+                                                background: editingEmployee.paymentModel === p.value ? '#dbeafe' : '#fff',
+                                                color: editingEmployee.paymentModel === p.value ? '#2563eb' : '#64748b',
+                                                fontWeight: 600,
+                                                fontSize: '13px',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            {p.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {(editingEmployee.paymentModel === 'FIXED' || editingEmployee.paymentModel === 'MIXED') && (
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>💰 Salario</label>
+                                    <input
+                                        type="number"
+                                        value={editingEmployee.salary}
+                                        onChange={(e) => setEditingEmployee({ ...editingEmployee, salary: e.target.value })}
+                                        placeholder="15000"
+                                        style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '2px solid #e2e8f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                                    />
+                                </div>
+                            )}
+
+                            {(editingEmployee.paymentModel === 'COMMISSION' || editingEmployee.paymentModel === 'MIXED') && (
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>📊 % Comisión</label>
+                                    <input
+                                        type="number"
+                                        value={editingEmployee.commissionPercentage}
+                                        onChange={(e) => setEditingEmployee({ ...editingEmployee, commissionPercentage: e.target.value })}
+                                        placeholder="60"
+                                        style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '2px solid #e2e8f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Footer */}
+                    <div style={{
+                        padding: '16px 32px',
+                        borderTop: '1px solid #e2e8f0',
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        gap: '12px',
+                        background: '#f8fafc'
+                    }}>
+                        <button
+                            onClick={() => { setEditOpen(false); setEditingEmployee(null); }}
+                            style={{
+                                padding: '12px 24px',
+                                borderRadius: '12px',
+                                border: '2px solid #e2e8f0',
+                                background: 'white',
+                                fontSize: '14px',
+                                fontWeight: 600,
+                                color: '#64748b',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleUpdate}
+                            disabled={isSaving || !editingEmployee?.firstName || !editingEmployee?.lastName}
+                            style={{
+                                padding: '12px 28px',
+                                borderRadius: '12px',
+                                border: 'none',
+                                background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                                fontSize: '14px',
+                                fontWeight: 600,
+                                color: 'white',
+                                cursor: (isSaving || !editingEmployee?.firstName) ? 'not-allowed' : 'pointer',
+                                opacity: (isSaving || !editingEmployee?.firstName) ? 0.5 : 1,
+                                boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}
+                        >
+                            {isSaving && <div style={{ width: '16px', height: '16px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />}
+                            <Check size={16} />
+                            Guardar Cambios
+                        </button>
+                    </div>
+                </DialogContent>
+            </Dialog >
+
+            {/* Access Management Modal */}
+            < Dialog open={accessModalOpen} onOpenChange={setAccessModalOpen} >
+                <DialogContent style={{
+                    maxWidth: '450px',
+                    padding: '0',
+                    borderRadius: '24px',
+                    overflow: 'hidden',
+                    border: 'none'
+                }}>
+                    <div style={{
+                        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                        padding: '24px 32px',
+                        color: 'white'
+                    }}>
+                        <h2 style={{ fontSize: '20px', fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: "10px" }}>
+                            <Key size={24} /> Credenciales de Acceso
+                        </h2>
+                        <p style={{ opacity: 0.9, margin: "4px 0 0 0", fontSize: "14px" }}>
+                            Para {accessEmployee?.firstName} {accessEmployee?.lastName}
+                        </p>
+                    </div>
+
+                    <div style={{ padding: '32px' }}>
+                        {tempCreds ? (
+                            <div style={{ textAlign: "center" }}>
+                                <div style={{ marginBottom: "24px" }}>
+                                    <div style={{ fontSize: "48px", marginBottom: "16px" }}>🎉</div>
+                                    <h3 style={{ fontSize: "18px", fontWeight: "bold", color: "#1e293b", marginBottom: "8px" }}>¡Cuenta Creada Exitosamente!</h3>
+                                    <p style={{ color: "#64748b", fontSize: "14px" }}>Comparte estas credenciales con el empleado. Solo se muestran una vez.</p>
+                                </div>
+
+                                <div style={{ background: "#f1f5f9", padding: "20px", borderRadius: "16px", textAlign: "left", display: "flex", flexDirection: "column", gap: "12px" }}>
+                                    <div>
+                                        <div style={{ fontSize: "12px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase" }}>Usuario / Email</div>
+                                        <div style={{ fontSize: "16px", fontWeight: 700, color: "#334155" }}>{tempCreds.email}</div>
+                                    </div>
+                                    <div style={{ borderTop: "1px solid #e2e8f0" }} />
+                                    <div>
+                                        <div style={{ fontSize: "12px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase" }}>Contraseña Temporal</div>
+                                        <div style={{ fontSize: "20px", fontFamily: "monospace", fontWeight: 700, color: "#0f172a", letterSpacing: "1px" }}>{tempCreds.pass}</div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => { setAccessModalOpen(false); fetchEmployees(); }}
+                                    style={{
+                                        marginTop: "32px",
+                                        width: "100%",
+                                        padding: "14px",
+                                        borderRadius: "12px",
+                                        background: "#0f172a",
+                                        color: "white",
+                                        fontWeight: 600,
+                                        border: "none",
+                                        cursor: "pointer"
+                                    }}
+                                >
+                                    Entendido, cerrar
+                                </button>
+                            </div>
+                        ) : (
+                            <div>
+                                <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
+                                    <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                        <Check size={24} color="#16a34a" />
+                                    </div>
+                                    <div>
+                                        <h3 style={{ fontSize: "16px", fontWeight: "bold", color: "#1e293b", margin: 0 }}>Acceso Activo</h3>
+                                        <p style={{ color: "#64748b", fontSize: "13px", margin: 0 }}>Vinculado a: {accessEmployee?.email}</p>
+                                    </div>
+                                </div>
+                                <div style={{ background: "#fffbeb", border: "1px solid #fcd34d", borderRadius: "12px", padding: "16px", fontSize: "13px", color: "#92400e", marginBottom: "24px" }}>
+                                    💡 Si el usuario olvidó su contraseña, indícale que use la opción "Olvidé mi contraseña" en la pantalla de login.
+                                </div>
+
+                                <button
+                                    onClick={() => handleGrantAccess(accessEmployee, true)}
+                                    style={{
+                                        width: "100%",
+                                        padding: "14px",
+                                        borderRadius: "12px",
+                                        background: "white",
+                                        color: "#ef4444",
+                                        fontWeight: 600,
+                                        border: "2px solid #fee2e2",
+                                        cursor: "pointer",
+                                        marginBottom: "12px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        gap: "8px"
+                                    }}
+                                >
+                                    <Key size={16} /> Restablecer y Mostrar Contraseña
+                                </button>
+                                <button
+                                    onClick={() => setAccessModalOpen(false)}
+                                    style={{
+                                        width: "100%",
+                                        padding: "14px",
+                                        borderRadius: "12px",
+                                        background: "#f1f5f9",
+                                        color: "#475569",
+                                        fontWeight: 600,
+                                        border: "none",
+                                        cursor: "pointer"
+                                    }}
+                                >
+                                    Cerrar
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog >
+        </div >
     );
 }

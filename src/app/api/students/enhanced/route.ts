@@ -74,6 +74,7 @@ export async function GET(req: Request) {
                 hasScholarship: student.scholarships.length > 0,
                 scholarshipCount: student.scholarships.length,
                 totalDebt,
+                balance: totalDebt, // Add this field to match frontend expectation
                 branches: student.branches,
                 overdueCount,
             };

@@ -71,7 +71,7 @@ export async function PATCH(req: Request) {
     try {
         const body = await req.json();
         console.log("[BUSINESS_PATCH] Payload:", body);
-        const { name, taxId, legalName, taxRegime, taxZipCode } = body;
+        const { name, taxId, legalName, taxRegime, taxZipCode, enableParentsModule, defaultPaymentDay, paymentGraceDays } = body;
 
         // Basic validation could be improved
 
@@ -83,6 +83,9 @@ export async function PATCH(req: Request) {
                 ...(legalName !== undefined && { legalName }),
                 ...(taxRegime !== undefined && { taxRegime }),
                 ...(taxZipCode !== undefined && { taxZipCode }),
+                ...(enableParentsModule !== undefined && { enableParentsModule }),
+                ...(defaultPaymentDay !== undefined && { defaultPaymentDay }),
+                ...(paymentGraceDays !== undefined && { paymentGraceDays }),
             }
         });
 
