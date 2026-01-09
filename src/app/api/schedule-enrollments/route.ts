@@ -55,30 +55,63 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { scheduleId, studentIds } = body;
+        const { scheduleId, studentIds, propagateToSiblings } = body;
 
         if (!scheduleId || !studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
             return NextResponse.json({ error: "scheduleId and studentIds array are required" }, { status: 400 });
         }
 
-        // Create enrollments for each student (skip duplicates)
-        const enrollments = await prisma.$transaction(
-            studentIds.map((studentId: string) =>
-                prisma.scheduleEnrollment.upsert({
+        let targetScheduleIds = [scheduleId];
+
+        // If propagation is requested, find all active siblings (same course, same business)
+        if (propagateToSiblings) {
+            const currentSchedule = await prisma.classSchedule.findUnique({
+                where: { id: scheduleId },
+                select: { courseId: true, businessId: true }
+            });
+
+            if (currentSchedule?.courseId) {
+                const siblings = await prisma.classSchedule.findMany({
                     where: {
-                        studentId_scheduleId: { studentId, scheduleId }
+                        courseId: currentSchedule.courseId,
+                        businessId: currentSchedule.businessId,
+                        // ensure we don't pick up old archives if status existed
+                        // status: "ACTIVE" // Assuming status field exists or validUntil check
+                        OR: [
+                            { validUntil: null },
+                            { validUntil: { gte: new Date() } }
+                        ]
                     },
-                    create: {
-                        studentId,
-                        scheduleId,
-                        status: "ACTIVE",
-                    },
-                    update: {
-                        status: "ACTIVE",
-                    },
-                })
-            )
-        );
+                    select: { id: true }
+                });
+                targetScheduleIds = siblings.map(s => s.id);
+            }
+        }
+
+        // Create enrollments for each student in EACH target schedule
+        const operations = [];
+
+        for (const targetId of targetScheduleIds) {
+            for (const studentId of studentIds) {
+                operations.push(
+                    prisma.scheduleEnrollment.upsert({
+                        where: {
+                            studentId_scheduleId: { studentId, scheduleId: targetId }
+                        },
+                        create: {
+                            studentId,
+                            scheduleId: targetId,
+                            status: "ACTIVE",
+                        },
+                        update: {
+                            status: "ACTIVE",
+                        },
+                    })
+                );
+            }
+        }
+
+        const enrollments = await prisma.$transaction(operations);
 
         return NextResponse.json(enrollments, { status: 201 });
     } catch (error) {

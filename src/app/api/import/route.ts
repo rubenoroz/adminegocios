@@ -52,6 +52,7 @@ export async function POST(req: Request) {
                     }
 
                     if (!existing) {
+                        // Create new student
                         await prisma.student.create({
                             data: {
                                 firstName: item.firstName,
@@ -66,9 +67,18 @@ export async function POST(req: Request) {
                         });
                         success++;
                     } else {
-                        // Optional: Update existing? For now, skip to avoid overwriting valid data
-                        console.log(`Skipping duplicate student: ${item.firstName} ${item.lastName}`);
-                        failed++;
+                        // Update existing student with new data
+                        await prisma.student.update({
+                            where: { id: existing.id },
+                            data: {
+                                firstName: item.firstName || existing.firstName,
+                                lastName: item.lastName || existing.lastName,
+                                email: item.email || existing.email,
+                                phone: item.phone || existing.phone,
+                                matricula: item.matricula || existing.matricula,
+                            }
+                        });
+                        success++; // Count updates as success
                     }
                 } catch (e) {
                     console.error("Error importing student:", e);

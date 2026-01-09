@@ -17,7 +17,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { name, email, password, role, branchId } = body;
+        const { name, email, password, role, branchId, employeeId } = body;
 
         if (!name || !email || !password || !role) {
             return new NextResponse("Missing required fields", { status: 400 });
@@ -49,6 +49,14 @@ export async function POST(req: Request) {
                 branchId: branchId || null,
             },
         });
+
+        // If employeeId is provided, link the user to the employee
+        if (employeeId) {
+            await prisma.employee.update({
+                where: { id: employeeId },
+                data: { userId: user.id }
+            });
+        }
 
         return NextResponse.json({
             id: user.id,

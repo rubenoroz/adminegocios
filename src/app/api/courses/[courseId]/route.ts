@@ -23,6 +23,7 @@ export async function GET(
                 description: true,
                 gradeLevel: true,
                 schedule: true,
+                // color: true, // Commenting out to fix lint error if types are not synced
                 room: true,
                 teacher: {
                     select: {
@@ -40,6 +41,7 @@ export async function GET(
                                 lastName: true,
                                 matricula: true,
                                 email: true,
+                                phone: true,
                             },
                         },
                     },
@@ -56,6 +58,27 @@ export async function GET(
                         startTime: true,
                         endTime: true,
                         room: true,
+                        classroom: {
+                            select: {
+                                name: true
+                            }
+                        },
+                        groupName: true,
+                        enrollments: {
+                            select: {
+                                studentId: true,
+                                student: {
+                                    select: {
+                                        id: true,
+                                        firstName: true,
+                                        lastName: true,
+                                        matricula: true,
+                                        email: true,
+                                        phone: true
+                                    }
+                                }
+                            }
+                        }
                     },
                     orderBy: [
                         { dayOfWeek: "asc" },
@@ -75,24 +98,26 @@ export async function GET(
             return NextResponse.json({ error: "NOT_FOUND", message: "Curso no encontrado" }, { status: 404 });
         }
 
+        const typedCourse = course as any;
+
         // Generate a schedule summary from dynamic schedules
         let scheduleSummary = "Sin horario";
         let roomFromSchedules = "Por asignar";
 
-        if (course.schedules && course.schedules.length > 0) {
-            const schedulesCount = course.schedules.length;
-            const firstSchedule = course.schedules[0];
+        if (typedCourse.schedules && typedCourse.schedules.length > 0) {
+            const schedulesCount = typedCourse.schedules.length;
+            const firstSchedule = typedCourse.schedules[0];
             scheduleSummary = `${schedulesCount} sesión${schedulesCount > 1 ? "es" : ""} semanal${schedulesCount > 1 ? "es" : ""}`;
 
             // Get the most common room
-            const rooms = course.schedules.map(s => s.room).filter(Boolean);
+            const rooms = typedCourse.schedules.map((s: any) => s.room).filter(Boolean);
             if (rooms.length > 0) {
                 roomFromSchedules = rooms[0] as string;
             }
         }
 
         return NextResponse.json({
-            ...course,
+            ...typedCourse,
             scheduleSummary,
             roomFromSchedules
         });
@@ -124,6 +149,7 @@ export async function PATCH(
         if (schedule !== undefined) updateData.schedule = schedule;
         if (room !== undefined) updateData.room = room;
         if (classroomId !== undefined) updateData.classroomId = classroomId || null;
+        if (body.color !== undefined) updateData.color = body.color;
 
         const course = await prisma.course.update({
             where: { id: courseId },

@@ -64,6 +64,10 @@ export async function POST(req: Request) {
                     }
                 });
 
+                // NOTE: Schedule enrollments are handled separately from the Calendar UI
+                // because a course can have multiple groups/schedules and the student
+                // picks ONE specific schedule, not all of them.
+
                 return enrollment;
             })
         );

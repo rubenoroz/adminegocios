@@ -44,7 +44,7 @@ const TabsContent = React.forwardRef<
     <TabsPrimitive.Content
         ref={ref}
         tabIndex={-1}
-        forceMount
+
         className={cn(
             "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0",
             "data-[state=inactive]:hidden",

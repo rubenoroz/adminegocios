@@ -48,7 +48,10 @@ export async function GET(req: Request) {
                 { firstName: 'asc' }
             ],
             include: {
-                branches: true
+                branches: true,
+                user: {
+                    select: { id: true, name: true, email: true }
+                }
             }
         });
 
@@ -123,7 +126,7 @@ export async function POST(req: Request) {
             }
         });
 
-        // Auto-create User account for the employee
+        // Auto-create User account for the employee and link it back
         try {
             // Check if user already exists
             const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -131,19 +134,28 @@ export async function POST(req: Request) {
             if (!existingUser) {
                 const hashedPassword = await import("bcryptjs").then(bcrypt => bcrypt.hash("password123", 10));
 
-                await prisma.user.create({
+                const newUser = await prisma.user.create({
                     data: {
                         name: `${firstName} ${lastName}`,
                         email,
                         password: hashedPassword,
-                        role: role === "TEACHER" ? "TEACHER" : "RECEPTIONIST", // Default mapping
+                        role: role === "TEACHER" ? "TEACHER" : "RECEPTIONIST",
                         businessId: user.businessId,
-                        // For user, currently we only support single branchId.
-                        // Ideally User model should also update, but for now let's leave it null 
-                        // or pick the first one if we want them tied to a dashboard view.
                         branchId: connectedBranches.length > 0 ? connectedBranches[0].id : null,
                         status: "ACTIVE"
                     }
+                });
+
+                // Link the user back to the employee
+                await prisma.employee.update({
+                    where: { id: employee.id },
+                    data: { userId: newUser.id }
+                });
+            } else {
+                // If user exists, link it to employee
+                await prisma.employee.update({
+                    where: { id: employee.id },
+                    data: { userId: existingUser.id }
                 });
             }
         } catch (userError) {

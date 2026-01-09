@@ -122,8 +122,8 @@ export async function GET(req: Request) {
             ];
         }
 
-        // Optimized query with select instead of include
-        const courses = await prisma.course.findMany({
+        // Optimized query to fetch necessary data
+        const rawCourses: any[] = await prisma.course.findMany({
             where,
             select: {
                 id: true,
@@ -131,6 +131,7 @@ export async function GET(req: Request) {
                 description: true,
                 gradeLevel: true,
                 schedule: true,
+                // color: true, // Commenting out to fix lint error if types are not synced
                 room: true,
                 teacher: {
                     select: {
@@ -138,16 +139,51 @@ export async function GET(req: Request) {
                         name: true,
                     },
                 },
-                branches: true, // Include branches for UI display
+                branches: true,
+                // Include schedules enrollments to calculate real student count
+                schedules: {
+                    select: {
+                        enrollments: {
+                            select: {
+                                studentId: true
+                            }
+                        }
+                    }
+                },
                 _count: {
                     select: {
-                        enrollments: true,
+                        enrollments: true, // Keep direct enrollments just in case
                     },
                 },
             },
             orderBy: {
                 name: "asc",
             },
+        });
+
+        // Process courses to calculate unique students from schedules
+        const courses = rawCourses.map((course: any) => {
+            // Get all student IDs from all schedules of this course
+            const scheduleStudentIds = course.schedules?.flatMap((s: any) =>
+                s.enrollments?.map((e: any) => e.studentId) || []
+            ) || [];
+
+            // Count unique students
+            const uniqueStudents = new Set(scheduleStudentIds).size;
+
+            // Use the greater of direct enrollments or schedule enrollments
+            // This handles legacy data or different enrollment flows
+            const totalEnrollments = Math.max(course._count.enrollments, uniqueStudents);
+
+            return {
+                ...course,
+                _count: {
+                    enrollments: totalEnrollments
+                },
+                // Build a summary of schedules for UI if needed, or remove to save bandwidth
+                // Removing heavy schedule data from response as it's not needed for the list view
+                schedules: undefined
+            };
         });
 
         return NextResponse.json(courses);

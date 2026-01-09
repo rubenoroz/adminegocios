@@ -1,10 +1,11 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { BookOpen, Users, UserCheck, Award, Clock, Briefcase, Megaphone } from "lucide-react";
+import { BookOpen, Users, UserCheck, Award, Clock, Briefcase, Megaphone, UsersRound } from "lucide-react";
 
 const tabs = [
     { id: "courses", label: "Cursos", icon: BookOpen, path: "/dashboard/courses" },
+    { id: "groups", label: "Grupos", icon: UsersRound, path: "/dashboard/groups" },
     { id: "students", label: "Alumnos", icon: Users, path: "/dashboard/students" },
     { id: "parents", label: "Padres", icon: UserCheck, path: "/dashboard/parents" },
     { id: "grades", label: "Calificaciones", icon: Award, path: "/dashboard/grades" },

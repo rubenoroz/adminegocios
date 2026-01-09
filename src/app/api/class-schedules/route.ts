@@ -21,8 +21,9 @@ export async function GET(request: NextRequest) {
                     select: {
                         id: true,
                         name: true,
+                        color: true,
                         teacher: {
-                            select: { name: true }
+                            select: { id: true, name: true }
                         }
                     }
                 },
@@ -37,6 +38,21 @@ export async function GET(request: NextRequest) {
                         id: true,
                         name: true
                     }
+                },
+                enrollments: {
+                    include: {
+                        student: {
+                            select: {
+                                id: true,
+                                firstName: true,
+                                lastName: true
+                            }
+                        }
+                    }
+                },
+                cancellations: true,
+                _count: {
+                    select: { enrollments: true }
                 }
             },
             orderBy: [
@@ -55,9 +71,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { businessId, branchId, courseId, classroomId, teacherId, dayOfWeek, startTime, endTime, validFrom, validUntil } = body;
+        const { businessId, branchId, courseId, classroomId, teacherId, title, groupName, dayOfWeek, startTime, endTime, validFrom, validUntil } = body;
 
-        if (!businessId || !courseId || dayOfWeek === undefined || !startTime || !endTime) {
+        // courseId OR title is required
+        if (!businessId || (!courseId && !title) || dayOfWeek === undefined || !startTime || !endTime) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
@@ -65,9 +82,11 @@ export async function POST(request: NextRequest) {
             data: {
                 businessId,
                 branchId: branchId || null,
-                courseId,
+                courseId: courseId || null,
                 classroomId: classroomId || null,
                 teacherId: teacherId || null,
+                title: title || null,
+                groupName: groupName || null,
                 dayOfWeek,
                 startTime,
                 endTime,
@@ -81,16 +100,17 @@ export async function POST(request: NextRequest) {
         });
 
         return NextResponse.json(schedule, { status: 201 });
-    } catch (error) {
-        console.error("Error creating class schedule:", error);
-        return NextResponse.json({ error: "Failed to create schedule" }, { status: 500 });
+    } catch (error: any) {
+        console.error("Error creating class schedule:", error?.message || error);
+        console.error("Full error:", JSON.stringify(error, null, 2));
+        return NextResponse.json({ error: "Failed to create schedule", details: error?.message }, { status: 500 });
     }
 }
 
 export async function PUT(request: NextRequest) {
     try {
         const body = await request.json();
-        const { id, courseId, classroomId, teacherId, dayOfWeek, startTime, endTime, validFrom, validUntil } = body;
+        const { id, courseId, classroomId, teacherId, groupName, dayOfWeek, startTime, endTime, validFrom, validUntil } = body;
 
         if (!id) {
             return NextResponse.json({ error: "Schedule ID is required" }, { status: 400 });
@@ -102,6 +122,7 @@ export async function PUT(request: NextRequest) {
                 ...(courseId && { courseId }),
                 ...(classroomId !== undefined && { classroomId: classroomId || null }),
                 ...(teacherId !== undefined && { teacherId: teacherId || null }),
+                ...(groupName !== undefined && { groupName: groupName || null }),
                 ...(dayOfWeek !== undefined && { dayOfWeek }),
                 ...(startTime && { startTime }),
                 ...(endTime && { endTime }),

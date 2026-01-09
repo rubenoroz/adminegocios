@@ -66,6 +66,8 @@ export async function POST(
                 studentFeeId: feeId,
                 amount: paymentAmount,
                 method,
+                // Link to teacher for commission tracking
+                teacherId: teacherId || null,
                 // Commission tracking
                 teacherCommission: teacherCommission ? parseFloat(teacherCommission) : null,
                 reserveAmount: reserveAmount ? parseFloat(reserveAmount) : null,

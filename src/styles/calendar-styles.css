@@ -194,6 +194,18 @@
     background-color: #FEF3C7;
 }
 
+/* Enhanced visibility for grid lines in Today column */
+/* Enhanced visibility for grid lines in Today column - Subtle */
+.services-calendar-container .rbc-day-slot.rbc-today .rbc-time-slot {
+    border-top: 1px solid rgba(59, 130, 246, 0.1) !important;
+    /* Blue-500 at 10% opacity */
+}
+
+.reservations-calendar-container .rbc-day-slot.rbc-today .rbc-time-slot {
+    border-top: 1px solid rgba(245, 158, 11, 0.1) !important;
+    /* Amber-500 at 10% opacity */
+}
+
 /* Events */
 .services-calendar-container .rbc-event,
 .reservations-calendar-container .rbc-event {
@@ -484,4 +496,46 @@
         display: flex;
         justify-content: center;
     }
+}
+
+/* ========================================
+   SOLID EVENT BLOCKS
+   Make events display as solid blocks without showing grid lines through them
+   ======================================== */
+
+.services-calendar-container .rbc-event,
+.reservations-calendar-container .rbc-event {
+    /* Solid background - no transparency */
+    border-radius: 8px !important;
+    border: none !important;
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+    /* Ensure event is above grid lines */
+    z-index: 10 !important;
+    /* Remove any backdrop that might show through */
+    backdrop-filter: none !important;
+    /* Cursor pointer for clickability */
+    cursor: pointer !important;
+    /* Smooth hover transition */
+    transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.services-calendar-container .rbc-event:hover,
+.reservations-calendar-container .rbc-event:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Event content styling */
+.services-calendar-container .rbc-event-content,
+.reservations-calendar-container .rbc-event-content {
+    font-weight: 600 !important;
+    line-height: 1.3 !important;
+}
+
+.services-calendar-container .rbc-event-label,
+.reservations-calendar-container .rbc-event-label {
+    font-weight: 700 !important;
+    font-size: 11px !important;
+    opacity: 0.9;
 }

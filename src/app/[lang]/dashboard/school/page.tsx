@@ -13,18 +13,19 @@ import { FeesList } from "@/components/finance/fees-list";
 import { FeeTemplatesManager } from "@/components/finance/fee-templates-manager";
 import { CommissionsManager } from "@/components/schools/commissions-manager";
 import { SchoolClassCalendar } from "@/components/schools/school-class-calendar";
+import { GroupsList } from "@/components/schools/groups-list";
 import { ModernKpiCard } from "@/components/ui/modern-kpi-card";
 import { useBranch } from "@/context/branch-context";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     BookOpen, Users, UserCheck, Award, Clock, Briefcase, Megaphone,
     DollarSign, Wallet, AlertCircle, TrendingUp, CalendarDays,
-    GraduationCap, Settings, LucideIcon
+    GraduationCap, Settings, LucideIcon, UsersRound
 } from "lucide-react";
 
 // Section and SubTab types
 type SectionType = "academico" | "alumnos" | "administracion";
-type SubTabType = "courses" | "calendario" | "students" | "parents" | "grades" | "attendance" | "staff" | "communication" | "finance" | "commissions";
+type SubTabType = "courses" | "groups" | "calendario" | "students" | "parents" | "grades" | "attendance" | "staff" | "communication" | "finance" | "commissions";
 
 interface SubTab {
     id: SubTabType;
@@ -46,6 +47,7 @@ const sections: Section[] = [
         icon: GraduationCap,
         subTabs: [
             { id: "courses", label: "Cursos", icon: BookOpen },
+            { id: "groups", label: "Grupos", icon: UsersRound },
             { id: "calendario", label: "Calendario", icon: CalendarDays },
         ]
     },
@@ -102,10 +104,16 @@ export default function SchoolPage() {
 
     // Sync URL with state
     useEffect(() => {
-        const newParams = new URLSearchParams(searchParams.toString());
-        newParams.set("section", activeSection);
-        newParams.set("tab", activeSubTab);
-        router.replace(`${pathname}?${newParams.toString()}`, { scroll: false });
+        const currentSection = searchParams.get("section");
+        const currentTab = searchParams.get("tab");
+
+        // Only update URL if state differs from URL
+        if (currentSection !== activeSection || currentTab !== activeSubTab) {
+            const newParams = new URLSearchParams(searchParams.toString());
+            newParams.set("section", activeSection);
+            newParams.set("tab", activeSubTab);
+            router.replace(`${pathname}?${newParams.toString()}`, { scroll: false });
+        }
     }, [activeSection, activeSubTab, pathname, router, searchParams]);
 
     // Fetch finance stats when on finance tab
@@ -190,6 +198,7 @@ export default function SchoolPage() {
                     transition={{ duration: 0.2 }}
                 >
                     {activeSubTab === "courses" && <CourseList />}
+                    {activeSubTab === "groups" && <GroupsList />}
                     {activeSubTab === "calendario" && <SchoolClassCalendar />}
                     {activeSubTab === "students" && <StudentList />}
                     {activeSubTab === "parents" && <ParentAccountsManager />}

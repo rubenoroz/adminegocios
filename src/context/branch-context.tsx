@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from "react";
 import { useSession } from "next-auth/react";
 
 interface Branch {
@@ -114,16 +114,18 @@ export function BranchProvider({ children }: { children: ReactNode }) {
         await fetchBranches();
     };
 
+
+
+    const value = useMemo(() => ({
+        selectedBranch,
+        branches,
+        setSelectedBranch,
+        loading,
+        refreshBranches,
+    }), [selectedBranch, branches, loading]);
+
     return (
-        <BranchContext.Provider
-            value={{
-                selectedBranch,
-                branches,
-                setSelectedBranch,
-                loading,
-                refreshBranches,
-            }}
-        >
+        <BranchContext.Provider value={value}>
             {children}
         </BranchContext.Provider>
     );

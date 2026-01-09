@@ -8,106 +8,263 @@ import {
     CardDescription,
     CardHeader,
     CardTitle,
+    CardFooter,
 } from "@/components/ui/card";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { PremiumSelect } from "@/components/ui/premium-select";
-import { Plus, UserPlus, Trash2, Download, FileSpreadsheet, FileText, MessageSquare, Clock, DoorOpen, BookOpen, Mail, User } from "lucide-react";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-    DialogFooter,
-} from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import Link from "next/link";
+import { Trash2, Save, User, BookOpen, Plus, X, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
+
+// Sub-component for managing authorized teachers
+function AuthorizedTeachersSection({ courseId }: { courseId: string }) {
+    const [authorizedTeachers, setAuthorizedTeachers] = useState<any[]>([]);
+    const [allEmployees, setAllEmployees] = useState<any[]>([]);
+    const [showSelector, setShowSelector] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        fetchAuthorizedTeachers();
+        fetchEmployees();
+    }, [courseId]);
+
+    const fetchAuthorizedTeachers = async () => {
+        try {
+            const res = await fetch(`/api/courses/${courseId}/teachers`);
+            if (res.ok) {
+                const data = await res.json();
+                setAuthorizedTeachers(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch authorized teachers", error);
+        }
+    };
+
+    const fetchEmployees = async () => {
+        try {
+            const res = await fetch("/api/employees?role=TEACHER");
+            if (res.ok) {
+                const data = await res.json();
+                setAllEmployees(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch employees", error);
+        }
+    };
+
+    const handleAddTeacher = async (employeeId: string) => {
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/courses/${courseId}/teachers`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ employeeIds: [employeeId] })
+            });
+            if (res.ok) {
+                toast({ title: "Profesor agregado" });
+                fetchAuthorizedTeachers();
+            }
+        } catch (error) {
+            toast({ title: "Error", variant: "destructive" });
+        } finally {
+            setLoading(false);
+            setShowSelector(false);
+        }
+    };
+
+    const handleRemoveTeacher = async (employeeId: string) => {
+        try {
+            const res = await fetch(`/api/courses/${courseId}/teachers?employeeId=${employeeId}`, {
+                method: "DELETE"
+            });
+            if (res.ok) {
+                toast({ title: "Profesor removido" });
+                fetchAuthorizedTeachers();
+            }
+        } catch (error) {
+            toast({ title: "Error", variant: "destructive" });
+        }
+    };
+
+    // Filter out already-added teachers
+    const availableEmployees = allEmployees.filter(
+        emp => !authorizedTeachers.some(at => at.employeeId === emp.id)
+    );
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Teacher Chips */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                {authorizedTeachers.map((at) => (
+                    <div
+                        key={at.id}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '10px 14px',
+                            borderRadius: '12px',
+                            border: '2px solid #E5E7EB',
+                            backgroundColor: '#F9FAFB',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        {/* Avatar */}
+                        <div style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            background: at.employee?.color || 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#FFFFFF',
+                            fontWeight: 700,
+                            fontSize: '12px'
+                        }}>
+                            {at.employee?.firstName?.[0]}{at.employee?.lastName?.[0]}
+                        </div>
+                        <span style={{ fontWeight: 600, fontSize: '14px', color: '#1F2937' }}>
+                            {at.employee?.firstName} {at.employee?.lastName}
+                        </span>
+                        {/* Remove Button */}
+                        <button
+                            type="button"
+                            onClick={() => handleRemoveTeacher(at.employeeId)}
+                            style={{
+                                width: '24px',
+                                height: '24px',
+                                borderRadius: '6px',
+                                border: 'none',
+                                backgroundColor: '#FEE2E2',
+                                color: '#DC2626',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            <X size={14} />
+                        </button>
+                    </div>
+                ))}
+
+                {/* Add Button */}
+                <button
+                    type="button"
+                    onClick={() => setShowSelector(!showSelector)}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px 16px',
+                        borderRadius: '12px',
+                        border: '2px dashed #D1D5DB',
+                        backgroundColor: showSelector ? '#F3F4F6' : '#FFFFFF',
+                        color: '#6B7280',
+                        fontWeight: 600,
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                    }}
+                >
+                    <Plus size={18} />
+                    Agregar Profesor
+                </button>
+            </div>
+
+            {/* Selector Dropdown */}
+            {showSelector && availableEmployees.length > 0 && (
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    padding: '12px',
+                    borderRadius: '12px',
+                    border: '1px solid #E5E7EB',
+                    backgroundColor: '#FFFFFF',
+                    maxHeight: '200px',
+                    overflowY: 'auto'
+                }}>
+                    {availableEmployees.map((emp) => (
+                        <div
+                            key={emp.id}
+                            onClick={() => handleAddTeacher(emp.id)}
+                            style={{
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                                padding: '10px 12px',
+                                borderRadius: '10px',
+                                border: '2px solid #D1D5DB',
+                                backgroundColor: '#FFFFFF',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            <div style={{
+                                width: '24px',
+                                height: '24px',
+                                minWidth: '24px',
+                                borderRadius: '6px',
+                                border: '2px solid #6B7280',
+                                backgroundColor: '#FFFFFF',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }} />
+                            <span style={{ fontWeight: 600, fontSize: '14px', color: '#1F2937' }}>
+                                {emp.firstName} {emp.lastName}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {showSelector && availableEmployees.length === 0 && (
+                <p style={{ fontSize: '13px', color: '#6B7280', fontStyle: 'italic' }}>
+                    No hay más profesores disponibles para agregar.
+                </p>
+            )}
+        </div>
+    );
+}
 
 interface CourseDetailProps {
     courseId: string;
 }
 
-interface Student {
-    id: string;
-    firstName: string;
-    lastName: string;
-    matricula: string;
-    email: string | null;
-}
-
-interface Enrollment {
-    id: string;
-    student: Student;
-}
-
 export function CourseDetail({ courseId }: CourseDetailProps) {
     const [course, setCourse] = useState<any>(null);
-    const [availableStudents, setAvailableStudents] = useState<Student[]>([]);
-    const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
-    const [isEnrollOpen, setIsEnrollOpen] = useState(false);
-    const [exporting, setExporting] = useState(false);
-    const { toast } = useToast();
-
-    const handleExportReportCards = async () => {
-        try {
-            setExporting(true);
-            const res = await fetch(`/api/courses/${courseId}/export/report-cards`);
-            if (res.ok) {
-                const blob = await res.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `boletas_${course.name.replace(/\s+/g, "_")}.pdf`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-                toast({
-                    title: "Boletas generadas",
-                    description: "La descarga ha comenzado",
-                });
-            } else {
-                toast({
-                    title: "Error",
-                    description: "No se pudieron generar las boletas",
-                    variant: "destructive",
-                });
-            }
-        } catch (error) {
-            toast({
-                title: "Error",
-                description: "Ocurrió un error",
-                variant: "destructive",
-            });
-        } finally {
-            setExporting(false);
-        }
-    };
-
     const [teachers, setTeachers] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        name: "",
+        description: "",
+        teacherId: "unassigned"
+    });
+
+    const { toast } = useToast();
+    const router = useRouter();
 
     useEffect(() => {
         fetchCourseDetail();
-        fetchAvailableStudents();
         fetchTeachers();
     }, [courseId]);
+
+    useEffect(() => {
+        if (course) {
+            setFormData({
+                name: course.name || "",
+                description: course.description || "",
+                teacherId: course.teacherId || course.teacher?.id || "unassigned"
+            });
+        }
+    }, [course]);
 
     const fetchTeachers = async () => {
         try {
@@ -133,411 +290,145 @@ export function CourseDetail({ courseId }: CourseDetailProps) {
         }
     };
 
-    const fetchAvailableStudents = async () => {
+    const handleUpdate = async () => {
+        setLoading(true);
         try {
-            const res = await fetch("/api/students");
-            if (res.ok) {
-                const data = await res.json();
-                setAvailableStudents(data);
-            }
-        } catch (error) {
-            console.error("Failed to fetch students", error);
-        }
-    };
-
-    const handleEnrollStudents = async () => {
-        if (selectedStudents.length === 0) {
-            toast({
-                title: "Error",
-                description: "Selecciona al menos un alumno",
-                variant: "destructive",
-            });
-            return;
-        }
-
-        try {
-            const res = await fetch("/api/enrollments", {
-                method: "POST",
+            const res = await fetch(`/api/courses/${courseId}`, {
+                method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    courseId,
-                    studentIds: selectedStudents,
-                }),
+                    name: formData.name,
+                    description: formData.description,
+                    teacherId: formData.teacherId === "unassigned" ? null : formData.teacherId
+                })
             });
 
             if (res.ok) {
-                toast({
-                    title: "Alumnos inscritos",
-                    description: `${selectedStudents.length} alumno(s) inscrito(s) exitosamente`,
-                });
-                setIsEnrollOpen(false);
-                setSelectedStudents([]);
+                toast({ title: "Curso actualizado", description: "Los cambios se han guardado." });
                 fetchCourseDetail();
             } else {
-                toast({
-                    title: "Error",
-                    description: "No se pudo inscribir a los alumnos",
-                    variant: "destructive",
-                });
+                throw new Error("Failed to update");
             }
         } catch (error) {
-            toast({
-                title: "Error",
-                description: "Ocurrió un error",
-                variant: "destructive",
-            });
+            toast({ title: "Error", description: "No se pudo actualizar el curso.", variant: "destructive" });
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handleUnenroll = async (enrollmentId: string) => {
-        if (!confirm("¿Desinscribir a este alumno del curso?")) return;
+    const handleDelete = async () => {
+        if (!confirm("¿ESTÁS SEGURO? Esta acción eliminará el curso permanentemente y no se puede deshacer.")) return;
 
         try {
-            const res = await fetch(`/api/enrollments?enrollmentId=${enrollmentId}`, {
-                method: "DELETE",
-            });
-
+            const res = await fetch(`/api/courses/${courseId}`, { method: "DELETE" });
             if (res.ok) {
-                toast({ title: "Alumno desinscrito" });
-                fetchCourseDetail();
-            }
-        } catch (error) {
-            toast({
-                title: "Error",
-                description: "Ocurrió un error",
-                variant: "destructive",
-            });
-        }
-    };
-
-    const toggleStudent = (studentId: string) => {
-        setSelectedStudents((prev) =>
-            prev.includes(studentId)
-                ? prev.filter((id) => id !== studentId)
-                : [...prev, studentId]
-        );
-    };
-
-    const handleExportPDF = async () => {
-        try {
-            const res = await fetch(`/api/courses/${courseId}/export/pdf`);
-            if (res.ok) {
-                const blob = await res.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `lista_${course.name.replace(/\s+/g, "_")}.pdf`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-                toast({
-                    title: "PDF generado",
-                    description: "La descarga ha comenzado",
-                });
+                toast({ title: "Curso eliminado" });
+                router.push("/dashboard/courses");
             } else {
-                toast({
-                    title: "Error",
-                    description: "No se pudo generar el PDF",
-                    variant: "destructive",
-                });
+                throw new Error("Failed to delete");
             }
         } catch (error) {
-            toast({
-                title: "Error",
-                description: "Ocurrió un error",
-                variant: "destructive",
-            });
+            toast({ title: "Error", description: "No se pudo eliminar el curso.", variant: "destructive" });
         }
     };
 
-    const handleExportExcel = async () => {
-        try {
-            const res = await fetch(`/api/courses/${courseId}/export/excel`);
-            if (res.ok) {
-                const blob = await res.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `lista_${course.name.replace(/\s+/g, "_")}.xlsx`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-                toast({
-                    title: "Excel generado",
-                    description: "La descarga ha comenzado",
-                });
-            } else {
-                toast({
-                    title: "Error",
-                    description: "No se pudo generar el Excel",
-                    variant: "destructive",
-                });
-            }
-        } catch (error) {
-            toast({
-                title: "Error",
-                description: "Ocurrió un error",
-                variant: "destructive",
-            });
-        }
-    };
-
-    if (!course) {
-        return <div>Cargando...</div>;
-    }
-
-    // Filter out already enrolled students
-    const enrolledIds = course.enrollments?.map((e: Enrollment) => e.student.id) || [];
-    const studentsToEnroll = availableStudents.filter(
-        (s) => !enrolledIds.includes(s.id)
-    );
+    if (!course) return <div className="p-8 text-center text-slate-500">Cargando configuración...</div>;
 
     return (
-        <div className="space-y-8 pt-6 px-6 pb-6">
-            {/* Modern Info Cards - Neutral & Protagonist */}
-            <div className="grid gap-8 md:grid-cols-3">
-                {/* Profesor Card */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500">
-                            <UserPlus className="h-5 w-5" />
-                        </div>
-                        <h3 className="text-slate-800 font-bold text-sm uppercase tracking-wider">Profesor</h3>
-                    </div>
-                    <PremiumSelect
-                        value={course.teacherId || course.teacher?.id || "unassigned"}
-                        onValueChange={async (value) => {
-                            if (value === "unassigned") return;
-                            try {
-                                await fetch(`/api/courses/${courseId}`, {
-                                    method: "PATCH",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ teacherId: value })
-                                });
-                                fetchCourseDetail();
-                                toast({ title: "Profesor asignado" });
-                            } catch (error) {
-                                toast({ title: "Error al asignar profesor", variant: "destructive" });
-                            }
-                        }}
-                        placeholder="Seleccionar profesor"
-                        label="Seleccionar Profesor"
-                        options={[
-                            { value: "unassigned", label: "Sin asignar" },
-                            ...teachers.map((t) => ({ value: t.id, label: t.name }))
-                        ]}
-                    />
-                </div>
+        <div className="space-y-8 max-w-4xl mx-auto pt-6">
 
-                {/* Horario Card */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500">
-                            <Clock size={20} />
-                        </div>
-                        <h3 className="text-slate-800 font-bold text-sm uppercase tracking-wider">Horario</h3>
-                    </div>
-                    <div className="text-slate-900 text-2xl font-black tracking-tight">{course.schedule || "No definido"}</div>
-                </div>
-
-                {/* Salón Card */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500">
-                            <DoorOpen size={20} />
-                        </div>
-                        <h3 className="text-slate-800 font-bold text-sm uppercase tracking-wider">Salón</h3>
-                    </div>
-                    <div className="text-slate-900 text-2xl font-black tracking-tight">{course.room || "No asignado"}</div>
-                </div>
+            {/* Header Section */}
+            <div>
+                <h2 className="text-2xl font-bold tracking-tight text-slate-900">Propiedades del Curso</h2>
+                <p className="text-slate-500">Administra la información básica, asignaciones y configuración general.</p>
             </div>
 
-            <Card>
+            {/* General Settings Card */}
+            <Card className="border-slate-200 shadow-sm">
                 <CardHeader>
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <CardTitle>Alumnos Inscritos</CardTitle>
-                            <CardDescription>
-                                {course.enrollments?.length || 0} alumno(s) en este curso
-                            </CardDescription>
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={handleExportPDF}
-                                className="button-modern gradient-blue flex items-center gap-2 py-2 px-6 rounded-xl text-white font-bold shadow-md hover:shadow-lg transition-all active:scale-95"
-                            >
-                                <Download className="h-4 w-4" />
-                                PDF
-                            </button>
-                            <button
-                                onClick={handleExportExcel}
-                                disabled={exporting}
-                                className="button-modern gradient-blue flex items-center gap-2 py-2 px-6 rounded-xl text-white font-bold shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50"
-                            >
-                                <FileSpreadsheet className="h-4 w-4" />
-                                Excel
-                            </button>
-                            <button
-                                onClick={handleExportReportCards}
-                                disabled={exporting}
-                                className="button-modern gradient-blue flex items-center gap-2 py-2 px-6 rounded-xl text-white font-bold shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50"
-                            >
-                                <FileText className="h-4 w-4" />
-                                Boletas PDF
-                            </button>
-                        </div>
-                    </div>
+                    <CardTitle className="flex items-center gap-2">
+                        <BookOpen className="h-5 w-5 text-blue-600" />
+                        Información General
+                    </CardTitle>
+                    <CardDescription>
+                        Detalles básicos visibles para estudiantes y profesores.
+                    </CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <div className="grid gap-6 md:grid-cols-2 mb-6">
-                        <Dialog open={isEnrollOpen} onOpenChange={setIsEnrollOpen}>
-                            <DialogTrigger asChild>
-                                <Button size="sm">
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Inscribir Alumnos
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                                <DialogHeader>
-                                    <DialogTitle>Inscribir Alumnos</DialogTitle>
-                                    <DialogDescription>
-                                        Selecciona los alumnos a inscribir en este curso
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-2 py-4">
-                                    {studentsToEnroll.map((student) => (
-                                        <div
-                                            key={student.id}
-                                            className="flex items-center space-x-2 p-2 hover:bg-muted rounded"
-                                        >
-                                            <Checkbox
-                                                checked={selectedStudents.includes(student.id)}
-                                                onCheckedChange={() => toggleStudent(student.id)}
-                                            />
-                                            <label className="flex-1 cursor-pointer">
-                                                {student.lastName}, {student.firstName} -{" "}
-                                                {student.matricula}
-                                            </label>
-                                        </div>
-                                    ))}
-                                    {studentsToEnroll.length === 0 && (
-                                        <div className="text-center py-8 text-muted-foreground">
-                                            Todos los alumnos ya están inscritos
-                                        </div>
-                                    )}
-                                </div>
-                                <DialogFooter>
-                                    <Button onClick={handleEnrollStudents}>
-                                        Inscribir {selectedStudents.length} alumno(s)
-                                    </Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
+                <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="name">Nombre del Curso</Label>
+                        <Input
+                            id="name"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            placeholder="Ej. Matemáticas Avanzadas"
+                        />
                     </div>
-                    <div className="overflow-hidden rounded-lg border border-slate-200">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-slate-200 bg-slate-50">
-                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Alumno</th>
-                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Matrícula</th>
-                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Contacto</th>
-                                    <th className="text-right px-6 py-4 text-sm font-semibold text-slate-600">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {course.enrollments?.map((enrollment: Enrollment, index: number) => (
-                                    <tr
-                                        key={enrollment.id}
-                                        className="border-b border-slate-100 transition-colors hover:bg-slate-50"
-                                        style={{
-                                            backgroundColor: index % 2 === 1 ? '#F8FAFC' : '#FFFFFF'
-                                        }}
-                                    >
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-4">
-                                                <div
-                                                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm"
-                                                    style={{ backgroundColor: '#EA580C' }}
-                                                >
-                                                    {enrollment.student.firstName[0]}{enrollment.student.lastName[0]}
-                                                </div>
-                                                <div className="font-semibold text-slate-900">
-                                                    {enrollment.student.firstName} {enrollment.student.lastName}
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <Badge variant="outline" className="font-mono text-slate-600 bg-slate-50">
-                                                {enrollment.student.matricula}
-                                            </Badge>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2 text-sm text-slate-600">
-                                                <Mail size={14} className="text-slate-400" />
-                                                {enrollment.student.email || "—"}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <Link href={`/dashboard/students/${enrollment.student.id}/notes`}>
-                                                    <button
-                                                        style={{
-                                                            width: '36px',
-                                                            height: '36px',
-                                                            borderRadius: '10px',
-                                                            backgroundColor: 'white',
-                                                            border: '1px solid #E2E8F0',
-                                                            cursor: 'pointer',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center'
-                                                        }}
-                                                        className="hover:bg-blue-50 transition-colors"
-                                                    >
-                                                        <MessageSquare size={16} className="text-blue-500" />
-                                                    </button>
-                                                </Link>
-                                                <button
-                                                    onClick={() => handleUnenroll(enrollment.id)}
-                                                    style={{
-                                                        width: '36px',
-                                                        height: '36px',
-                                                        borderRadius: '10px',
-                                                        backgroundColor: 'white',
-                                                        border: '1px solid #E2E8F0',
-                                                        cursor: 'pointer',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center'
-                                                    }}
-                                                    className="hover:bg-red-50 transition-colors"
-                                                >
-                                                    <Trash2 size={16} className="text-red-500" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {(!course.enrollments || course.enrollments.length === 0) && (
-                                    <tr>
-                                        <td
-                                            colSpan={4}
-                                            className="text-center py-12 text-slate-400"
-                                        >
-                                            <div className="flex flex-col items-center gap-2">
-                                                <User size={32} className="opacity-20" />
-                                                <p>No hay alumnos inscritos en este curso</p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                    <div className="space-y-2">
+                        <Label htmlFor="description">Descripción</Label>
+                        <Textarea
+                            id="description"
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            placeholder="Describe los objetivos y contenido del curso..."
+                            className="min-h-[100px]"
+                        />
                     </div>
                 </CardContent>
             </Card>
-        </div >
+
+            {/* Authorized Teachers Section */}
+            <Card className="border-slate-200 shadow-sm">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <User className="h-5 w-5 text-purple-600" />
+                        Profesores Autorizados
+                    </CardTitle>
+                    <CardDescription>
+                        Profesores habilitados para impartir grupos de este curso.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <AuthorizedTeachersSection courseId={courseId} />
+                </CardContent>
+            </Card>
+
+            {/* Danger Zone */}
+            <div className="pt-8">
+                <div className="rounded-xl border border-red-200 bg-red-50 p-6">
+                    <h3 className="text-red-900 font-bold mb-2 flex items-center gap-2">
+                        <Trash2 className="h-5 w-5" />
+                        Zona de Peligro
+                    </h3>
+                    <p className="text-red-700 text-sm mb-4">
+                        Eliminar este curso borrará permanentemente todos los datos asociados, incluyendo calificaciones y asistencias. Esta acción no se puede deshacer.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={handleDelete}
+                        style={{
+                            height: '44px',
+                            padding: '0 24px',
+                            borderRadius: '12px',
+                            border: 'none',
+                            background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                            color: '#FFFFFF',
+                            fontSize: '14px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        <Trash2 size={16} color="#FFFFFF" />
+                        Eliminar Curso Permanentemente
+                    </button>
+                </div>
+            </div>
+
+        </div>
     );
 }

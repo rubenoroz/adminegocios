@@ -56,6 +56,9 @@ model User {
   branchId      String?
   branch        Branch?   @relation(fields: [branchId], references: [id])
   
+  // Link to Employee record (if any)
+  employee      Employee?
+  
   // Teaching relation
   courses       Course[]  @relation("CourseTeacher")
   writtenNotes  StudentNote[]
@@ -415,6 +418,10 @@ model Employee {
   color       String?  @default("#3B82F6") // Color for calendar display
   role        String   @default("STAFF") // MANAGER, ADMIN, TEACHER, STAFF
   
+  // Link to User account (optional - not all employees need login)
+  userId      String?  @unique
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
   // Payment configuration
   paymentModel String  @default("FIXED") // FIXED, HOURLY, COMMISSION, MIXED
   salary      Float?   // For FIXED and MIXED models
@@ -436,6 +443,7 @@ model Employee {
   classPayments     StudentPayment[]  // Payments where this employee was the teacher
   commissionSettlements CommissionSettlement[]  // Liquidaciones de comisiones
   appointments Appointment[]  // Citas asignadas a este empleado
+  authorizedCourses CourseTeacher[]  // Courses this teacher is authorized to teach
 }
 
 model Expense {
@@ -588,11 +596,11 @@ model Student {
   id          String   @id @default(cuid())
   firstName   String
   lastName    String
-  email       String?  @unique
+  email       String?
   phone       String?
   address     String?
   dateOfBirth DateTime?
-  matricula   String?  @unique
+  matricula   String?
   status      String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
   
   businessId  String
@@ -614,6 +622,8 @@ model Student {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
+  @@unique([businessId, email])      // Email único por negocio
+  @@unique([businessId, matricula])  // Matrícula única por negocio
   @@index([businessId])
   @@index([matricula])
   @@index([lastName, firstName])
@@ -627,6 +637,7 @@ model Course {
   schedule    String?  // e.g., "Mon/Wed 8:00-10:00"
   room        String?  // e.g., "Room 101" (deprecated, use classroomId)
   status      String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
+  color       String?  @default("#3B82F6") // Hex color for calendar
   
   businessId  String
   business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
@@ -635,6 +646,9 @@ model Course {
   
   teacherId   String?
   teacher     User?    @relation("CourseTeacher", fields: [teacherId], references: [id])
+  
+  // Authorized teachers (many-to-many via CourseTeacher)
+  authorizedTeachers CourseTeacher[]
   
   classroomId String?
   classroom   Classroom? @relation(fields: [classroomId], references: [id])
@@ -649,6 +663,21 @@ model Course {
   
   @@index([businessId])
   @@index([teacherId])
+}
+
+// Join table for many-to-many relation between Course and Employee (authorized teachers)
+model CourseTeacher {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  isPrimary   Boolean  @default(false)  // Optional: mark as "primary responsible"
+  createdAt   DateTime @default(now())
+  
+  @@unique([courseId, employeeId])  // Prevent duplicates
+  @@index([courseId])
+  @@index([employeeId])
 }
 
 model CourseModule {
@@ -962,6 +991,7 @@ model ClassSchedule {
   endTime     String   // HH:mm format
   room        String?  // Deprecated, use classroomId
   title       String?  // Optional title for the schedule block
+  groupName   String?  // Name to link multiple schedules as one group (e.g., "Grupo A")
   
   // Course is now optional - allows schedule-only blocks
   courseId    String?
@@ -985,6 +1015,9 @@ model ClassSchedule {
   
   // Students enrolled in this specific schedule
   enrollments ScheduleEnrollment[]
+  
+  // Cancellations/Exceptions for recurring schedules
+  cancellations ClassScheduleCancellation[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -1142,4 +1175,16 @@ model OwnerRecoveryRequest {
   
   @@index([businessId])
   @@index([status])
+}
+
+model ClassScheduleCancellation {
+  id          String        @id @default(cuid())
+  scheduleId  String
+  schedule    ClassSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  date        DateTime      // Specific date cancelled
+  reason      String?
+  createdAt   DateTime      @default(now())
+  
+  @@unique([scheduleId, date])
+  @@index([scheduleId])
 }

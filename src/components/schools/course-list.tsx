@@ -34,6 +34,7 @@ interface Course {
         enrollments: number;
     };
     branches?: { id: string; name: string }[];
+    color?: string;
 }
 
 interface Teacher {
@@ -46,6 +47,8 @@ export function CourseList() {
     const [courses, setCourses] = useState<Course[]>([]);
     const [teachers, setTeachers] = useState<Teacher[]>([]);
     const [classrooms, setClassrooms] = useState<any[]>([]);
+    const [totalStudentsInSchool, setTotalStudentsInSchool] = useState(0);
+    const [activeGroupsCount, setActiveGroupsCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [searchValue, setSearchValue] = useState("");
@@ -111,8 +114,34 @@ export function CourseList() {
         }
     };
 
+    const fetchStats = async () => {
+        if (!selectedBranch?.businessId) return;
+        try {
+            // 1. Fetch Students count
+            const resStudents = await fetch(`/api/students?businessId=${selectedBranch.businessId}`);
+            if (resStudents.ok) {
+                const students = await resStudents.json();
+                // Filter active students if needed, assuming API returns all
+                const active = students.filter((s: any) => s.status === "ACTIVE" || !s.status);
+                setTotalStudentsInSchool(active.length);
+            }
+
+            // 2. Fetch Active Groups (Schedules)
+            const resSchedules = await fetch(`/api/class-schedules?businessId=${selectedBranch.businessId}`);
+            if (resSchedules.ok) {
+                const schedules = await resSchedules.json();
+                // Aggregate by groupName to count unique groups
+                const groups = new Set(schedules.map((s: any) => s.groupName || `${s.courseId}-${s.startTime}`)).size;
+                setActiveGroupsCount(groups);
+            }
+        } catch (error) {
+            console.error("Error fetching stats:", error);
+        }
+    };
+
     useEffect(() => {
         fetchCourses();
+        fetchStats();
     }, [selectedBranch]);
 
     useEffect(() => {
@@ -265,8 +294,7 @@ export function CourseList() {
                 body: JSON.stringify({
                     name: editingCourse.name,
                     description: editingCourse.description,
-                    teacherId: editingCourse.teacher?.id || null,
-                    classroomId: editingCourse.classroom?.id || null
+                    color: editingCourse.color || "#3B82F6"
                 })
             });
 
@@ -348,14 +376,14 @@ export function CourseList() {
                         value={totalCourses.toString()}
                         icon={BookOpen}
                         gradientClass="gradient-courses"
-                        subtitle="Cursos activos"
+                        subtitle="Cursos creados"
                     />
                     <ModernKpiCard
                         title="Total Estudiantes"
-                        value={totalStudents.toString()}
+                        value={totalStudentsInSchool.toString()}
                         icon={Users}
                         gradientClass="gradient-students"
-                        subtitle="Inscritos en cursos"
+                        subtitle="Total alumnos activos"
                     />
                     <ModernKpiCard
                         title="Promedio"
@@ -366,10 +394,10 @@ export function CourseList() {
                     />
                     <ModernKpiCard
                         title="Con Profesor"
-                        value={coursesWithTeacher.toString()}
+                        value={activeGroupsCount.toString()}
                         icon={User}
                         gradientClass="gradient-finance"
-                        subtitle="Cursos asignados"
+                        subtitle="Grupos Activos"
                     />
                 </div>
             </motion.div>
@@ -616,15 +644,28 @@ export function CourseList() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '32px' }}>
                         {filteredCourses.map((course, index) => {
                             const isSelected = selectedIds.includes(course.id);
-                            const courseColors: Record<number, { bg: string; accent: string }> = {
-                                0: { bg: '#DBEAFE', accent: '#2563EB' },
-                                1: { bg: '#EDE9FE', accent: '#7C3AED' },
-                                2: { bg: '#FCE7F3', accent: '#DB2777' },
-                                3: { bg: '#FFEDD5', accent: '#EA580C' },
-                                4: { bg: '#D1FAE5', accent: '#059669' },
-                                5: { bg: '#CCFBF1', accent: '#0D9488' },
+
+
+                            // Helper to darken color for accent
+                            const hexToRgba = (hex: string, alpha: number) => {
+                                let r = 0, g = 0, b = 0;
+                                if (hex.length === 4) {
+                                    r = parseInt("0x" + hex[1] + hex[1]);
+                                    g = parseInt("0x" + hex[2] + hex[2]);
+                                    b = parseInt("0x" + hex[3] + hex[3]);
+                                } else if (hex.length === 7) {
+                                    r = parseInt("0x" + hex[1] + hex[2]);
+                                    g = parseInt("0x" + hex[3] + hex[4]);
+                                    b = parseInt("0x" + hex[5] + hex[6]);
+                                }
+                                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
                             };
-                            const colors = courseColors[index % 6];
+
+                            const courseColor = course.color || '#3B82F6';
+                            const colors = {
+                                bg: hexToRgba(courseColor, 0.1), // 10% opacity for background
+                                accent: courseColor
+                            };
 
                             return (
                                 <div
@@ -891,43 +932,19 @@ export function CourseList() {
                             onChange={(val) => setEditingCourse({ ...editingCourse, description: val })}
                         />
 
-                        {/* Teacher Selector */}
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium">Maestro</label>
-                            <PremiumSelect
-                                value={editingCourse?.teacher?.id || ""}
-                                onValueChange={(val) => setEditingCourse({
-                                    ...editingCourse,
-                                    teacher: teachers.find(t => t.id === val) || null
-                                })}
-                                placeholder="Seleccionar maestro"
-                                label="Seleccionar Maestro"
-                                options={teachers.map(teacher => ({
-                                    value: teacher.id,
-                                    label: teacher.name
-                                }))}
-                            />
-                        </div>
-
-                        {/* CLASSROOM SELECTOR (shows branch) */}
                         <div className="pt-4 border-t border-slate-100">
-                            <label className="block text-sm font-medium mb-2">Salón (Sucursal)</label>
-                            <PremiumSelect
-                                value={editingCourse?.classroom?.id || "none"}
-                                onValueChange={(val) => setEditingCourse({
-                                    ...editingCourse,
-                                    classroom: val === "none" ? null : classrooms.find(c => c.id === val) || null
-                                })}
-                                placeholder="Seleccionar salón"
-                                label="Seleccionar Salón"
-                                options={[
-                                    { value: "none", label: "Sin asignar" },
-                                    ...classrooms.map((c) => ({
-                                        value: c.id,
-                                        label: c.name + (c.branch ? ` (${c.branch.name})` : '')
-                                    }))
-                                ]}
-                            />
+                            <label className="block text-sm font-medium mb-2">Color del Curso</label>
+                            <div className="flex items-center gap-4">
+                                <input
+                                    type="color"
+                                    value={editingCourse?.color || "#3B82F6"}
+                                    onChange={(e) => setEditingCourse({ ...editingCourse, color: e.target.value })}
+                                    className="h-10 w-20 rounded cursor-pointer border-0 p-0"
+                                />
+                                <span className="text-sm text-slate-500">
+                                    Este color se usará en el calendario.
+                                </span>
+                            </div>
                         </div>
                     </div>
                     <DialogFooter className="gap-2">

@@ -92,17 +92,19 @@ export function EmployeeList() {
                     name: `${selectedEmployee.firstName} ${selectedEmployee.lastName}`,
                     email: selectedEmployee.email,
                     password: "password123",
-                    role: selectedEmployee.role, // Usa el mismo rol del empleado
-                    branchId: selectedEmployee.branchId
+                    role: selectedEmployee.role,
+                    branchId: selectedEmployee.branchId,
+                    employeeId: selectedEmployee.id // Vincula el usuario con el empleado
                 })
             });
 
             if (res.ok) {
                 setCreateUserOpen(false);
                 setSelectedEmployee(null);
+                refetch(); // Actualizar lista de empleados para mostrar el nuevo userId
                 toast({
                     title: "Cuenta creada exitosamente",
-                    description: `${selectedEmployee.firstName} ahora puede acceder al sistema como ${roleLabels[selectedEmployee.role] || selectedEmployee.role}.`
+                    description: `${selectedEmployee.firstName} ahora puede acceder al sistema como ${roleLabels[selectedEmployee.role] || selectedEmployee.role}. Contraseña inicial: password123`
                 });
             } else {
                 const error = await res.json();

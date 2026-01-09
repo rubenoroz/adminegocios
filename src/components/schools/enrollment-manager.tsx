@@ -30,7 +30,7 @@ export function EnrollmentManager({ courseId }: { courseId: string }) {
         await fetch("/api/enrollments", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ studentId, courseId })
+            body: JSON.stringify({ studentIds: [studentId], courseId })
         });
         fetchEnrollments();
     };

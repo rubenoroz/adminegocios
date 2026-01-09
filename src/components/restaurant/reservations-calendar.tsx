@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Calendar, dateFnsLocalizer, Views, SlotInfo } from "react-big-calendar";
 import withDragAndDrop, { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
 import { format, parse, startOfWeek, getDay, addHours, addDays, addWeeks, addMonths, subDays, subWeeks, subMonths } from "date-fns";
@@ -151,6 +151,21 @@ export function ReservationsCalendar() {
         fetchTables();
         fetchReservations();
     }, [fetchTables, fetchReservations]);
+
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Robust fix for drag-and-drop offset: Monitor container size changes
+    useEffect(() => {
+        if (!containerRef.current) return;
+
+        const resizeObserver = new ResizeObserver(() => {
+            window.dispatchEvent(new Event('resize'));
+        });
+
+        resizeObserver.observe(containerRef.current);
+
+        return () => resizeObserver.disconnect();
+    }, []);
 
     // Resources for resource view (tables)
     const resources = useMemo(() => {
@@ -354,7 +369,7 @@ export function ReservationsCalendar() {
     };
 
     return (
-        <div className="services-calendar-container" style={{ padding: "20px" }}>
+        <div className="services-calendar-container">
 
             {/* 0. Title & KPIs (EXTERNAL) */}
             <div style={{ marginBottom: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -369,98 +384,7 @@ export function ReservationsCalendar() {
 
             {/* 1. Controls & Navigation (EXTERNAL) */}
             <div style={{ marginBottom: "16px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
-                {/* Navigation (Back/Today/Next) */}
-                {/* Navigation (Back/Today/Next) - FORCED STYLES */}
-                <div style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    backgroundColor: "#ffffff",
-                    padding: "6px 8px",
-                    borderRadius: "16px",
-                    border: "1px solid #e2e8f0",
-                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
-                }}>
-                    <button
-                        type="button"
-                        onClick={() => handleNavigate('TODAY')}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            padding: "8px 16px",
-                            borderRadius: "10px",
-                            backgroundColor: "#f1f5f9",
-                            color: "#334155",
-                            fontSize: "14px",
-                            fontWeight: 600,
-                            border: "none",
-                            cursor: "pointer",
-                            transition: "all 0.2s ease"
-                        }}
-                    >
-                        <CalendarDays size={18} color="#475569" />
-                        Hoy
-                    </button>
 
-                    <div style={{ width: "1px", height: "24px", backgroundColor: "#cbd5e1", margin: "0 4px" }} />
-
-                    <div style={{ display: "flex", gap: "4px" }}>
-                        <button
-                            type="button"
-                            onClick={() => handleNavigate('PREV')}
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                width: "36px",
-                                height: "36px",
-                                borderRadius: "10px",
-                                backgroundColor: "white",
-                                border: "1px solid #e2e8f0",
-                                color: "#334155",
-                                cursor: "pointer",
-                                boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
-                            }}
-                            title="Anterior"
-                        >
-                            <ChevronLeft size={20} />
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => handleNavigate('NEXT')}
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                width: "36px",
-                                height: "36px",
-                                borderRadius: "10px",
-                                backgroundColor: "white",
-                                border: "1px solid #e2e8f0",
-                                color: "#334155",
-                                cursor: "pointer",
-                                boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
-                            }}
-                            title="Siguiente"
-                        >
-                            <ChevronRight size={20} />
-                        </button>
-                    </div>
-
-                    <div style={{ width: "1px", height: "24px", backgroundColor: "#cbd5e1", margin: "0 4px" }} />
-
-                    <span style={{
-                        marginLeft: "8px",
-                        marginRight: "8px",
-                        fontSize: "16px",
-                        fontWeight: 700,
-                        color: "#1e293b",
-                        letterSpacing: "-0.025em"
-                    }}>
-                        {dateLabel}
-                    </span>
-                </div>
 
                 {/* View Modes & Filters */}
                 <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
@@ -609,14 +533,16 @@ export function ReservationsCalendar() {
             )}
 
             {/* Main Calendar Container - Pure Grid */}
-            <div style={{
-                backgroundColor: "white",
-                borderRadius: "16px",
-                border: "1px solid #E2E8F0",
-                padding: "24px",
-                minHeight: "850px", // Standard healthy height
-                // No isolation, no relative needed strictly, but good for containment
-            }}>
+            <div
+                ref={containerRef}
+                style={{
+                    backgroundColor: "white",
+                    borderRadius: "16px",
+                    border: "1px solid #E2E8F0",
+                    padding: "16px",
+                    minHeight: "700px",
+                    position: "relative"
+                }}>
                 {loading && (
                     <div style={{
                         position: "absolute",
@@ -657,7 +583,7 @@ export function ReservationsCalendar() {
                     views={viewMode === 'resource' ? [Views.DAY] : [Views.DAY, Views.WEEK, Views.MONTH]}
                     popup
                     showMultiDayTimes
-                    toolbar={false} // Disable internal toolbar
+
                     {...(viewMode === 'resource' ? {
                         resources: resources,
                         resourceIdAccessor: "id" as any,
