@@ -86,25 +86,28 @@ export async function POST(
             }
         }
 
-        // Check 2: Check for room conflicts with OTHER courses
-        if (room && !forceCreate) {
-            console.log("[SCHEDULES_POST] Checking for conflicts in room:", room);
+        // Check 2: Check for classroom/room conflicts with OTHER courses
+        if ((body.classroomId || room) && !forceCreate) {
+            console.log("[SCHEDULES_POST] Checking for conflicts in classroom/room:", body.classroomId || room);
 
             const existingSchedules = await prisma.classSchedule.findMany({
                 where: {
                     businessId,
-                    room,
+                    ...(body.classroomId ? { classroomId: body.classroomId } : { room }),
                     dayOfWeek,
                     courseId: { not: courseId }
                 },
                 include: {
                     course: {
                         select: { name: true }
+                    },
+                    classroom: {
+                        select: { name: true }
                     }
                 }
             });
 
-            console.log("[SCHEDULES_POST] Existing schedules in this room/day:", existingSchedules.length);
+            console.log("[SCHEDULES_POST] Existing schedules in this classroom/day:", existingSchedules.length);
 
             const conflictingSchedules = existingSchedules.filter(s =>
                 timesOverlap(startTime, endTime, s.startTime, s.endTime)
@@ -116,15 +119,17 @@ export async function POST(
                 const conflicts = conflictingSchedules.map(s => ({
                     courseName: s.course?.name || "Curso desconocido",
                     time: `${s.startTime} - ${s.endTime}`,
-                    room: s.room
+                    room: s.classroom?.name || s.room
                 }));
+
+                const classroomName = conflictingSchedules[0].classroom?.name || room;
 
                 console.log("[SCHEDULES_POST] Returning conflict response:", conflicts);
 
                 return NextResponse.json({
                     hasConflict: true,
                     conflicts,
-                    message: `El salón "${room}" ya está ocupado en este horario`
+                    message: `El salón "${classroomName}" ya está ocupado en este horario`
                 }, { status: 409 });
             }
         }

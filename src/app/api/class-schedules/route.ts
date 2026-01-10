@@ -78,6 +78,51 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
+        // Helper function to check if two time ranges overlap
+        const timesOverlap = (start1: string, end1: string, start2: string, end2: string): boolean => {
+            const toMinutes = (time: string): number => {
+                const [h, m] = time.split(":").map(Number);
+                return h * 60 + m;
+            };
+            const s1 = toMinutes(start1);
+            const e1 = toMinutes(end1);
+            const s2 = toMinutes(start2);
+            const e2 = toMinutes(end2);
+            return s1 < e2 && e1 > s2;
+        };
+
+        // Validate classroom conflicts (if classroomId is provided)
+        if (classroomId) {
+            const existingSchedules = await prisma.classSchedule.findMany({
+                where: {
+                    businessId,
+                    classroomId,
+                    dayOfWeek
+                },
+                include: {
+                    course: { select: { name: true } },
+                    classroom: { select: { name: true } }
+                }
+            });
+
+            const conflicting = existingSchedules.filter(s =>
+                timesOverlap(startTime, endTime, s.startTime, s.endTime)
+            );
+
+            if (conflicting.length > 0) {
+                const conflict = conflicting[0];
+                return NextResponse.json({
+                    hasConflict: true,
+                    message: `El salón "${conflict.classroom?.name || 'asignado'}" ya está ocupado por "${conflict.course?.name || conflict.title || 'otra clase'}" de ${conflict.startTime} a ${conflict.endTime}`,
+                    conflicts: conflicting.map(c => ({
+                        courseName: c.course?.name || c.title || "Clase",
+                        time: `${c.startTime} - ${c.endTime}`,
+                        classroom: c.classroom?.name
+                    }))
+                }, { status: 409 });
+            }
+        }
+
         const schedule = await prisma.classSchedule.create({
             data: {
                 businessId,
@@ -114,6 +159,67 @@ export async function PUT(request: NextRequest) {
 
         if (!id) {
             return NextResponse.json({ error: "Schedule ID is required" }, { status: 400 });
+        }
+
+        // Get the current schedule to know its businessId and current values
+        const currentSchedule = await prisma.classSchedule.findUnique({
+            where: { id }
+        });
+
+        if (!currentSchedule) {
+            return NextResponse.json({ error: "Schedule not found" }, { status: 404 });
+        }
+
+        // Determine the values to use for validation (new or current)
+        const checkClassroomId = classroomId !== undefined ? classroomId : currentSchedule.classroomId;
+        const checkDayOfWeek = dayOfWeek !== undefined ? dayOfWeek : currentSchedule.dayOfWeek;
+        const checkStartTime = startTime || currentSchedule.startTime;
+        const checkEndTime = endTime || currentSchedule.endTime;
+
+        // Helper function to check if two time ranges overlap
+        const timesOverlap = (start1: string, end1: string, start2: string, end2: string): boolean => {
+            const toMinutes = (time: string): number => {
+                const [h, m] = time.split(":").map(Number);
+                return h * 60 + m;
+            };
+            const s1 = toMinutes(start1);
+            const e1 = toMinutes(end1);
+            const s2 = toMinutes(start2);
+            const e2 = toMinutes(end2);
+            return s1 < e2 && e1 > s2;
+        };
+
+        // Validate classroom conflicts (if there's a classroomId)
+        if (checkClassroomId) {
+            const existingSchedules = await prisma.classSchedule.findMany({
+                where: {
+                    businessId: currentSchedule.businessId,
+                    classroomId: checkClassroomId,
+                    dayOfWeek: checkDayOfWeek,
+                    id: { not: id } // Exclude current schedule
+                },
+                include: {
+                    course: { select: { name: true } },
+                    classroom: { select: { name: true } }
+                }
+            });
+
+            const conflicting = existingSchedules.filter(s =>
+                timesOverlap(checkStartTime, checkEndTime, s.startTime, s.endTime)
+            );
+
+            if (conflicting.length > 0) {
+                const conflict = conflicting[0];
+                return NextResponse.json({
+                    hasConflict: true,
+                    message: `El salón "${conflict.classroom?.name || 'asignado'}" ya está ocupado por "${conflict.course?.name || conflict.title || 'otra clase'}" de ${conflict.startTime} a ${conflict.endTime}`,
+                    conflicts: conflicting.map(c => ({
+                        courseName: c.course?.name || c.title || "Clase",
+                        time: `${c.startTime} - ${c.endTime}`,
+                        classroom: c.classroom?.name
+                    }))
+                }, { status: 409 });
+            }
         }
 
         const schedule = await prisma.classSchedule.update({

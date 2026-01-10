@@ -87,6 +87,30 @@ export async function POST(req: Request) {
                 }
             }
 
+            // Auto-add teacher to authorized teachers (CourseTeacher) if teacherId is provided
+            if (teacherId) {
+                const employee = await tx.employee.findFirst({
+                    where: { userId: teacherId }
+                });
+
+                if (employee) {
+                    // Use upsert to avoid duplicate errors
+                    await tx.courseTeacher.upsert({
+                        where: {
+                            courseId_employeeId: {
+                                courseId: newCourse.id,
+                                employeeId: employee.id
+                            }
+                        },
+                        update: {},
+                        create: {
+                            courseId: newCourse.id,
+                            employeeId: employee.id
+                        }
+                    });
+                }
+            }
+
             return newCourse;
         });
 

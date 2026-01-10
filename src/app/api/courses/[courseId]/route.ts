@@ -175,6 +175,30 @@ export async function PATCH(
             },
         });
 
+        // Auto-add teacher to authorized teachers (CourseTeacher) if teacherId is being set
+        if (teacherId) {
+            const employee = await prisma.employee.findFirst({
+                where: { userId: teacherId }
+            });
+
+            if (employee) {
+                // Use upsert to avoid duplicate errors
+                await prisma.courseTeacher.upsert({
+                    where: {
+                        courseId_employeeId: {
+                            courseId: courseId,
+                            employeeId: employee.id
+                        }
+                    },
+                    update: {},
+                    create: {
+                        courseId: courseId,
+                        employeeId: employee.id
+                    }
+                });
+            }
+        }
+
         return NextResponse.json(course);
     } catch (error) {
         console.error("[COURSE_PATCH]", error);

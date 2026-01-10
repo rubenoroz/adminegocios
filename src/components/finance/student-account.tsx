@@ -95,7 +95,7 @@ export function StudentAccount({ studentId }: StudentAccountProps) {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    studentFeeId: selectedFee.id,
+                    feeId: selectedFee.id,
                     amount: paymentAmount,
                     method: paymentMethod,
                 }),

@@ -806,6 +806,7 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
     const [validUntil, setValidUntil] = useState(format(addMonths(new Date(), 3), "yyyy-MM-dd"));
     const [selectedDays, setSelectedDays] = useState<number[]>(initialData ? [initialData.dayOfWeek] : [selectedSlot.start.getDay()]);
     const [saving, setSaving] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [students, setStudents] = useState<Array<{ id: string; firstName: string; lastName: string }>>([]);
 
     // Editable times for mobile
@@ -855,14 +856,21 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
     };
 
     const handleSave = async () => {
+        // Limpiar errores anteriores
+        setErrorMessage(null);
+
         if (selectedDays.length === 0) {
-            toast({ title: "Error", description: "Selecciona al menos un día", variant: "destructive" });
+            const msg = "Selecciona al menos un día";
+            setErrorMessage(msg);
+            window.alert("⚠️ " + msg);
             return;
         }
 
         // Require at least a course or a title
         if (!selectedCourse && !scheduleTitle) {
-            toast({ title: "Error", description: "Selecciona un curso o escribe un título para la clase", variant: "destructive" });
+            const msg = "Selecciona un curso o escribe un título para la clase";
+            setErrorMessage(msg);
+            window.alert("⚠️ " + msg);
             return;
         }
 
@@ -890,7 +898,11 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
 
                 if (!res.ok) {
                     const error = await res.json();
-                    throw new Error(error.details || error.message || "Error al actualizar clase");
+                    const errorMsg = error.details || error.message || "Error al actualizar clase";
+                    setErrorMessage(errorMsg);
+                    window.alert("⚠️ " + errorMsg);
+                    setSaving(false);
+                    return; // Salir sin lanzar error para evitar overlay de Next.js
                 }
 
                 // Update enrollments
@@ -936,7 +948,11 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
                 for (const response of responses) {
                     if (!response.ok) {
                         const error = await response.json();
-                        throw new Error(error.details || error.message || "Error al guardar clase");
+                        const errorMsg = error.details || error.message || "Error al guardar clase";
+                        setErrorMessage(errorMsg);
+                        window.alert("⚠️ " + errorMsg);
+                        setSaving(false);
+                        return; // Salir sin lanzar error para evitar overlay de Next.js
                     }
                     createdSchedules.push(await response.json());
                 }
@@ -960,9 +976,17 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
             const dayNames = selectedDays.map(d => daysOfWeek.find(dw => dw.id === d)?.label).join(", ");
             toast({ title: "Clases programadas", description: `${dayNames} - ${startTime} a ${endTime}${selectedStudents.length > 0 ? ` (${selectedStudents.length} alumnos)` : ""}` });
             onSave();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error saving schedule:", error);
-            toast({ title: "Error", description: "No se pudo guardar la clase", variant: "destructive" });
+            const errorMsg = error?.message || "No se pudo guardar la clase";
+            setErrorMessage(errorMsg);
+            // Mostrar alerta visible al usuario
+            window.alert("⚠️ " + errorMsg);
+            toast({
+                title: "Error al guardar",
+                description: errorMsg,
+                variant: "destructive"
+            });
         } finally {
             setSaving(false);
         }
@@ -1000,6 +1024,43 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
                     Nueva Clase Programada
                 </h3>
 
+                {/* Error Banner */}
+                {errorMessage && (
+                    <div style={{
+                        padding: "16px",
+                        marginBottom: "16px",
+                        backgroundColor: "#fef2f2",
+                        border: "2px solid #fecaca",
+                        borderRadius: "12px",
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: "12px"
+                    }}>
+                        <div style={{ fontSize: "20px" }}>⚠️</div>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 600, color: "#dc2626", marginBottom: "4px" }}>
+                                Conflicto de Horario
+                            </div>
+                            <div style={{ fontSize: "14px", color: "#7f1d1d" }}>
+                                {errorMessage}
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setErrorMessage(null)}
+                            style={{
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                color: "#dc2626",
+                                fontSize: "18px",
+                                padding: "4px"
+                            }}
+                        >
+                            ✕
+                        </button>
+                    </div>
+                )}
+
                 {/* Time Display - Always editable */}
                 <MobileTimePicker
                     startTime={editableStartTime}
@@ -1012,7 +1073,8 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
                 {/* Course Select */}
                 <div style={{ marginBottom: "16px" }}>
                     <label style={{ display: "block", marginBottom: "6px", fontWeight: 500, color: "#334155", fontSize: "14px" }}>
-                        Curso (Opcional)
+                        Curso {!scheduleTitle && <span style={{ color: "#dc2626" }}>*</span>}
+                        <span style={{ fontSize: "12px", color: "#94a3b8", marginLeft: "6px" }}>(requerido si no hay título)</span>
                     </label>
                     <select
                         value={selectedCourse}

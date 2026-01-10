@@ -44,12 +44,9 @@ export async function POST(req: Request) {
             where: { id: feeId },
             include: {
                 course: {
-                    include: {
-                        teacher: {
-                            include: {
-                                employee: true
-                            }
-                        }
+                    select: {
+                        id: true,
+                        name: true
                     }
                 }
             }
@@ -58,9 +55,7 @@ export async function POST(req: Request) {
         console.log(`[PAYMENT_DEBUG] Fee Data found:`, {
             hasCourse: !!feeData?.course,
             courseId: feeData?.course?.id,
-            hasTeacher: !!feeData?.course?.teacher,
-            teacherName: feeData?.course?.teacher?.name,
-            hasEmployee: !!feeData?.course?.teacher?.employee
+            courseName: feeData?.course?.name
         });
 
         // Helper to get Commission % and ID
@@ -103,13 +98,9 @@ export async function POST(req: Request) {
             if (groupEnrollment?.schedule?.teacher) {
                 console.log(`[PAYMENT_DEBUG] Found Group Teacher: ${groupEnrollment.schedule.teacher.name}`);
                 commissionData = getTeacherCommissionData(groupEnrollment.schedule.teacher);
+            } else {
+                console.log(`[PAYMENT_DEBUG] No teacher assigned to the schedule/group - no commission will be calculated`);
             }
-        }
-
-        // 2. Fallback to Course Main Teacher if no group teacher found
-        if (!commissionData && feeData?.course?.teacher) {
-            console.log(`[PAYMENT_DEBUG] Using Course Main Teacher: ${feeData.course.teacher.name}`);
-            commissionData = getTeacherCommissionData(feeData.course.teacher);
         }
 
         if (commissionData) {
