@@ -15,18 +15,19 @@ import { CommissionsManager } from "@/components/schools/commissions-manager";
 import { BillingProfilesManager } from "@/components/settings/billing-profiles-manager";
 import { SchoolClassCalendar } from "@/components/schools/school-class-calendar";
 import { GroupsList } from "@/components/schools/groups-list";
+import { PayrollManager } from "@/components/schools/payroll-manager";
 import { ModernKpiCard } from "@/components/ui/modern-kpi-card";
 import { useBranch } from "@/context/branch-context";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     BookOpen, Users, UserCheck, Award, Clock, Briefcase, Megaphone,
     DollarSign, Wallet, AlertCircle, TrendingUp, CalendarDays,
-    GraduationCap, Settings, LucideIcon, UsersRound, FileText
+    GraduationCap, Settings, LucideIcon, UsersRound, FileText, Receipt
 } from "lucide-react";
 
 // Section and SubTab types
 type SectionType = "academico" | "alumnos" | "administracion";
-type SubTabType = "courses" | "groups" | "calendario" | "students" | "parents" | "grades" | "attendance" | "staff" | "communication" | "finance" | "commissions" | "billing";
+type SubTabType = "courses" | "groups" | "calendario" | "students" | "parents" | "grades" | "attendance" | "staff" | "communication" | "finance" | "commissions" | "billing" | "payroll";
 
 interface SubTab {
     id: SubTabType;
@@ -73,6 +74,7 @@ const sections: Section[] = [
             { id: "finance", label: "Finanzas", icon: DollarSign },
             { id: "commissions", label: "Comisiones", icon: TrendingUp },
             { id: "billing", label: "Facturación", icon: FileText },
+            { id: "payroll", label: "Nómina", icon: Receipt },
         ]
     }
 ];
@@ -301,6 +303,11 @@ export default function SchoolPage() {
                     {activeSubTab === "billing" && (
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-4 lg:p-6">
                             <BillingProfilesManager />
+                        </div>
+                    )}
+                    {activeSubTab === "payroll" && (
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-4 lg:p-6">
+                            <PayrollManager />
                         </div>
                     )}
                 </motion.div>

@@ -19,6 +19,7 @@ interface PremiumSelectProps {
     label?: string;
     className?: string;
     disabled?: boolean;
+    inline?: boolean; // If true, renders dropdown inline instead of portal (for use inside modals)
 }
 
 export function PremiumSelect({
@@ -28,21 +29,23 @@ export function PremiumSelect({
     placeholder = "Seleccionar...",
     label,
     className,
-    disabled = false
+    disabled = false,
+    inline = false
 }: PremiumSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
     const triggerRef = useRef<HTMLButtonElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         setMounted(true);
     }, []);
 
-    // Calculate dropdown position
+    // Calculate dropdown position (only for portal mode)
     useLayoutEffect(() => {
-        if (isOpen && triggerRef.current) {
+        if (isOpen && triggerRef.current && !inline) {
             const rect = triggerRef.current.getBoundingClientRect();
             setPosition({
                 top: rect.bottom + window.scrollY + 8,
@@ -50,33 +53,38 @@ export function PremiumSelect({
                 width: rect.width
             });
         }
-    }, [isOpen]);
+    }, [isOpen, inline]);
 
     // Close dropdown when clicking outside
     useEffect(() => {
+        if (!isOpen) return;
+
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as HTMLElement;
-            if (isOpen &&
-                dropdownRef.current &&
-                !dropdownRef.current.contains(target) &&
-                triggerRef.current &&
-                !triggerRef.current.contains(target)
-            ) {
+
+            // Check if click is inside dropdown or trigger
+            const isInsideDropdown = dropdownRef.current?.contains(target);
+            const isInsideTrigger = triggerRef.current?.contains(target);
+            const isInsideContainer = containerRef.current?.contains(target);
+
+            if (!isInsideDropdown && !isInsideTrigger && !isInsideContainer) {
                 setIsOpen(false);
             }
         };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+
+        // Use 'click' instead of 'mousedown' to allow button clicks to complete first
+        document.addEventListener('click', handleClickOutside, true);
+        return () => document.removeEventListener('click', handleClickOutside, true);
     }, [isOpen]);
 
-    // Close on scroll
+    // Close on scroll (only for portal mode)
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && !inline) {
             const handleScroll = () => setIsOpen(false);
             window.addEventListener('scroll', handleScroll, true);
             return () => window.removeEventListener('scroll', handleScroll, true);
         }
-    }, [isOpen]);
+    }, [isOpen, inline]);
 
     const selectedOption = options.find(opt => opt.value === value);
 
@@ -88,11 +96,14 @@ export function PremiumSelect({
     const dropdownContent = (
         <div
             ref={dropdownRef}
+            data-premium-select-dropdown="true"
+            onClick={(e) => e.stopPropagation()} // Prevent clicks from bubbling
             style={{
-                position: 'fixed',
-                top: position.top,
-                left: position.left,
-                width: position.width,
+                position: inline ? 'absolute' : 'fixed',
+                top: inline ? '100%' : position.top,
+                left: inline ? 0 : position.left,
+                width: inline ? '100%' : position.width,
+                marginTop: inline ? '8px' : 0,
                 background: 'white',
                 borderRadius: '20px',
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
@@ -122,7 +133,11 @@ export function PremiumSelect({
                     <button
                         key={option.value}
                         type="button"
-                        onClick={() => handleSelect(option.value)}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSelect(option.value);
+                        }}
                         style={{
                             width: '100%',
                             display: 'flex',
@@ -191,12 +206,16 @@ export function PremiumSelect({
     );
 
     return (
-        <div className={cn("relative", className)}>
+        <div ref={containerRef} className={cn("relative", className)} style={{ position: 'relative' }}>
             {/* Trigger Button */}
             <button
                 ref={triggerRef}
                 type="button"
-                onClick={() => !disabled && setIsOpen(!isOpen)}
+                onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!disabled) setIsOpen(!isOpen);
+                }}
                 disabled={disabled}
                 style={{
                     width: '100%',
@@ -242,9 +261,12 @@ export function PremiumSelect({
                 />
             </button>
 
-            {/* Dropdown Menu - Rendered via Portal */}
-            {mounted && isOpen && createPortal(dropdownContent, document.body)}
+            {/* Dropdown Menu */}
+            {isOpen && (
+                inline
+                    ? dropdownContent
+                    : (mounted && createPortal(dropdownContent, document.body))
+            )}
         </div>
     );
 }
-

@@ -205,6 +205,18 @@
     max-width: 72rem !important;
 }
 
+/* Extra right padding for modals with edge content */
+.dialog-content.pr-extra {
+    padding-right: 3rem !important;
+    padding-left: 2.5rem !important;
+}
+
+/* Fix table cells in payment modal */
+.dialog-content.pr-extra table th:last-child,
+.dialog-content.pr-extra table td:last-child {
+    padding-right: 1rem !important;
+}
+
 .dialog-header {
     display: flex;
     flex-direction: column;

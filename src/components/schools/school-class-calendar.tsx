@@ -47,6 +47,7 @@ interface CalendarEvent {
         startTime?: string;
         endTime?: string;
         title?: string;
+        groupName?: string | null;
         studentIds?: string[];
         instanceDate?: string;
         isCancelled?: boolean;
@@ -71,6 +72,7 @@ interface ClassSchedule {
     startTime: string;
     endTime: string;
     title?: string;
+    groupName?: string | null;
     courseId: string | null;
     course?: { id: string; name: string; color?: string; teacher?: { name: string } } | null;
     classroomId: string | null;
@@ -258,6 +260,7 @@ export function SchoolClassCalendar() {
                             startTime: schedule.startTime,
                             endTime: schedule.endTime,
                             title: schedule.title,
+                            groupName: schedule.groupName, // Added for series deletion
                             studentIds: enrolledStudentIds,
                             instanceDate: dateStr,
                             isCancelled: !!isCancelled,
@@ -680,26 +683,61 @@ export function SchoolClassCalendar() {
                                     onClick={async (e) => {
                                         e.stopPropagation();
                                         e.preventDefault();
-                                        console.log("DEBUG: Delete series clicked, scheduleId:", selectedEvent.resource?.id);
-                                        if (!confirm("¿Eliminar TODA la serie recurrente? Esto borrará todas las clases futuras.")) {
+
+                                        const scheduleId = selectedEvent.resource?.id;
+                                        const groupName = selectedEvent.resource?.groupName;
+                                        const courseId = selectedEvent.resource?.courseId;
+
+                                        console.log("DEBUG: Delete series clicked", { scheduleId, groupName, courseId });
+
+                                        if (!confirm("¿Eliminar TODA la serie recurrente? Esto borrará todas las clases de este grupo (todos los días).")) {
                                             console.log("DEBUG: User cancelled confirmation");
                                             return;
                                         }
+
                                         console.log("DEBUG: User confirmed, proceeding with delete...");
+
                                         try {
-                                            const deleteUrl = `/api/class-schedules/${selectedEvent.resource.id}`;
-                                            console.log("DEBUG: Calling DELETE:", deleteUrl);
-                                            const res = await fetch(deleteUrl, { method: "DELETE" });
-                                            console.log("DEBUG: Delete response status:", res.status);
-                                            if (res.ok) {
-                                                toast({ title: "Serie eliminada", description: "Se han borrado todas las clases recurrentes." });
-                                                await fetchSchedules(); // Wait for fetch
+                                            // Find all sibling schedules with the same groupName or courseId
+                                            let scheduleIdsToDelete: string[] = [scheduleId];
+
+                                            if (groupName) {
+                                                // Find all schedules with same groupName
+                                                const siblings = schedules.filter(s =>
+                                                    s.groupName === groupName &&
+                                                    s.course?.id === courseId
+                                                );
+                                                scheduleIdsToDelete = siblings.map(s => s.id);
+                                                console.log("DEBUG: Found siblings by groupName:", scheduleIdsToDelete);
+                                            }
+
+                                            console.log("DEBUG: Deleting schedules:", scheduleIdsToDelete);
+
+                                            // Delete all schedules in parallel
+                                            const deletePromises = scheduleIdsToDelete.map(id =>
+                                                fetch(`/api/class-schedules/${id}`, { method: "DELETE" })
+                                            );
+
+                                            const results = await Promise.all(deletePromises);
+                                            const failedCount = results.filter(r => !r.ok).length;
+
+                                            console.log("DEBUG: Delete results:", results.map(r => r.status));
+
+                                            if (failedCount === 0) {
+                                                toast({
+                                                    title: "Serie eliminada",
+                                                    description: `Se eliminaron ${scheduleIdsToDelete.length} horario(s) del grupo.`
+                                                });
+                                                await fetchSchedules();
                                                 setIsViewModalOpen(false);
                                                 setSelectedEvent(null);
                                             } else {
-                                                const errorData = await res.json().catch(() => ({}));
-                                                console.error("DEBUG: Delete failed:", errorData);
-                                                toast({ title: "Error al eliminar", description: errorData?.error || "Error desconocido", variant: "destructive" });
+                                                toast({
+                                                    title: "Error parcial",
+                                                    description: `${failedCount} de ${scheduleIdsToDelete.length} horarios no pudieron eliminarse.`,
+                                                    variant: "destructive"
+                                                });
+                                                await fetchSchedules();
                                             }
                                         } catch (error) {
                                             console.error("DEBUG: Delete exception:", error);
@@ -861,6 +899,14 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
 
         if (selectedDays.length === 0) {
             const msg = "Selecciona al menos un día";
+            setErrorMessage(msg);
+            window.alert("⚠️ " + msg);
+            return;
+        }
+
+        // Require group name for series management
+        if (!groupName.trim()) {
+            const msg = "El nombre del grupo es obligatorio para poder gestionar la serie correctamente";
             setErrorMessage(msg);
             window.alert("⚠️ " + msg);
             return;
@@ -1095,22 +1141,22 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
                     </select>
                 </div>
 
-                {/* Group Name - for linking multiple days as one group */}
+                {/* Group Name - REQUIRED for linking multiple days as one group */}
                 <div style={{ marginBottom: "16px" }}>
                     <label style={{ display: "block", marginBottom: "6px", fontWeight: 500, color: "#334155", fontSize: "14px" }}>
-                        Nombre del Grupo
+                        Nombre del Grupo <span style={{ color: "#dc2626" }}>*</span>
                         <span style={{ fontSize: "12px", color: "#94a3b8", marginLeft: "6px" }}>(ej: Grupo A, Turno Matutino)</span>
                     </label>
                     <input
                         type="text"
                         value={groupName}
                         onChange={(e) => setGroupName(e.target.value)}
-                        placeholder="Identificador para agrupar múltiples días"
+                        placeholder="Identificador para agrupar múltiples días (obligatorio)"
                         style={{
                             width: "100%",
                             padding: "10px 12px",
                             borderRadius: "8px",
-                            border: "1px solid #e2e8f0",
+                            border: groupName.trim() ? "1px solid #e2e8f0" : "2px solid #fca5a5",
                             fontSize: "14px",
                             backgroundColor: "white",
                         }}

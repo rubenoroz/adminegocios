@@ -866,7 +866,7 @@ model StudentFee {
   title       String
   amount      Float    // Final amount to pay
   dueDate     DateTime
-  status      String   @default("PENDING") // PENDING, PARTIAL, PAID, OVERDUE
+  status      String   @default("PENDING") // PENDING, PARTIAL, PAID, OVERDUE, CANCELLED
   
   studentId   String
   student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
@@ -879,6 +879,10 @@ model StudentFee {
   
   originalAmount  Float? // Before discount
   discountApplied Float  @default(0)
+  
+  // Cancellation tracking
+  cancelledAt       DateTime?
+  cancellationReason String? // "GROUP_CLOSED", "COURSE_ENDED", "STUDENT_DROPPED", "OTHER"
   
   payments    StudentPayment[]
   

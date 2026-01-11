@@ -55,28 +55,110 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { scheduleId, studentIds, propagateToSiblings } = body;
+        const { scheduleId, studentIds, propagateToSiblings, skipConflictCheck } = body;
 
         if (!scheduleId || !studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
             return NextResponse.json({ error: "scheduleId and studentIds array are required" }, { status: 400 });
+        }
+
+        // Get the target schedule info for conflict checking
+        const targetSchedule = await prisma.classSchedule.findUnique({
+            where: { id: scheduleId },
+            select: {
+                id: true,
+                dayOfWeek: true,
+                startTime: true,
+                endTime: true,
+                courseId: true,
+                businessId: true,
+                course: { select: { name: true } }
+            }
+        });
+
+        if (!targetSchedule) {
+            return NextResponse.json({ error: "Schedule not found" }, { status: 404 });
+        }
+
+        // Helper to check if two time ranges overlap
+        const timesOverlap = (start1: string, end1: string, start2: string, end2: string): boolean => {
+            const toMinutes = (time: string): number => {
+                const [h, m] = time.split(":").map(Number);
+                return h * 60 + m;
+            };
+            const s1 = toMinutes(start1);
+            const e1 = toMinutes(end1);
+            const s2 = toMinutes(start2);
+            const e2 = toMinutes(end2);
+            return s1 < e2 && e1 > s2;
+        };
+
+        // Check for conflicts if not skipped
+        if (!skipConflictCheck) {
+            const conflicts: Array<{ studentName: string; conflictingCourse: string; day: number; time: string }> = [];
+
+            for (const studentId of studentIds) {
+                // Get student's existing enrollments
+                const existingEnrollments = await prisma.scheduleEnrollment.findMany({
+                    where: {
+                        studentId,
+                        status: "ACTIVE",
+                        schedule: {
+                            dayOfWeek: targetSchedule.dayOfWeek,
+                            businessId: targetSchedule.businessId,
+                        }
+                    },
+                    include: {
+                        student: { select: { firstName: true, lastName: true } },
+                        schedule: {
+                            select: {
+                                id: true,
+                                startTime: true,
+                                endTime: true,
+                                course: { select: { name: true } }
+                            }
+                        }
+                    }
+                });
+
+                // Check for time overlap
+                for (const enrollment of existingEnrollments) {
+                    if (enrollment.schedule.id === scheduleId) continue; // Skip same schedule
+
+                    if (timesOverlap(
+                        targetSchedule.startTime,
+                        targetSchedule.endTime,
+                        enrollment.schedule.startTime,
+                        enrollment.schedule.endTime
+                    )) {
+                        conflicts.push({
+                            studentName: `${enrollment.student.firstName} ${enrollment.student.lastName}`,
+                            conflictingCourse: enrollment.schedule.course?.name || "Otro horario",
+                            day: targetSchedule.dayOfWeek,
+                            time: `${enrollment.schedule.startTime} - ${enrollment.schedule.endTime}`
+                        });
+                    }
+                }
+            }
+
+            // If there are conflicts, return them as a warning
+            if (conflicts.length > 0) {
+                return NextResponse.json({
+                    hasConflicts: true,
+                    conflicts,
+                    message: `Se detectaron ${conflicts.length} conflicto(s) de horario. ¿Desea continuar de todos modos?`
+                }, { status: 409 });
+            }
         }
 
         let targetScheduleIds = [scheduleId];
 
         // If propagation is requested, find all active siblings (same course, same business)
         if (propagateToSiblings) {
-            const currentSchedule = await prisma.classSchedule.findUnique({
-                where: { id: scheduleId },
-                select: { courseId: true, businessId: true }
-            });
-
-            if (currentSchedule?.courseId) {
+            if (targetSchedule.courseId) {
                 const siblings = await prisma.classSchedule.findMany({
                     where: {
-                        courseId: currentSchedule.courseId,
-                        businessId: currentSchedule.businessId,
-                        // ensure we don't pick up old archives if status existed
-                        // status: "ACTIVE" // Assuming status field exists or validUntil check
+                        courseId: targetSchedule.courseId,
+                        businessId: targetSchedule.businessId,
                         OR: [
                             { validUntil: null },
                             { validUntil: { gte: new Date() } }

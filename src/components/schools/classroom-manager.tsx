@@ -84,6 +84,8 @@ export function ClassroomManager() {
             const url = editingId ? `/api/classrooms/${editingId}` : "/api/classrooms";
             const method = editingId ? "PUT" : "POST";
 
+            console.log("[CLASSROOM_SAVE] Sending:", { name: newName, capacity: newCapacity, building: newBuilding, branchId: newBranchId });
+
             const res = await fetch(url, {
                 method,
                 headers: { "Content-Type": "application/json" },
@@ -95,16 +97,21 @@ export function ClassroomManager() {
                 }),
             });
 
+            console.log("[CLASSROOM_SAVE] Response status:", res.status);
+
             if (res.ok) {
                 toast({ title: editingId ? "Salón actualizado" : "Salón creado" });
                 setIsCreateOpen(false);
                 fetchClassrooms();
                 setEditingId(null);
             } else {
-                throw new Error("Failed");
+                const errorData = await res.json().catch(() => ({}));
+                console.error("[CLASSROOM_SAVE] Error response:", errorData);
+                throw new Error(errorData.error || "Failed");
             }
-        } catch (error) {
-            toast({ title: "Error al guardar", variant: "destructive" });
+        } catch (error: any) {
+            console.error("[CLASSROOM_SAVE] Catch error:", error);
+            toast({ title: "Error al guardar", description: error?.message, variant: "destructive" });
         } finally {
             setSaving(false);
         }
@@ -149,7 +156,7 @@ export function ClassroomManager() {
 
                     <DialogContent
                         className="dialog-content rounded-3xl"
-                        style={{ padding: '32px', maxWidth: '512px', border: 'none', backgroundColor: 'white' }}
+                        style={{ padding: '32px', maxWidth: '512px', border: 'none', backgroundColor: 'white', overflow: 'visible' }}
                     >
                         <DialogTitle className="sr-only">{editingId ? "Editar salón" : "Nuevo salón"}</DialogTitle>
                         {/* Header */}
@@ -197,6 +204,7 @@ export function ClassroomManager() {
                                         onValueChange={(val) => setNewBranchId(val === "none" ? "" : val)}
                                         placeholder="Seleccionar sucursal..."
                                         label="Seleccionar Sucursal"
+                                        inline={true}
                                         options={[
                                             { value: "none", label: "Sin asignar" },
                                             ...branches.map((branch) => ({

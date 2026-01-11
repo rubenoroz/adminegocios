@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { UsersRound, Calendar, Clock, User, Users, MapPin, ChevronRight, X, Save, UserPlus, Check, Loader2, Search } from "lucide-react";
+import { UsersRound, Calendar, Clock, User, Users, MapPin, ChevronRight, X, Save, UserPlus, Check, Loader2, Search, Trash2 } from "lucide-react";
 import { useBranch } from "@/context/branch-context";
 import { ModernKpiCard } from "@/components/ui/modern-kpi-card";
 import { ModernFilterBar } from "@/components/ui/modern-filter-bar";
@@ -93,6 +93,7 @@ export function GroupsList() {
     const [selectedGroup, setSelectedGroup] = useState<AggregatedGroup | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalSaving, setModalSaving] = useState(false);
+    const [modalDeleting, setModalDeleting] = useState(false);
 
     // Data for modal dropdowns
     const [students, setStudents] = useState<Student[]>([]);
@@ -228,21 +229,61 @@ export function GroupsList() {
 
             await Promise.all(updatePromises);
 
-            // Update enrollments for each schedule
-            const enrollmentPromises = selectedGroup.scheduleIds.map(scheduleId =>
-                fetch("/api/schedule-enrollments", {
+            // Update enrollments for each schedule - with conflict check
+            let hasConflicts = false;
+            let conflictMessages: string[] = [];
+
+            for (const scheduleId of selectedGroup.scheduleIds) {
+                const res = await fetch("/api/schedule-enrollments", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         scheduleId,
                         studentIds: modalSelectedStudents,
                     }),
-                })
-            );
+                });
 
-            await Promise.all(enrollmentPromises);
+                if (res.status === 409) {
+                    const data = await res.json();
+                    if (data.hasConflicts) {
+                        hasConflicts = true;
+                        data.conflicts.forEach((c: any) => {
+                            conflictMessages.push(`${c.studentName} ya tiene "${c.conflictingCourse}" a las ${c.time}`);
+                        });
+                    }
+                }
+            }
 
-            toast({ title: "Grupo actualizado", description: "Los cambios se guardaron correctamente." });
+            if (hasConflicts) {
+                // Show conflict warning and ask if user wants to continue
+                const shouldContinue = window.confirm(
+                    `⚠️ Conflictos de horario detectados:\n\n${conflictMessages.join('\n')}\n\n¿Desea inscribir de todos modos?`
+                );
+
+                if (shouldContinue) {
+                    // Re-send with skipConflictCheck
+                    for (const scheduleId of selectedGroup.scheduleIds) {
+                        await fetch("/api/schedule-enrollments", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                scheduleId,
+                                studentIds: modalSelectedStudents,
+                                skipConflictCheck: true,
+                            }),
+                        });
+                    }
+                    toast({ title: "Grupo actualizado", description: "Se guardaron los cambios con conflictos de horario." });
+                } else {
+                    toast({ title: "Inscripción cancelada", description: "No se realizaron cambios en las inscripciones." });
+                    closeModal();
+                    fetchSchedules();
+                    return;
+                }
+            } else {
+                toast({ title: "Grupo actualizado", description: "Los cambios se guardaron correctamente." });
+            }
+
             closeModal();
             fetchSchedules(); // Refresh data
         } catch (error) {
@@ -250,6 +291,47 @@ export function GroupsList() {
             toast({ title: "Error", description: "No se pudo guardar los cambios", variant: "destructive" });
         } finally {
             setModalSaving(false);
+        }
+    };
+
+    const handleDeleteGroup = async () => {
+        if (!selectedGroup) return;
+
+        console.log("[DELETE_GROUP] Group to delete:", {
+            key: selectedGroup.key,
+            groupName: selectedGroup.groupName,
+            scheduleIds: selectedGroup.scheduleIds,
+            days: selectedGroup.days
+        });
+
+        const confirmDelete = window.confirm(
+            `¿Estás seguro de eliminar este grupo?\n\nEsto eliminará ${selectedGroup.scheduleIds.length} horario(s) y desinscribirá a ${selectedGroup.totalEnrollments} alumno(s).\n\nEsta acción no se puede deshacer.`
+        );
+
+        if (!confirmDelete) return;
+
+        setModalDeleting(true);
+        try {
+            // Delete all schedules associated with this group
+            console.log("[DELETE_GROUP] Deleting schedules:", selectedGroup.scheduleIds);
+
+            const deletePromises = selectedGroup.scheduleIds.map(scheduleId =>
+                fetch(`/api/class-schedules/${scheduleId}`, {
+                    method: "DELETE",
+                })
+            );
+
+            const results = await Promise.all(deletePromises);
+            console.log("[DELETE_GROUP] Delete results:", results.map(r => r.status));
+
+            toast({ title: "Grupo eliminado", description: "El grupo y sus horarios han sido eliminados." });
+            closeModal();
+            fetchSchedules();
+        } catch (error) {
+            console.error("Error deleting group:", error);
+            toast({ title: "Error", description: "No se pudo eliminar el grupo", variant: "destructive" });
+        } finally {
+            setModalDeleting(false);
         }
     };
 
@@ -872,55 +954,93 @@ export function GroupsList() {
                             </div>
 
                             {/* Action Buttons */}
-                            <div style={{ display: "flex", gap: "12px" }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                                {/* Delete Button - Separate Row */}
                                 <button
-                                    onClick={closeModal}
+                                    onClick={handleDeleteGroup}
+                                    disabled={modalDeleting || modalSaving}
                                     style={{
-                                        flex: 1,
-                                        padding: "14px 24px",
+                                        width: "100%",
+                                        padding: "12px 24px",
                                         borderRadius: "12px",
-                                        border: "2px solid #e2e8f0",
-                                        backgroundColor: "white",
-                                        color: "#64748b",
+                                        border: "2px solid #fecaca",
+                                        backgroundColor: modalDeleting ? "#fee2e2" : "#fef2f2",
+                                        color: "#dc2626",
                                         fontSize: "14px",
                                         fontWeight: 600,
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    onClick={handleSaveGroup}
-                                    disabled={modalSaving}
-                                    style={{
-                                        flex: 1,
-                                        padding: "14px 24px",
-                                        borderRadius: "12px",
-                                        border: "none",
-                                        background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                                        color: "white",
-                                        fontSize: "14px",
-                                        fontWeight: 600,
-                                        cursor: modalSaving ? "not-allowed" : "pointer",
+                                        cursor: modalDeleting || modalSaving ? "not-allowed" : "pointer",
                                         display: "flex",
                                         alignItems: "center",
                                         justifyContent: "center",
                                         gap: "8px",
-                                        opacity: modalSaving ? 0.7 : 1,
+                                        opacity: modalDeleting || modalSaving ? 0.6 : 1,
+                                        transition: "all 0.2s ease",
                                     }}
                                 >
-                                    {modalSaving ? (
+                                    {modalDeleting ? (
                                         <>
                                             <Loader2 size={18} className="animate-spin" />
-                                            Guardando...
+                                            Eliminando...
                                         </>
                                     ) : (
                                         <>
-                                            <Save size={18} />
-                                            Guardar Cambios
+                                            <Trash2 size={18} />
+                                            Eliminar Grupo
                                         </>
                                     )}
                                 </button>
+
+                                {/* Save/Cancel Row */}
+                                <div style={{ display: "flex", gap: "12px" }}>
+                                    <button
+                                        onClick={closeModal}
+                                        style={{
+                                            flex: 1,
+                                            padding: "14px 24px",
+                                            borderRadius: "12px",
+                                            border: "2px solid #e2e8f0",
+                                            backgroundColor: "white",
+                                            color: "#64748b",
+                                            fontSize: "14px",
+                                            fontWeight: 600,
+                                            cursor: "pointer",
+                                        }}
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleSaveGroup}
+                                        disabled={modalSaving || modalDeleting}
+                                        style={{
+                                            flex: 1,
+                                            padding: "14px 24px",
+                                            borderRadius: "12px",
+                                            border: "none",
+                                            background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                            color: "white",
+                                            fontSize: "14px",
+                                            fontWeight: 600,
+                                            cursor: modalSaving || modalDeleting ? "not-allowed" : "pointer",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            gap: "8px",
+                                            opacity: modalSaving || modalDeleting ? 0.7 : 1,
+                                        }}
+                                    >
+                                        {modalSaving ? (
+                                            <>
+                                                <Loader2 size={18} className="animate-spin" />
+                                                Guardando...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Save size={18} />
+                                                Guardar Cambios
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         </motion.div>
                     </motion.div>

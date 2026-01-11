@@ -28,9 +28,19 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Plus, DollarSign, CreditCard, FileText } from "lucide-react";
+import { Loader2, Plus, DollarSign, CreditCard, FileText, Ban, X } from "lucide-react";
 
 import { CustomerFiscalModal } from "@/components/sales/customer-fiscal-modal";
+
+// Cancellation reasons
+const CANCELLATION_REASONS = [
+    { value: "GROUP_CLOSED", label: "Grupo cerrado" },
+    { value: "COURSE_ENDED", label: "Curso terminado" },
+    { value: "STUDENT_DROPPED", label: "Alumno dado de baja" },
+    { value: "DUPLICATE", label: "Cargo duplicado" },
+    { value: "ERROR", label: "Error de captura" },
+    { value: "OTHER", label: "Otro motivo" }
+];
 
 interface StudentPaymentModalProps {
     studentId: string | null;
@@ -47,6 +57,8 @@ interface Fee {
     dueDate: string;
     originalAmount?: number;
     discountApplied?: number;
+    cancelledAt?: string;
+    cancellationReason?: string;
     payments: Payment[];
     course?: {
         id: string;
@@ -88,6 +100,12 @@ export function StudentPaymentModal({
 
     // Billing Profiles
     const [billingProfiles, setBillingProfiles] = useState<any[]>([]);
+
+    // Cancellation
+    const [cancellingFeeId, setCancellingFeeId] = useState<string | null>(null);
+    const [cancellationReason, setCancellationReason] = useState("");
+    const [customReason, setCustomReason] = useState("");
+    const [cancelling, setCancelling] = useState(false);
 
 
     // Fetch billing profiles when modal opens
@@ -261,12 +279,53 @@ export function StudentPaymentModal({
         }
     };
 
-    const getStatusBadge = (status: string) => {
+    const handleCancelFee = async () => {
+        if (!cancellingFeeId || !cancellationReason || !studentId) return;
+
+        setCancelling(true);
+        try {
+            const res = await fetch(`/api/students/${studentId}/fees/${cancellingFeeId}/cancel`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    reason: cancellationReason,
+                    customReason: cancellationReason === "OTHER" ? customReason : undefined
+                }),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                toast({ title: "Cargo cancelado", description: data.message || "El cargo fue cancelado exitosamente." });
+                setCancellingFeeId(null);
+                setCancellationReason("");
+                setCustomReason("");
+                fetchFees();
+            } else {
+                const error = await res.json();
+                toast({ title: "Error", description: error.error || "No se pudo cancelar el cargo.", variant: "destructive" });
+            }
+        } catch (error) {
+            toast({ title: "Error", description: "Ocurrió un error.", variant: "destructive" });
+        } finally {
+            setCancelling(false);
+        }
+    };
+
+    const getStatusBadge = (status: string, fee?: Fee) => {
         switch (status) {
             case "PAID": return <Badge className="bg-green-500">Pagado</Badge>;
             case "PARTIAL": return <Badge className="bg-yellow-500">Parcial</Badge>;
             case "PENDING": return <Badge variant="outline">Pendiente</Badge>;
             case "OVERDUE": return <Badge variant="destructive">Vencido</Badge>;
+            case "CANCELLED":
+                return (
+                    <Badge
+                        className="bg-gray-400 cursor-help"
+                        title={fee?.cancellationReason ? `Motivo: ${fee.cancellationReason}` : "Cancelado"}
+                    >
+                        Cancelado
+                    </Badge>
+                );
             default: return <Badge variant="secondary">{status}</Badge>;
         }
     };
@@ -278,7 +337,7 @@ export function StudentPaymentModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto pr-extra">
                 <DialogHeader>
                     <DialogTitle>Pagos y Deudas: {studentName}</DialogTitle>
                     <DialogDescription>
@@ -304,7 +363,7 @@ export function StudentPaymentModal({
                                         <TableHead>Pagado</TableHead>
                                         <TableHead>Saldo</TableHead>
                                         <TableHead>Estado</TableHead>
-                                        <TableHead className="text-right">Acción</TableHead>
+                                        <TableHead className="text-right" style={{ paddingRight: '24px' }}>Acción</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -344,30 +403,50 @@ export function StudentPaymentModal({
                                                 <TableCell className="font-bold text-red-600">
                                                     ${balance.toFixed(2)}
                                                 </TableCell>
-                                                <TableCell>{getStatusBadge(fee.status)}</TableCell>
-                                                <TableCell className="text-right">
-                                                    {!isPaid && (
-                                                        <button
-                                                            className="button-modern bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
-                                                            onClick={() => {
-                                                                setPayingFeeId(fee.id);
-                                                                setPaymentAmount(balance.toString());
+                                                <TableCell>{getStatusBadge(fee.status, fee)}</TableCell>
+                                                <TableCell className="text-right" style={{ paddingRight: '16px' }}>
+                                                    {fee.status !== "PAID" && fee.status !== "CANCELLED" && (
+                                                        <div className="flex gap-2 justify-end" style={{ marginRight: '8px' }}>
+                                                            <button
+                                                                className="button-modern bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
+                                                                onClick={() => {
+                                                                    setPayingFeeId(fee.id);
+                                                                    setCancellingFeeId(null); // Clear cancel mode
+                                                                    setPaymentAmount(balance.toString());
 
-                                                                // Auto-detect teacher from course
-                                                                const courseTeacher = fee.course?.teacher;
-                                                                if (courseTeacher) {
-                                                                    // Find employee with same email that has commission
-                                                                    const matchingEmployee = teachers.find(
-                                                                        t => t.email === courseTeacher.email
-                                                                    );
-                                                                    if (matchingEmployee) {
-                                                                        setSelectedTeacherId(matchingEmployee.id);
+                                                                    // Auto-detect teacher from course
+                                                                    const courseTeacher = fee.course?.teacher;
+                                                                    if (courseTeacher) {
+                                                                        // Find employee with same email that has commission
+                                                                        const matchingEmployee = teachers.find(
+                                                                            t => t.email === courseTeacher.email
+                                                                        );
+                                                                        if (matchingEmployee) {
+                                                                            setSelectedTeacherId(matchingEmployee.id);
+                                                                        }
                                                                     }
-                                                                }
-                                                            }}
-                                                        >
-                                                            Pagar
-                                                        </button>
+                                                                }}
+                                                            >
+                                                                Pagar
+                                                            </button>
+                                                            <button
+                                                                className="button-modern bg-gradient-to-r from-gray-500 to-gray-400 hover:from-gray-600 hover:to-gray-500"
+                                                                onClick={() => {
+                                                                    setCancellingFeeId(fee.id);
+                                                                    setPayingFeeId(null); // Clear pay mode
+                                                                    setCancellationReason("");
+                                                                    setCustomReason("");
+                                                                }}
+                                                                title="Cancelar cargo"
+                                                            >
+                                                                <Ban size={16} />
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                    {fee.status === "CANCELLED" && (
+                                                        <span className="text-sm text-gray-500 italic">
+                                                            {fee.cancellationReason?.replace("OTHER: ", "") || "Cancelado"}
+                                                        </span>
                                                     )}
                                                 </TableCell>
                                             </TableRow>
@@ -383,6 +462,168 @@ export function StudentPaymentModal({
                                 </TableBody>
                             </Table>
                         </div>
+
+                        {/* Cancellation Form */}
+                        {cancellingFeeId && (
+                            <div className="bg-red-50 p-4 rounded-xl border border-red-200 space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="font-semibold text-red-800 flex items-center gap-2">
+                                        <Ban size={18} /> Cancelar Cargo
+                                    </h3>
+                                    <button
+                                        onClick={() => { setCancellingFeeId(null); setCancellationReason(""); setCustomReason(""); }}
+                                        style={{
+                                            width: "32px",
+                                            height: "32px",
+                                            borderRadius: "10px",
+                                            border: "none",
+                                            background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                                            color: "white",
+                                            cursor: "pointer",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            boxShadow: "0 2px 8px rgba(239, 68, 68, 0.3)",
+                                            transition: "all 0.2s ease",
+                                            marginRight: "8px"
+                                        }}
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                                <p className="text-sm text-red-700">
+                                    Cargo: <strong>{fees.find(f => f.id === cancellingFeeId)?.title}</strong>
+                                </p>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                                    <div className="space-y-2">
+                                        <Label>Motivo de Cancelación *</Label>
+                                        <Select value={cancellationReason} onValueChange={setCancellationReason}>
+                                            <SelectTrigger
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '10px',
+                                                    padding: '10px 18px',
+                                                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                                                    border: 'none',
+                                                    borderRadius: '14px',
+                                                    color: 'white',
+                                                    fontWeight: 600,
+                                                    fontSize: '14px',
+                                                    cursor: 'pointer',
+                                                    boxShadow: '0 4px 15px rgba(239, 68, 68, 0.35)',
+                                                    height: '44px',
+                                                    width: 'auto',
+                                                    minWidth: '200px',
+                                                    maxWidth: '280px'
+                                                }}
+                                            >
+                                                <SelectValue placeholder="Seleccionar motivo..." />
+                                            </SelectTrigger>
+                                            <SelectContent
+                                                style={{
+                                                    background: 'white',
+                                                    borderRadius: '16px',
+                                                    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                                                    padding: '8px',
+                                                    border: 'none',
+                                                    minWidth: '220px',
+                                                    zIndex: 10001
+                                                }}
+                                            >
+                                                <div style={{
+                                                    fontSize: '11px',
+                                                    textTransform: 'uppercase',
+                                                    color: '#ef4444',
+                                                    fontWeight: 700,
+                                                    letterSpacing: '0.5px',
+                                                    padding: '8px 12px',
+                                                    marginBottom: '4px'
+                                                }}>
+                                                    Motivo de Cancelación
+                                                </div>
+                                                {CANCELLATION_REASONS.map(reason => (
+                                                    <SelectItem
+                                                        key={reason.value}
+                                                        value={reason.value}
+                                                        style={{
+                                                            borderRadius: '10px',
+                                                            marginBottom: '2px',
+                                                            padding: '10px 12px',
+                                                            cursor: 'pointer',
+                                                            border: 'none'
+                                                        }}
+                                                        className="focus:bg-red-50 data-[state=checked]:bg-red-100 data-[state=checked]:text-red-700"
+                                                    >
+                                                        {reason.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    {cancellationReason === "OTHER" && (
+                                        <div className="space-y-2">
+                                            <Label>Especificar motivo</Label>
+                                            <Input
+                                                value={customReason}
+                                                onChange={(e) => setCustomReason(e.target.value)}
+                                                placeholder="Describir motivo..."
+                                                className="h-11 rounded-xl bg-white border-slate-200"
+                                            />
+                                        </div>
+                                    )}
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleCancelFee}
+                                            disabled={!cancellationReason || cancelling}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '8px',
+                                                padding: '12px 20px',
+                                                background: (!cancellationReason || cancelling)
+                                                    ? '#d1d5db'
+                                                    : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                                                border: 'none',
+                                                borderRadius: '12px',
+                                                color: 'white',
+                                                fontWeight: 600,
+                                                fontSize: '14px',
+                                                cursor: (!cancellationReason || cancelling) ? 'not-allowed' : 'pointer',
+                                                boxShadow: (!cancellationReason || cancelling)
+                                                    ? 'none'
+                                                    : '0 4px 15px rgba(239, 68, 68, 0.35)',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                        >
+                                            {cancelling ? <Loader2 className="animate-spin h-4 w-4" /> : "Confirmar Cancelación"}
+                                        </button>
+                                        <button
+                                            onClick={() => { setCancellingFeeId(null); setCancellationReason(""); setCustomReason(""); }}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '8px',
+                                                padding: '12px 20px',
+                                                background: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
+                                                border: 'none',
+                                                borderRadius: '12px',
+                                                color: 'white',
+                                                fontWeight: 600,
+                                                fontSize: '14px',
+                                                cursor: 'pointer',
+                                                boxShadow: '0 4px 15px rgba(107, 114, 128, 0.35)',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                        >
+                                            No Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {payingFeeId && (
                             <div className="bg-muted/50 p-4 rounded-lg border space-y-4">

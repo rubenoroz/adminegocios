@@ -73,9 +73,11 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { businessId, branchId, courseId, classroomId, teacherId, title, groupName, dayOfWeek, startTime, endTime, validFrom, validUntil } = body;
 
-        // courseId OR title is required
-        if (!businessId || (!courseId && !title) || dayOfWeek === undefined || !startTime || !endTime) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        // courseId AND classroomId AND groupName are required for groups
+        if (!businessId || !courseId || !classroomId || !groupName || dayOfWeek === undefined || !startTime || !endTime) {
+            return NextResponse.json({
+                error: "Faltan campos requeridos. Debes seleccionar un curso, un salón y definir un nombre de grupo."
+            }, { status: 400 });
         }
 
         // Helper function to check if two time ranges overlap
