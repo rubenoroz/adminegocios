@@ -438,125 +438,187 @@ export default function CommissionsPage() {
 
             {/* DETAIL MODAL */}
             <Dialog open={!!selectedTeacher} onOpenChange={(open) => !open && setSelectedTeacher(null)}>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>
-                            Comisiones de {selectedTeacher?.teacher.firstName} {selectedTeacher?.teacher.lastName}
-                        </DialogTitle>
-                        <DialogDescription>
-                            Selecciona los pagos a liquidar
-                        </DialogDescription>
-                    </DialogHeader>
-
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
                     {selectedTeacher && (
-                        <div className="space-y-4">
-                            {/* Summary */}
-                            <div className="grid grid-cols-3 gap-3">
-                                <div className="bg-emerald-50 rounded-xl p-3 text-center">
-                                    <p className="text-xs text-emerald-600">Comisión</p>
-                                    <p className="text-lg font-bold text-emerald-700">
-                                        ${selectedTeacher.totalCommission.toLocaleString()}
-                                    </p>
-                                </div>
-                                <div className="bg-amber-50 rounded-xl p-3 text-center">
-                                    <p className="text-xs text-amber-600">Reserva</p>
-                                    <p className="text-lg font-bold text-amber-700">
-                                        ${selectedTeacher.totalReserve.toLocaleString()}
-                                    </p>
-                                </div>
-                                <div className="bg-purple-50 rounded-xl p-3 text-center">
-                                    <p className="text-xs text-purple-600">Escuela</p>
-                                    <p className="text-lg font-bold text-purple-700">
-                                        ${selectedTeacher.totalSchool.toLocaleString()}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Payments list */}
-                            <div className="border rounded-xl overflow-hidden">
-                                <div className="bg-slate-50 p-2 text-sm font-medium text-slate-600 flex">
-                                    <div className="w-8"></div>
-                                    <div className="flex-1">Alumno / Concepto</div>
-                                    <div className="w-24 text-right">Monto</div>
-                                    <div className="w-24 text-right">Comisión</div>
-                                </div>
-                                <div className="max-h-60 overflow-y-auto">
-                                    {selectedTeacher.payments.map((payment, idx) => (
-                                        <label
-                                            key={payment.id}
-                                            className="flex items-center p-2 hover:bg-blue-50 cursor-pointer border-t"
-                                            style={{ backgroundColor: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC' }}
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedPayments.includes(payment.id)}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        setSelectedPayments([...selectedPayments, payment.id]);
-                                                    } else {
-                                                        setSelectedPayments(selectedPayments.filter(id => id !== payment.id));
-                                                    }
-                                                }}
-                                                className="w-4 h-4 mr-2"
-                                            />
-                                            <div className="flex-1">
-                                                <p className="text-sm font-medium">{payment.studentName}</p>
-                                                <p className="text-xs text-slate-500">{payment.concept} • {new Date(payment.date).toLocaleDateString('es-MX')}</p>
-                                            </div>
-                                            <div className="w-24 text-right text-sm">${payment.amount.toLocaleString()}</div>
-                                            <div className="w-24 text-right text-sm font-medium text-emerald-600">
-                                                ${payment.teacherCommission.toLocaleString()}
-                                            </div>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Settlement form */}
-                            <div className="bg-blue-50 rounded-xl p-4 space-y-3">
-                                <p className="font-medium text-blue-800">Liquidar Comisiones</p>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="text-xs text-slate-600">Método de pago</label>
-                                        <Select value={settleMethod} onValueChange={setSettleMethod}>
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="TRANSFER">Transferencia</SelectItem>
-                                                <SelectItem value="CASH">Efectivo</SelectItem>
-                                                <SelectItem value="CHECK">Cheque</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                        <div style={{ backgroundColor: '#f8fafc' }}>
+                            {/* Header con gradiente */}
+                            <div
+                                className="p-5"
+                                style={{
+                                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                                    color: 'white'
+                                }}
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div
+                                        style={{
+                                            width: '56px',
+                                            height: '56px',
+                                            borderRadius: '14px',
+                                            backgroundColor: 'rgba(255,255,255,0.25)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontWeight: 'bold',
+                                            fontSize: '20px',
+                                        }}
+                                    >
+                                        {`${selectedTeacher.teacher.firstName?.[0] || ''}${selectedTeacher.teacher.lastName?.[0] || ''}`.toUpperCase()}
                                     </div>
                                     <div>
-                                        <label className="text-xs text-slate-600">Nota (opcional)</label>
-                                        <Input
-                                            value={settleNote}
-                                            onChange={(e) => setSettleNote(e.target.value)}
-                                            placeholder="Ej: Pago quincenal"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="flex items-center justify-between pt-2 border-t border-blue-200">
-                                    <div>
-                                        <p className="text-sm text-slate-600">{selectedPayments.length} pagos seleccionados</p>
-                                        <p className="text-xl font-bold text-blue-800">
-                                            Total: ${selectedTeacher.payments
-                                                .filter(p => selectedPayments.includes(p.id))
-                                                .reduce((sum, p) => sum + p.teacherCommission, 0)
-                                                .toLocaleString()}
+                                        <h3 className="font-bold text-xl">
+                                            {selectedTeacher.teacher.firstName} {selectedTeacher.teacher.lastName}
+                                        </h3>
+                                        <p className="text-sm opacity-90">
+                                            {selectedTeacher.teacher.commissionPercentage}% comisión • {selectedTeacher.paymentCount} pagos pendientes
                                         </p>
                                     </div>
-                                    <button
-                                        onClick={handleSettle}
-                                        disabled={selectedPayments.length === 0}
-                                        className="button-modern bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 flex items-center gap-2 disabled:opacity-50"
-                                        style={{ borderRadius: '8px' }}
-                                    >
-                                        <Check size={16} />
-                                        Liquidar Comisión
-                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Body con fondo gris suave */}
+                            <div className="p-5 space-y-4" style={{ backgroundColor: '#f8fafc' }}>
+                                {/* Summary Cards */}
+                                <div className="grid grid-cols-3 gap-3">
+                                    <div className="rounded-xl p-3 text-center" style={{ backgroundColor: '#D1FAE5' }}>
+                                        <div
+                                            className="mx-auto mb-2 flex items-center justify-center"
+                                            style={{
+                                                width: '36px',
+                                                height: '36px',
+                                                borderRadius: '10px',
+                                                backgroundColor: '#10B981'
+                                            }}
+                                        >
+                                            <DollarSign size={18} className="text-white" />
+                                        </div>
+                                        <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Comisión</p>
+                                        <p className="text-xl font-bold text-emerald-700">
+                                            ${selectedTeacher.totalCommission.toLocaleString()}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-xl p-3 text-center" style={{ backgroundColor: '#FEF3C7' }}>
+                                        <div
+                                            className="mx-auto mb-2 flex items-center justify-center"
+                                            style={{
+                                                width: '36px',
+                                                height: '36px',
+                                                borderRadius: '10px',
+                                                backgroundColor: '#F59E0B'
+                                            }}
+                                        >
+                                            <Clock size={18} className="text-white" />
+                                        </div>
+                                        <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Reserva</p>
+                                        <p className="text-xl font-bold text-amber-700">
+                                            ${selectedTeacher.totalReserve.toLocaleString()}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-xl p-3 text-center" style={{ backgroundColor: '#EDE9FE' }}>
+                                        <div
+                                            className="mx-auto mb-2 flex items-center justify-center"
+                                            style={{
+                                                width: '36px',
+                                                height: '36px',
+                                                borderRadius: '10px',
+                                                backgroundColor: '#8B5CF6'
+                                            }}
+                                        >
+                                            <TrendingUp size={18} className="text-white" />
+                                        </div>
+                                        <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide">Escuela</p>
+                                        <p className="text-xl font-bold text-purple-700">
+                                            ${selectedTeacher.totalSchool.toLocaleString()}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Payments list */}
+                                <div className="border rounded-xl overflow-hidden">
+                                    <div className="bg-slate-50 p-2 text-sm font-medium text-slate-600 flex">
+                                        <div className="w-8"></div>
+                                        <div className="flex-1">Alumno / Concepto</div>
+                                        <div className="w-24 text-right">Monto</div>
+                                        <div className="w-24 text-right">Comisión</div>
+                                    </div>
+                                    <div className="max-h-60 overflow-y-auto">
+                                        {selectedTeacher.payments.map((payment, idx) => (
+                                            <label
+                                                key={payment.id}
+                                                className="flex items-center p-2 hover:bg-blue-50 cursor-pointer border-t"
+                                                style={{ backgroundColor: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC' }}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedPayments.includes(payment.id)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setSelectedPayments([...selectedPayments, payment.id]);
+                                                        } else {
+                                                            setSelectedPayments(selectedPayments.filter(id => id !== payment.id));
+                                                        }
+                                                    }}
+                                                    className="w-4 h-4 mr-2"
+                                                />
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-medium">{payment.studentName}</p>
+                                                    <p className="text-xs text-slate-500">{payment.concept} • {new Date(payment.date).toLocaleDateString('es-MX')}</p>
+                                                </div>
+                                                <div className="w-24 text-right text-sm">${payment.amount.toLocaleString()}</div>
+                                                <div className="w-24 text-right text-sm font-medium text-emerald-600">
+                                                    ${payment.teacherCommission.toLocaleString()}
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Settlement form */}
+                                <div className="bg-blue-50 rounded-xl p-4 space-y-3">
+                                    <p className="font-medium text-blue-800">Liquidar Comisiones</p>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-xs text-slate-600">Método de pago</label>
+                                            <Select value={settleMethod} onValueChange={setSettleMethod}>
+                                                <SelectTrigger>
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="TRANSFER">Transferencia</SelectItem>
+                                                    <SelectItem value="CASH">Efectivo</SelectItem>
+                                                    <SelectItem value="CHECK">Cheque</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-slate-600">Nota (opcional)</label>
+                                            <Input
+                                                value={settleNote}
+                                                onChange={(e) => setSettleNote(e.target.value)}
+                                                placeholder="Ej: Pago quincenal"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between pt-2 border-t border-blue-200">
+                                        <div>
+                                            <p className="text-sm text-slate-600">{selectedPayments.length} pagos seleccionados</p>
+                                            <p className="text-xl font-bold text-blue-800">
+                                                Total: ${selectedTeacher.payments
+                                                    .filter(p => selectedPayments.includes(p.id))
+                                                    .reduce((sum, p) => sum + p.teacherCommission, 0)
+                                                    .toLocaleString()}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={handleSettle}
+                                            disabled={selectedPayments.length === 0}
+                                            className="button-modern bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 flex items-center gap-2 disabled:opacity-50"
+                                            style={{ borderRadius: '8px' }}
+                                        >
+                                            <Check size={16} />
+                                            Liquidar Comisión
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

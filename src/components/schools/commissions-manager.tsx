@@ -413,54 +413,159 @@ export function CommissionsManager() {
 
             {/* DETAIL MODAL */}
             <Dialog open={!!selectedTeacher} onOpenChange={(open) => !open && setSelectedTeacher(null)}>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>
-                            Comisiones de {selectedTeacher?.teacher.firstName} {selectedTeacher?.teacher.lastName}
-                        </DialogTitle>
-                        <DialogDescription>
-                            Selecciona los pagos a liquidar
-                        </DialogDescription>
-                    </DialogHeader>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto pr-extra" style={{ borderRadius: '24px', padding: '0' }}>
+                    {/* Modern Header with Gradient */}
+                    <div style={{
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        padding: '24px 28px',
+                        borderRadius: '24px 24px 0 0',
+                        color: 'white'
+                    }}>
+                        <div className="flex items-center gap-4">
+                            <div style={{
+                                width: '56px',
+                                height: '56px',
+                                borderRadius: '16px',
+                                background: 'rgba(255,255,255,0.2)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '24px',
+                                fontWeight: 'bold'
+                            }}>
+                                {selectedTeacher?.teacher.firstName?.[0]}{selectedTeacher?.teacher.lastName?.[0]}
+                            </div>
+                            <div>
+                                <h2 style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>
+                                    {selectedTeacher?.teacher.firstName} {selectedTeacher?.teacher.lastName}
+                                </h2>
+                                <p style={{ opacity: 0.9, fontSize: '14px', marginTop: '4px' }}>
+                                    {selectedTeacher?.teacher.commissionPercentage || 0}% comisión • {selectedTeacher?.paymentCount || 0} pagos pendientes
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
                     {selectedTeacher && (
-                        <div className="space-y-4">
-                            {/* Summary */}
-                            <div className="grid grid-cols-3 gap-3">
-                                <div className="bg-emerald-50 rounded-xl p-3 text-center">
-                                    <p className="text-xs text-emerald-600">Comisión</p>
-                                    <p className="text-lg font-bold text-emerald-700">
+                        <div style={{ padding: '24px 28px' }} className="space-y-5">
+                            {/* Summary Cards with Gradients */}
+                            <div className="grid grid-cols-3 gap-4">
+                                <div style={{
+                                    background: 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)',
+                                    borderRadius: '16px',
+                                    padding: '16px',
+                                    textAlign: 'center',
+                                    boxShadow: '0 4px 15px rgba(16, 185, 129, 0.15)'
+                                }}>
+                                    <div style={{
+                                        width: '36px',
+                                        height: '36px',
+                                        borderRadius: '10px',
+                                        background: '#10B981',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        margin: '0 auto 8px',
+                                        color: 'white'
+                                    }}>
+                                        <DollarSign size={18} />
+                                    </div>
+                                    <p style={{ fontSize: '11px', color: '#059669', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Comisión</p>
+                                    <p style={{ fontSize: '24px', fontWeight: 700, color: '#047857' }}>
                                         ${selectedTeacher.totalCommission.toLocaleString()}
                                     </p>
                                 </div>
-                                <div className="bg-amber-50 rounded-xl p-3 text-center">
-                                    <p className="text-xs text-amber-600">Reserva</p>
-                                    <p className="text-lg font-bold text-amber-700">
+                                <div style={{
+                                    background: 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)',
+                                    borderRadius: '16px',
+                                    padding: '16px',
+                                    textAlign: 'center',
+                                    boxShadow: '0 4px 15px rgba(245, 158, 11, 0.15)'
+                                }}>
+                                    <div style={{
+                                        width: '36px',
+                                        height: '36px',
+                                        borderRadius: '10px',
+                                        background: '#F59E0B',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        margin: '0 auto 8px',
+                                        color: 'white'
+                                    }}>
+                                        <Clock size={18} />
+                                    </div>
+                                    <p style={{ fontSize: '11px', color: '#D97706', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Reserva</p>
+                                    <p style={{ fontSize: '24px', fontWeight: 700, color: '#B45309' }}>
                                         ${selectedTeacher.totalReserve.toLocaleString()}
                                     </p>
                                 </div>
-                                <div className="bg-purple-50 rounded-xl p-3 text-center">
-                                    <p className="text-xs text-purple-600">Escuela</p>
-                                    <p className="text-lg font-bold text-purple-700">
+                                <div style={{
+                                    background: 'linear-gradient(135deg, #E9D5FF 0%, #DDD6FE 100%)',
+                                    borderRadius: '16px',
+                                    padding: '16px',
+                                    textAlign: 'center',
+                                    boxShadow: '0 4px 15px rgba(139, 92, 246, 0.15)'
+                                }}>
+                                    <div style={{
+                                        width: '36px',
+                                        height: '36px',
+                                        borderRadius: '10px',
+                                        background: '#8B5CF6',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        margin: '0 auto 8px',
+                                        color: 'white'
+                                    }}>
+                                        <TrendingUp size={18} />
+                                    </div>
+                                    <p style={{ fontSize: '11px', color: '#7C3AED', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Escuela</p>
+                                    <p style={{ fontSize: '24px', fontWeight: 700, color: '#6D28D9' }}>
                                         ${selectedTeacher.totalSchool.toLocaleString()}
                                     </p>
                                 </div>
                             </div>
 
-                            {/* Payments list */}
-                            <div className="border rounded-xl overflow-hidden">
-                                <div className="bg-slate-50 p-2 text-sm font-medium text-slate-600 flex">
-                                    <div className="w-8"></div>
-                                    <div className="flex-1">Alumno / Concepto</div>
-                                    <div className="w-24 text-right">Monto</div>
-                                    <div className="w-24 text-right">Comisión</div>
+                            {/* Payments list - Modern Table */}
+                            <div style={{
+                                borderRadius: '16px',
+                                overflow: 'hidden',
+                                border: '1px solid #E2E8F0',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                            }}>
+                                <div style={{
+                                    background: 'linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%)',
+                                    padding: '12px 16px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    fontSize: '12px',
+                                    fontWeight: 600,
+                                    color: '#475569',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.5px'
+                                }}>
+                                    <div style={{ width: '32px' }}></div>
+                                    <div style={{ flex: 1 }}>Alumno / Concepto</div>
+                                    <div style={{ width: '90px', textAlign: 'right' }}>Monto</div>
+                                    <div style={{ width: '100px', textAlign: 'right' }}>Comisión</div>
                                 </div>
-                                <div className="max-h-60 overflow-y-auto">
+                                <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
                                     {selectedTeacher.payments.map((payment, idx) => (
                                         <label
                                             key={payment.id}
-                                            className="flex items-center p-2 hover:bg-blue-50 cursor-pointer border-t"
-                                            style={{ backgroundColor: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC' }}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                padding: '14px 16px',
+                                                cursor: 'pointer',
+                                                backgroundColor: selectedPayments.includes(payment.id)
+                                                    ? 'rgba(16, 185, 129, 0.08)'
+                                                    : idx % 2 === 0 ? '#FFFFFF' : '#FAFAFA',
+                                                borderTop: idx > 0 ? '1px solid #F1F5F9' : 'none',
+                                                transition: 'all 0.15s ease'
+                                            }}
+                                            className="hover:bg-emerald-50"
                                         >
                                             <input
                                                 type="checkbox"
@@ -472,14 +577,30 @@ export function CommissionsManager() {
                                                         setSelectedPayments(selectedPayments.filter(id => id !== payment.id));
                                                     }
                                                 }}
-                                                className="w-4 h-4 mr-2"
+                                                style={{
+                                                    width: '18px',
+                                                    height: '18px',
+                                                    marginRight: '12px',
+                                                    accentColor: '#10B981',
+                                                    cursor: 'pointer'
+                                                }}
                                             />
-                                            <div className="flex-1">
-                                                <p className="text-sm font-medium">{payment.studentName}</p>
-                                                <p className="text-xs text-slate-500">{payment.concept} • {new Date(payment.date).toLocaleDateString('es-MX')}</p>
+                                            <div style={{ flex: 1 }}>
+                                                <p style={{ fontSize: '14px', fontWeight: 600, color: '#1E293B' }}>{payment.studentName}</p>
+                                                <p style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>
+                                                    {payment.concept} • {new Date(payment.date).toLocaleDateString('es-MX')}
+                                                </p>
                                             </div>
-                                            <div className="w-24 text-right text-sm">${payment.amount.toLocaleString()}</div>
-                                            <div className="w-24 text-right text-sm font-medium text-emerald-600">
+                                            <div style={{ width: '90px', textAlign: 'right', fontSize: '14px', color: '#475569' }}>
+                                                ${payment.amount.toLocaleString()}
+                                            </div>
+                                            <div style={{
+                                                width: '100px',
+                                                textAlign: 'right',
+                                                fontSize: '14px',
+                                                fontWeight: 700,
+                                                color: '#10B981'
+                                            }}>
                                                 ${payment.teacherCommission.toLocaleString()}
                                             </div>
                                         </label>
@@ -487,37 +608,102 @@ export function CommissionsManager() {
                                 </div>
                             </div>
 
-                            {/* Settlement form */}
-                            <div className="bg-blue-50 rounded-xl p-4 space-y-3">
-                                <p className="font-medium text-blue-800">Liquidar Comisiones</p>
-                                <div className="grid grid-cols-2 gap-3">
+                            {/* Settlement form - Modern Card */}
+                            <div style={{
+                                background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
+                                borderRadius: '16px',
+                                padding: '20px',
+                                boxShadow: '0 4px 15px rgba(59, 130, 246, 0.1)'
+                            }}>
+                                <p style={{ fontSize: '15px', fontWeight: 700, color: '#1E40AF', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <DollarSign size={18} /> Liquidar Comisiones
+                                </p>
+                                <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="text-xs text-slate-600">Método de pago</label>
+                                        <label style={{ fontSize: '12px', color: '#475569', fontWeight: 600, display: 'block', marginBottom: '6px' }}>Método de pago</label>
                                         <Select value={settleMethod} onValueChange={setSettleMethod}>
-                                            <SelectTrigger>
+                                            <SelectTrigger
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '10px',
+                                                    padding: '10px 16px',
+                                                    background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                                                    border: 'none',
+                                                    borderRadius: '12px',
+                                                    color: 'white',
+                                                    fontWeight: 600,
+                                                    fontSize: '14px',
+                                                    cursor: 'pointer',
+                                                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                                                    height: '44px'
+                                                }}
+                                            >
                                                 <SelectValue />
                                             </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="TRANSFER">Transferencia</SelectItem>
-                                                <SelectItem value="CASH">Efectivo</SelectItem>
-                                                <SelectItem value="CHECK">Cheque</SelectItem>
+                                            <SelectContent
+                                                style={{
+                                                    background: 'white',
+                                                    borderRadius: '16px',
+                                                    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
+                                                    padding: '8px',
+                                                    border: 'none',
+                                                    minWidth: '200px',
+                                                    zIndex: 10001
+                                                }}
+                                            >
+                                                <div style={{
+                                                    fontSize: '11px',
+                                                    textTransform: 'uppercase',
+                                                    color: '#3B82F6',
+                                                    fontWeight: 700,
+                                                    letterSpacing: '0.5px',
+                                                    padding: '8px 12px',
+                                                    marginBottom: '4px'
+                                                }}>
+                                                    Método de Pago
+                                                </div>
+                                                <SelectItem value="TRANSFER" style={{ borderRadius: '10px', padding: '10px 12px' }} className="focus:bg-blue-50 data-[state=checked]:bg-blue-100 data-[state=checked]:text-blue-700">
+                                                    💳 Transferencia
+                                                </SelectItem>
+                                                <SelectItem value="CASH" style={{ borderRadius: '10px', padding: '10px 12px' }} className="focus:bg-blue-50 data-[state=checked]:bg-blue-100 data-[state=checked]:text-blue-700">
+                                                    💵 Efectivo
+                                                </SelectItem>
+                                                <SelectItem value="CHECK" style={{ borderRadius: '10px', padding: '10px 12px' }} className="focus:bg-blue-50 data-[state=checked]:bg-blue-100 data-[state=checked]:text-blue-700">
+                                                    📄 Cheque
+                                                </SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
                                     <div>
-                                        <label className="text-xs text-slate-600">Nota (opcional)</label>
+                                        <label style={{ fontSize: '12px', color: '#475569', fontWeight: 600, display: 'block', marginBottom: '6px' }}>Nota (opcional)</label>
                                         <Input
                                             value={settleNote}
                                             onChange={(e) => setSettleNote(e.target.value)}
                                             placeholder="Ej: Pago quincenal"
+                                            style={{
+                                                height: '44px',
+                                                borderRadius: '12px',
+                                                border: '2px solid #CBD5E1',
+                                                fontSize: '14px',
+                                                background: 'white'
+                                            }}
+                                            className="focus:border-blue-500"
                                         />
                                     </div>
                                 </div>
-                                <div className="flex items-center justify-between pt-2 border-t border-blue-200">
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    paddingTop: '16px',
+                                    marginTop: '16px',
+                                    borderTop: '2px dashed rgba(59, 130, 246, 0.2)'
+                                }}>
                                     <div>
-                                        <p className="text-sm text-slate-600">{selectedPayments.length} pagos seleccionados</p>
-                                        <p className="text-xl font-bold text-blue-800">
-                                            Total: ${selectedTeacher.payments
+                                        <p style={{ fontSize: '13px', color: '#64748B' }}>{selectedPayments.length} pagos seleccionados</p>
+                                        <p style={{ fontSize: '28px', fontWeight: 800, color: '#1E40AF' }}>
+                                            ${selectedTeacher.payments
                                                 .filter(p => selectedPayments.includes(p.id))
                                                 .reduce((sum, p) => sum + p.teacherCommission, 0)
                                                 .toLocaleString()}
@@ -526,10 +712,28 @@ export function CommissionsManager() {
                                     <button
                                         onClick={handleSettle}
                                         disabled={selectedPayments.length === 0}
-                                        className="button-modern bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 flex items-center gap-2 disabled:opacity-50"
-                                        style={{ borderRadius: '8px' }}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '8px',
+                                            padding: '14px 24px',
+                                            background: selectedPayments.length === 0
+                                                ? '#94A3B8'
+                                                : 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                                            border: 'none',
+                                            borderRadius: '14px',
+                                            color: 'white',
+                                            fontWeight: 700,
+                                            fontSize: '15px',
+                                            cursor: selectedPayments.length === 0 ? 'not-allowed' : 'pointer',
+                                            boxShadow: selectedPayments.length === 0
+                                                ? 'none'
+                                                : '0 6px 20px rgba(16, 185, 129, 0.4)',
+                                            transition: 'all 0.2s ease'
+                                        }}
                                     >
-                                        <Check size={16} />
+                                        <Check size={18} />
                                         Liquidar Comisión
                                     </button>
                                 </div>

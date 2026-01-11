@@ -173,6 +173,8 @@
 .dialog-content.p-0 {
     padding: 0 !important;
     gap: 0 !important;
+    overflow: hidden !important;
+    background: transparent !important;
 }
 
 /* Force white text on purple gradient select triggers */
