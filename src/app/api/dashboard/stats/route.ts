@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { startOfMonth, subMonths } from "date-fns";
+import { startOfMonth, subMonths, subDays } from "date-fns";
 
 export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
@@ -18,6 +18,12 @@ export async function GET(req: Request) {
 
         if (!user?.businessId) {
             return NextResponse.json({ error: "Business not found" }, { status: 404 });
+        }
+
+        // Restrict to OWNER (as requested: "those sections only available for owner")
+        if (user.role !== "OWNER" && user.role !== "SUPERADMIN") {
+            // Return 403 Forbidden
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
         // 1. Total Sales (Current Month)
@@ -59,14 +65,48 @@ export async function GET(req: Request) {
             },
             orderBy: { createdAt: 'desc' },
             take: 5,
-            include: { customer: true } // Assuming we have customer relation, if not optional
+            include: { customer: true }
         });
+
+        // 5. Students Count
+        const totalStudents = await prisma.student.count({
+            where: {
+                businessId: user.businessId
+            }
+        });
+
+        // 6. Active Courses Count
+        const activeCourses = await prisma.course.count({
+            where: {
+                businessId: user.businessId,
+                status: "ACTIVE"
+            }
+        });
+
+        // 7. Attendance Average (Last 7 days)
+        const sevenDaysAgo = subDays(new Date(), 7);
+        const attendanceRecords = await prisma.attendance.findMany({
+            where: {
+                date: { gte: sevenDaysAgo },
+                course: { businessId: user.businessId }
+            },
+            select: { status: true }
+        });
+
+        let attendanceAvg = 0;
+        if (attendanceRecords.length > 0) {
+            const presentCount = attendanceRecords.filter(r => r.status === "PRESENT").length;
+            attendanceAvg = (presentCount / attendanceRecords.length) * 100;
+        }
 
         return NextResponse.json({
             totalSales,
             totalProducts,
             lowStockProducts,
-            recentSales
+            recentSales,
+            totalStudents,
+            activeCourses,
+            attendanceAvg: Math.round(attendanceAvg * 10) / 10 // Round to 1 decimal
         });
     } catch (error) {
         console.error(error);

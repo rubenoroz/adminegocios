@@ -14,7 +14,7 @@ import { BusinessForm } from "@/components/settings/business-form";
 import { UserManagement } from "@/components/settings/user-management";
 import { PayrollSettings } from "@/components/settings/payroll-settings";
 import { AcademicSettings } from "@/components/settings/academic-settings";
-import { Settings, Building, Palette, Wallet, GraduationCap, Users, Upload, FileText } from "lucide-react";
+import { Settings, Building, Palette, Wallet, GraduationCap, Users, Upload } from "lucide-react";
 
 export default async function SettingsPage({ params }: { params: Promise<{ lang: string }> }) {
     const { lang } = await params;
@@ -163,52 +163,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ lang:
                             </div>
                         )}
 
-                        {isOwnerOrAdmin && (
-                            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                                <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-violet-50 to-purple-50 flex items-center justify-between gap-4">
-                                    <div className="flex items-center gap-3">
-                                        <div style={{
-                                            width: '40px',
-                                            height: '40px',
-                                            borderRadius: '10px',
-                                            background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            color: 'white'
-                                        }}>
-                                            <FileText className="h-5 w-5" />
-                                        </div>
-                                        <h3 className="font-bold text-lg text-slate-800">Clientes de Facturación</h3>
-                                    </div>
-                                    <Link
-                                        href={`/${lang}/dashboard/settings/billing-profiles`}
-                                        className="select-trigger-purple"
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                            padding: '8px 16px',
-                                            background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                                            border: 'none',
-                                            borderRadius: '10px',
-                                            color: 'white',
-                                            fontWeight: 600,
-                                            fontSize: '14px',
-                                            textDecoration: 'none',
-                                            boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
-                                        }}
-                                    >
-                                        Administrar
-                                    </Link>
-                                </div>
-                                <div className="p-6">
-                                    <p className="text-sm text-slate-500">
-                                        Gestiona los datos fiscales (RFC) y vincula a múltiples estudiantes para facturación.
-                                    </p>
-                                </div>
-                            </div>
-                        )}
+
                     </div>
                 </div>
             </div>

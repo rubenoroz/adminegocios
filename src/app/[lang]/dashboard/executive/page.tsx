@@ -2,99 +2,28 @@
 
 import { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import { useRouter } from "next/navigation";
 import {
-    AreaChart,
-    Area,
-    BarChart,
-    Bar,
-    LineChart,
-    Line,
-    PieChart,
-    Pie,
-    Cell,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    Radar,
-    RadarChart,
-    PolarGrid,
-    PolarAngleAxis,
-    PolarRadiusAxis
+    AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+    XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Radar, RadarChart,
+    PolarGrid, PolarAngleAxis, PolarRadiusAxis, Legend
 } from "recharts";
 import {
-    GripVertical,
-    Settings,
-    TrendingUp,
-    Users,
-    DollarSign,
-    BookOpen,
-    Calendar,
-    Eye,
-    EyeOff,
-    CreditCard,
-    GraduationCap,
-    UserCheck
+    GripVertical, Settings, TrendingUp, Users, DollarSign, BookOpen,
+    Calendar, Eye, EyeOff, CreditCard, GraduationCap, UserCheck, Lock, RotateCcw
 } from "lucide-react";
 
-// Sample data
-const revenueData = [
-    { month: "Ene", ingresos: 42000, gastos: 28000 },
-    { month: "Feb", ingresos: 45000, gastos: 30000 },
-    { month: "Mar", ingresos: 48000, gastos: 29000 },
-    { month: "Abr", ingresos: 51000, gastos: 31000 },
-    { month: "May", ingresos: 49000, gastos: 30500 },
-    { month: "Jun", ingresos: 53000, gastos: 32000 },
-];
-
-const enrollmentData = [
-    { month: "Ene", alumnos: 220 },
-    { month: "Feb", alumnos: 225 },
-    { month: "Mar", alumnos: 230 },
-    { month: "Abr", alumnos: 235 },
-    { month: "May", alumnos: 240 },
-    { month: "Jun", alumnos: 245 },
-];
-
-const courseDistribution = [
-    { name: "Matemáticas", value: 45 },
-    { name: "Español", value: 38 },
-    { name: "Ciencias", value: 32 },
-    { name: "Historia", value: 28 },
-    { name: "Inglés", value: 35 },
-];
-
-const attendanceData = [
-    { day: "Lun", asistencia: 95 },
-    { day: "Mar", asistencia: 94 },
-    { day: "Mié", asistencia: 96 },
-    { day: "Jue", asistencia: 93 },
-    { day: "Vie", asistencia: 92 },
-];
-
-const paymentStatus = [
-    { name: "Pagados", value: 180 },
-    { name: "Pendientes", value: 45 },
-    { name: "Vencidos", value: 20 },
-];
-
-const teacherPerformance = [
-    { subject: "Mat", score: 85 },
-    { subject: "Esp", score: 90 },
-    { subject: "Cie", score: 88 },
-    { subject: "His", score: 82 },
-    { subject: "Ing", score: 87 },
-];
-
-const monthlyGrowth = [
-    { month: "Ene", crecimiento: 5 },
-    { month: "Feb", crecimiento: 8 },
-    { month: "Mar", crecimiento: 12 },
-    { month: "Abr", crecimiento: 10 },
-    { month: "May", crecimiento: 15 },
-    { month: "Jun", crecimiento: 18 },
-];
+// Premium color palette with better contrast
+const COLORS = {
+    rose: { primary: "#e11d48", secondary: "#fda4af", bg: "linear-gradient(135deg, #1f1218 0%, #4c1d3b 100%)" },
+    violet: { primary: "#8b5cf6", secondary: "#c4b5fd", bg: "linear-gradient(135deg, #1e1b4b 0%, #4c1d95 100%)" },
+    emerald: { primary: "#10b981", secondary: "#6ee7b7", bg: "linear-gradient(135deg, #064e3b 0%, #065f46 100%)" },
+    amber: { primary: "#f59e0b", secondary: "#fcd34d", bg: "linear-gradient(135deg, #451a03 0%, #78350f 100%)" },
+    sky: { primary: "#0ea5e9", secondary: "#7dd3fc", bg: "linear-gradient(135deg, #0c4a6e 0%, #075985 100%)" },
+    cyan: { primary: "#06b6d4", secondary: "#67e8f9", bg: "linear-gradient(135deg, #164e63 0%, #155e75 100%)" },
+    teal: { primary: "#14b8a6", secondary: "#5eead4", bg: "linear-gradient(135deg, #134e4a 0%, #115e59 100%)" },
+    indigo: { primary: "#6366f1", secondary: "#a5b4fc", bg: "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)" },
+};
 
 interface Widget {
     id: string;
@@ -102,24 +31,21 @@ interface Widget {
     type: "chart" | "metric";
     chartType?: "area" | "bar" | "line" | "pie" | "radar";
     visible: boolean;
-    color: string;
-    bgGradient: string;
+    colorKey: keyof typeof COLORS;
     icon: any;
     colors?: { [key: string]: string };
     data?: any[];
 }
 
-const defaultWidgets: Widget[] = [
+const defaultWidgetsStructure: Widget[] = [
     {
         id: "payments",
         title: "Estado de Pagos",
         type: "chart",
         chartType: "pie",
         visible: true,
-        color: "#ef4444",
-        bgGradient: "linear-gradient(135deg, rgba(254, 226, 226, 0.5) 0%, rgba(254, 202, 202, 0.5) 100%)",
+        colorKey: "rose",
         icon: CreditCard,
-        data: paymentStatus
     },
     {
         id: "courses",
@@ -127,10 +53,8 @@ const defaultWidgets: Widget[] = [
         type: "chart",
         chartType: "pie",
         visible: true,
-        color: "#8b5cf6",
-        bgGradient: "linear-gradient(135deg, rgba(237, 233, 254, 0.5) 0%, rgba(221, 214, 254, 0.5) 100%)",
-        icon: BookOpen,
-        data: courseDistribution
+        colorKey: "violet",
+        icon: BookOpen
     },
     {
         id: "enrollment",
@@ -138,10 +62,8 @@ const defaultWidgets: Widget[] = [
         type: "chart",
         chartType: "line",
         visible: true,
-        color: "#10b981",
-        bgGradient: "linear-gradient(135deg, rgba(209, 250, 229, 0.5) 0%, rgba(167, 243, 208, 0.5) 100%)",
-        icon: GraduationCap,
-        data: enrollmentData
+        colorKey: "emerald",
+        icon: GraduationCap
     },
     {
         id: "attendance",
@@ -149,10 +71,8 @@ const defaultWidgets: Widget[] = [
         type: "chart",
         chartType: "bar",
         visible: true,
-        color: "#f59e0b",
-        bgGradient: "linear-gradient(135deg, rgba(254, 243, 199, 0.5) 0%, rgba(253, 230, 138, 0.5) 100%)",
-        icon: UserCheck,
-        data: attendanceData
+        colorKey: "amber",
+        icon: UserCheck
     },
     {
         id: "revenue",
@@ -160,11 +80,9 @@ const defaultWidgets: Widget[] = [
         type: "chart",
         chartType: "area",
         visible: true,
-        color: "#3b82f6",
-        bgGradient: "linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(191, 219, 254, 0.5) 100%)",
+        colorKey: "sky",
         icon: DollarSign,
-        colors: { ingresos: "#3b82f6", gastos: "#ef4444" },
-        data: revenueData
+        colors: { ingresos: "#38bdf8", gastos: "#f87171" }
     },
     {
         id: "teachers",
@@ -172,10 +90,8 @@ const defaultWidgets: Widget[] = [
         type: "chart",
         chartType: "radar",
         visible: true,
-        color: "#06b6d4",
-        bgGradient: "linear-gradient(135deg, rgba(207, 250, 254, 0.5) 0%, rgba(165, 243, 252, 0.5) 100%)",
-        icon: Users,
-        data: teacherPerformance
+        colorKey: "cyan",
+        icon: Users
     },
     {
         id: "revenue-trend",
@@ -183,323 +99,424 @@ const defaultWidgets: Widget[] = [
         type: "chart",
         chartType: "area",
         visible: true,
-        color: "#14b8a6",
-        bgGradient: "linear-gradient(135deg, rgba(204, 251, 241, 0.5) 0%, rgba(153, 246, 228, 0.5) 100%)",
+        colorKey: "teal",
         icon: TrendingUp,
-        colors: { ingresos: "#14b8a6", gastos: "#f97316" },
-        data: revenueData
+        colors: { ingresos: "#2dd4bf", gastos: "#fb923c" }
     },
     {
         id: "metrics",
         title: "Métricas Rápidas",
         type: "metric",
         visible: true,
-        color: "#f59e0b",
-        bgGradient: "linear-gradient(135deg, rgba(226, 232, 240, 0.4) 0%, rgba(203, 213, 225, 0.4) 100%)",
+        colorKey: "indigo",
         icon: Calendar
     },
 ];
 
 export default function ExecutiveDashboard() {
-    const [widgets, setWidgets] = useState<Widget[]>(defaultWidgets);
+    const [widgets, setWidgets] = useState<Widget[]>(defaultWidgetsStructure);
     const [editMode, setEditMode] = useState(false);
-    const [isLoaded, setIsLoaded] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [metrics, setMetrics] = useState<any>(null);
+    const router = useRouter();
 
     useEffect(() => {
-        const savedConfig = localStorage.getItem('dashboard-executive-config');
-        if (savedConfig) {
-            try {
-                const parsed = JSON.parse(savedConfig);
-                // Restaurar iconos desde defaultWidgets ya que no se serializan en JSON
-                const restoredWidgets = parsed.map((widget: Widget) => {
-                    const defaultWidget = defaultWidgets.find(dw => dw.id === widget.id);
-                    return {
-                        ...widget,
-                        icon: defaultWidget?.icon || Calendar
-                    };
-                });
-                setWidgets(restoredWidgets);
-            } catch (error) {
-                console.error('Error loading dashboard config:', error);
-            }
-        }
-        setIsLoaded(true);
+        fetchData();
     }, []);
 
-    useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem('dashboard-executive-config', JSON.stringify(widgets));
+    const fetchData = async () => {
+        try {
+            const res = await fetch("/api/dashboard/executive/stats");
+
+            if (res.status === 403) {
+                setError("FORBIDDEN");
+                setLoading(false);
+                return;
+            }
+
+            if (!res.ok) throw new Error("Error fetching stats");
+
+            const data = await res.json();
+            setMetrics(data.metrics);
+
+            const savedConfig = localStorage.getItem('dashboard-executive-config-v2');
+            let baseWidgets = defaultWidgetsStructure;
+
+            if (savedConfig) {
+                try {
+                    const parsed = JSON.parse(savedConfig);
+                    baseWidgets = parsed.map((savedW: Widget) => {
+                        const defaultW = defaultWidgetsStructure.find(dw => dw.id === savedW.id);
+                        return {
+                            ...savedW,
+                            icon: defaultW?.icon || Calendar,
+                            colorKey: defaultW?.colorKey || savedW.colorKey,
+                        };
+                    });
+                } catch (e) {
+                    console.error("Error parsing saved config", e);
+                }
+            }
+
+            const populatedWidgets = baseWidgets.map(w => {
+                let widgetData: any[] = [];
+                switch (w.id) {
+                    case "payments": widgetData = data.paymentStatus; break;
+                    case "courses": widgetData = data.courseDistribution; break;
+                    case "enrollment": widgetData = data.enrollmentData; break;
+                    case "attendance": widgetData = data.attendanceData; break;
+                    case "revenue": widgetData = data.revenueData; break;
+                    case "revenue-trend": widgetData = data.revenueData; break;
+                    case "teachers": widgetData = data.teacherPerformance; break;
+                }
+                return { ...w, data: widgetData };
+            });
+
+            setWidgets(populatedWidgets);
+
+        } catch (err) {
+            console.error(err);
+            setError("ERROR");
+        } finally {
+            setLoading(false);
         }
-    }, [widgets, isLoaded]);
+    };
+
+    useEffect(() => {
+        if (!loading && !error) {
+            const configToSave = widgets.map(({ data, ...rest }) => rest);
+            localStorage.setItem('dashboard-executive-config-v2', JSON.stringify(configToSave));
+        }
+    }, [widgets, loading, error]);
 
     const handleDragEnd = (result: DropResult) => {
         if (!result.destination) return;
-
         const items = Array.from(widgets);
         const [reorderedItem] = items.splice(result.source.index, 1);
         items.splice(result.destination.index, 0, reorderedItem);
-
         setWidgets(items);
     };
 
     const toggleWidgetVisibility = (id: string) => {
-        setWidgets(widgets.map(w =>
-            w.id === id ? { ...w, visible: !w.visible } : w
-        ));
+        setWidgets(widgets.map(w => w.id === id ? { ...w, visible: !w.visible } : w));
     };
 
     const resetConfiguration = () => {
-        if (confirm('¿Estás seguro de que quieres restaurar la configuración por defecto?')) {
-            setWidgets(defaultWidgets);
-            localStorage.removeItem('dashboard-executive-config');
+        if (confirm('¿Restaurar configuración por defecto?')) {
+            localStorage.removeItem('dashboard-executive-config-v2');
+            fetchData();
         }
     };
 
-    const updateChartType = (id: string, chartType: "area" | "bar" | "line" | "pie" | "radar") => {
-        setWidgets(widgets.map(w => {
-            if (w.id === id) {
-                let compatibleData = w.data;
-                if (chartType === "radar" && (!w.data || !w.data[0]?.subject)) {
-                    compatibleData = teacherPerformance;
-                } else if (chartType === "pie") {
-                    if (w.data && !w.data[0]?.name && w.data[0]?.label) {
-                        compatibleData = w.data.map(item => ({
-                            name: item.label || item.month || item.day || "Item",
-                            value: item.value || item.asistencia || item.crecimiento || item.alumnos || 0
-                        }));
-                    }
-                }
-                return { ...w, chartType, data: compatibleData };
-            }
-            return w;
-        }));
+    const updateChartType = (id: string, chartType: any) => {
+        setWidgets(widgets.map(w => w.id === id ? { ...w, chartType } : w));
     };
 
+    // Premium Chart Renderer
     const renderChart = (widget: Widget) => {
-        const colors = [widget.color, "#8b5cf6", "#f59e0b", "#10b981", "#ef4444"];
+        const palette = COLORS[widget.colorKey];
+        const chartColors = [palette.primary, palette.secondary, "#f472b6", "#a78bfa", "#fbbf24"];
         const seriesColors = widget.colors || {};
+
         const dataKeys = widget.data && widget.data.length > 0
-            ? Object.keys(widget.data[0]).filter(key => key !== 'label' && key !== 'month' && key !== 'day' && key !== 'name' && key !== 'subject')
+            ? Object.keys(widget.data[0]).filter(key =>
+                !['label', 'month', 'day', 'name', 'subject', 'date'].includes(key)
+            )
             : [];
+
+        const commonGrid = <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />;
+        const commonXAxis = <XAxis
+            dataKey={widget.data?.[0]?.month ? "month" : widget.data?.[0]?.day ? "day" : "name"}
+            stroke="rgba(255,255,255,0.6)"
+            fontSize={11}
+            tickLine={false}
+            axisLine={false}
+            dy={8}
+        />;
+        const commonYAxis = <YAxis
+            stroke="rgba(255,255,255,0.6)"
+            fontSize={11}
+            tickLine={false}
+            axisLine={false}
+            width={40}
+        />;
+        const commonTooltip = <Tooltip
+            contentStyle={{
+                borderRadius: '12px',
+                border: 'none',
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
+                padding: '12px 16px',
+                backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                color: '#fff',
+            }}
+            itemStyle={{ color: '#e2e8f0' }}
+            labelStyle={{ color: '#fff', fontWeight: 600, marginBottom: 4 }}
+        />;
+
+        if (!widget.data || widget.data.length === 0) {
+            return (
+                <div className="flex items-center justify-center h-[260px]" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                    <p className="text-sm font-medium">Sin datos disponibles</p>
+                </div>
+            );
+        }
 
         switch (widget.chartType) {
             case "area":
                 return (
-                    <ResponsiveContainer width="100%" height={220}>
-                        <AreaChart data={widget.data}>
+                    <ResponsiveContainer width="100%" height={260}>
+                        <AreaChart data={widget.data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                             <defs>
-                                {dataKeys.map(key => (
+                                {dataKeys.map((key, i) => (
                                     <linearGradient key={key} id={`gradient-${widget.id}-${key}`} x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={seriesColors[key] || widget.color} stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor={seriesColors[key] || widget.color} stopOpacity={0} />
+                                        <stop offset="0%" stopColor={seriesColors[key] || chartColors[i % chartColors.length]} stopOpacity={0.5} />
+                                        <stop offset="100%" stopColor={seriesColors[key] || chartColors[i % chartColors.length]} stopOpacity={0.05} />
                                     </linearGradient>
                                 ))}
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                            <XAxis dataKey={widget.data && widget.data[0]?.month ? "month" : "name"} stroke="#6b7280" fontSize={12} />
-                            <YAxis stroke="#6b7280" fontSize={12} />
-                            <Tooltip />
+                            {commonGrid}
+                            {commonXAxis}
+                            {commonYAxis}
+                            {commonTooltip}
                             {dataKeys.map((key, index) => (
                                 <Area
                                     key={key}
                                     type="monotone"
                                     dataKey={key}
-                                    stroke={seriesColors[key] || colors[index % colors.length]}
+                                    stroke={seriesColors[key] || chartColors[index % chartColors.length]}
                                     fill={`url(#gradient-${widget.id}-${key})`}
-                                    strokeWidth={2}
+                                    strokeWidth={3}
                                 />
                             ))}
                         </AreaChart>
                     </ResponsiveContainer>
                 );
-
             case "line":
                 return (
-                    <ResponsiveContainer width="100%" height={220}>
-                        <LineChart data={widget.data}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                            <XAxis dataKey="month" stroke="#6b7280" fontSize={12} />
-                            <YAxis stroke="#6b7280" fontSize={12} />
-                            <Tooltip />
+                    <ResponsiveContainer width="100%" height={260}>
+                        <LineChart data={widget.data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                            {commonGrid}
+                            {commonXAxis}
+                            {commonYAxis}
+                            {commonTooltip}
                             {dataKeys.map((key, index) => (
                                 <Line
                                     key={key}
                                     type="monotone"
                                     dataKey={key}
-                                    stroke={seriesColors[key] || colors[index % colors.length]}
+                                    stroke={seriesColors[key] || chartColors[index % chartColors.length]}
                                     strokeWidth={3}
-                                    dot={{ fill: seriesColors[key] || colors[index % colors.length], r: 4 }}
+                                    dot={{ r: 5, fill: palette.primary, strokeWidth: 2, stroke: '#fff' }}
+                                    activeDot={{ r: 7, strokeWidth: 0, fill: palette.secondary }}
                                 />
                             ))}
                         </LineChart>
                     </ResponsiveContainer>
                 );
-
             case "bar":
-                const isAttendance = widget.data && widget.data[0]?.asistencia !== undefined;
                 return (
-                    <ResponsiveContainer width="100%" height={220}>
-                        <BarChart data={widget.data}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                            <XAxis dataKey={widget.data && widget.data[0]?.day ? "day" : "month"} stroke="#6b7280" fontSize={12} />
-                            <YAxis
-                                stroke="#6b7280"
-                                fontSize={12}
-                                domain={isAttendance ? [0, 100] : undefined}
-                                tickFormatter={isAttendance ? (value) => `${value}%` : undefined}
-                            />
-                            <Tooltip formatter={isAttendance ? (value: any) => `${value}%` : undefined} />
+                    <ResponsiveContainer width="100%" height={260}>
+                        <BarChart data={widget.data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                            {commonGrid}
+                            {commonXAxis}
+                            {commonYAxis}
+                            {commonTooltip}
                             {dataKeys.map((key, index) => (
                                 <Bar
                                     key={key}
                                     dataKey={key}
-                                    fill={seriesColors[key] || colors[index % colors.length]}
+                                    fill={seriesColors[key] || chartColors[index % chartColors.length]}
                                     radius={[8, 8, 0, 0]}
+                                    maxBarSize={50}
                                 />
                             ))}
                         </BarChart>
                     </ResponsiveContainer>
                 );
-
             case "pie":
                 return (
-                    <ResponsiveContainer width="100%" height={220}>
+                    <ResponsiveContainer width="100%" height={260}>
                         <PieChart>
                             <Pie
                                 data={widget.data}
-                                cx="50%"
-                                cy="50%"
-                                labelLine={false}
-                                label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-                                outerRadius={70}
-                                fill={widget.color}
+                                cx="50%" cy="50%"
+                                innerRadius={55}
+                                outerRadius={90}
+                                paddingAngle={4}
                                 dataKey="value"
+                                stroke="none"
                             >
-                                {widget.data?.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.color || colors[index % colors.length]} />
+                                {widget.data.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.color || chartColors[index % chartColors.length]} />
                                 ))}
                             </Pie>
-                            <Tooltip />
+                            <Tooltip
+                                contentStyle={{
+                                    borderRadius: '12px',
+                                    border: 'none',
+                                    boxShadow: '0 10px 20px rgba(0,0,0,0.3)',
+                                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                                    color: '#fff',
+                                }}
+                            />
+                            <Legend
+                                formatter={(value) => <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12 }}>{value}</span>}
+                            />
                         </PieChart>
                     </ResponsiveContainer>
                 );
-
             case "radar":
                 return (
-                    <ResponsiveContainer width="100%" height={220}>
-                        <RadarChart data={widget.data}>
-                            <PolarGrid stroke="#e5e7eb" />
-                            <PolarAngleAxis dataKey="subject" stroke="#6b7280" fontSize={12} />
-                            <PolarRadiusAxis stroke="#6b7280" fontSize={12} />
+                    <ResponsiveContainer width="100%" height={260}>
+                        <RadarChart data={widget.data} cx="50%" cy="50%" outerRadius="75%">
+                            <PolarGrid stroke="rgba(255,255,255,0.15)" />
+                            <PolarAngleAxis dataKey="subject" stroke="rgba(255,255,255,0.7)" fontSize={11} />
+                            <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="rgba(255,255,255,0.3)" />
                             <Radar
                                 name="Score"
                                 dataKey="score"
-                                stroke={widget.color}
-                                fill={widget.color}
-                                fillOpacity={0.3}
+                                stroke={palette.primary}
+                                fill={palette.primary}
+                                fillOpacity={0.5}
+                                strokeWidth={2}
                             />
-                            <Tooltip />
+                            <Tooltip
+                                contentStyle={{
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                                    color: '#fff'
+                                }}
+                            />
                         </RadarChart>
                     </ResponsiveContainer>
                 );
-
-            default:
-                return null;
+            default: return null;
         }
     };
 
-    const visibleWidgets = widgets.filter(w => w.visible);
-
-    // Componente de Widget reutilizable
+    // Premium Widget Card
     const WidgetCard = ({ widget, isDragging = false, showGrip = false }: { widget: Widget; isDragging?: boolean; showGrip?: boolean }) => {
         const Icon = widget.icon;
+        const palette = COLORS[widget.colorKey];
 
         return (
             <div
-                className={`kpi-card-modern ${isDragging ? 'opacity-50' : ''}`}
+                className={`${isDragging ? 'opacity-70 scale-105' : ''}`}
                 style={{
-                    background: widget.bgGradient,
+                    background: palette.bg,
+                    borderRadius: '24px',
+                    padding: '28px',
+                    height: '100%',
+                    minHeight: widget.type === "metric" ? 'auto' : '380px',
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255,255,255,0.1) inset',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     position: 'relative',
-                    cursor: showGrip ? 'grab' : 'default',
-                    maxWidth: '100%',
-                    width: '100%'
+                    overflow: 'hidden',
+                }}
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.boxShadow = '0 30px 60px -15px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255,255,255,0.15) inset';
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255,255,255,0.1) inset';
                 }}
             >
-                {/* Overlay */}
+                {/* Decorative gradient orb */}
                 <div style={{
                     position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 100%)',
-                    pointerEvents: 'none'
+                    top: '-50%',
+                    right: '-30%',
+                    width: '300px',
+                    height: '300px',
+                    borderRadius: '50%',
+                    background: `radial-gradient(circle, ${palette.primary}40 0%, transparent 70%)`,
+                    pointerEvents: 'none',
                 }} />
 
-                {/* Header */}
-                <div style={{
-                    position: 'relative',
-                    zIndex: 1,
-                    marginBottom: 'var(--spacing-lg)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                        {showGrip && <GripVertical size={18} className="text-slate-400" />}
-                        <div className="kpi-icon-gradient" style={{
-                            marginBottom: 0,
-                            background: `${widget.color}15`,
-                            color: widget.color
-                        }}>
-                            <Icon size={32} />
+                <div className="flex items-center justify-between mb-6 relative z-10">
+                    <div className="flex items-center gap-4">
+                        {showGrip && <GripVertical size={20} style={{ color: 'rgba(255,255,255,0.5)' }} className="cursor-grab" />}
+                        <div
+                            style={{
+                                padding: '12px',
+                                borderRadius: '16px',
+                                background: `linear-gradient(135deg, ${palette.primary} 0%, ${palette.secondary} 100%)`,
+                                boxShadow: `0 8px 16px ${palette.primary}50`,
+                            }}
+                        >
+                            <Icon size={22} color="#fff" />
                         </div>
-                        <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b' }}>
+                        <h3 style={{ color: '#fff', fontSize: '18px', fontWeight: 700, letterSpacing: '-0.02em' }}>
                             {widget.title}
                         </h3>
                     </div>
                     {showGrip && widget.type === "chart" && (
                         <select
                             value={widget.chartType}
-                            onChange={(e) => updateChartType(widget.id, e.target.value as any)}
-                            className="px-2 py-1 text-sm rounded-lg border border-slate-200"
-                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => updateChartType(widget.id, e.target.value)}
+                            style={{
+                                background: 'rgba(255,255,255,0.1)',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                borderRadius: '10px',
+                                padding: '6px 12px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                color: '#fff',
+                                cursor: 'pointer',
+                                outline: 'none',
+                            }}
                         >
-                            <option value="area">Área</option>
-                            <option value="line">Línea</option>
-                            <option value="bar">Barras</option>
-                            <option value="pie">Pastel</option>
-                            <option value="radar">Radar</option>
+                            <option value="area" style={{ background: '#1e293b' }}>Área</option>
+                            <option value="line" style={{ background: '#1e293b' }}>Línea</option>
+                            <option value="bar" style={{ background: '#1e293b' }}>Barras</option>
+                            <option value="pie" style={{ background: '#1e293b' }}>Pastel</option>
+                            <option value="radar" style={{ background: '#1e293b' }}>Radar</option>
                         </select>
                     )}
                 </div>
 
-                {/* Contenido */}
-                <div style={{ position: 'relative', zIndex: 1 }}>
-                    {widget.type === "chart" ? (
-                        renderChart(widget)
-                    ) : (
-                        <div className="grid grid-cols-2 gap-3">
+                <div className="relative z-10">
+                    {widget.type === "chart" ? renderChart(widget) : (
+                        <div className="grid grid-cols-2 gap-5">
                             {[
-                                { label: "Alumnos", value: "245", icon: Users, color: "#3b82f6" },
-                                { label: "Cursos", value: "18", icon: BookOpen, color: "#10b981" },
-                                { label: "Ingresos", value: "$53K", icon: DollarSign, color: "#f59e0b" },
-                                { label: "Asistencia", value: "94%", icon: Calendar, color: "#8b5cf6" },
-                            ].map((metric, idx) => {
-                                const MetricIcon = metric.icon;
-                                return (
-                                    <div
-                                        key={idx}
-                                        className="p-3 rounded-lg bg-white/60 border border-white/50 hover:bg-white/90 transition-all"
-                                    >
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <MetricIcon size={14} style={{ color: metric.color }} />
-                                            <span className="text-xs text-slate-600 font-medium">{metric.label}</span>
-                                        </div>
-                                        <div className="text-xl font-bold text-slate-900">{metric.value}</div>
+                                { label: "Alumnos", value: metrics?.students || 0, icon: Users, color: "#3b82f6" },
+                                { label: "Cursos", value: metrics?.courses || 0, icon: BookOpen, color: "#10b981" },
+                                { label: "Ingresos", value: `$${metrics?.revenue?.toLocaleString() || 0}`, icon: DollarSign, color: "#f59e0b" },
+                                { label: "Asistencia", value: `${metrics?.attendance || 0}%`, icon: Calendar, color: "#8b5cf6" },
+                            ].map((m, idx) => (
+                                <div
+                                    key={idx}
+                                    style={{
+                                        background: 'rgba(255,255,255,0.08)',
+                                        backdropFilter: 'blur(10px)',
+                                        padding: '20px',
+                                        borderRadius: '16px',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        transition: 'all 0.2s ease',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = 'rgba(255,255,255,0.12)';
+                                        e.currentTarget.style.transform = 'scale(1.02)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                                        e.currentTarget.style.transform = 'scale(1)';
+                                    }}
+                                >
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <m.icon size={14} style={{ color: m.color }} />
+                                        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                            {m.label}
+                                        </span>
                                     </div>
-                                );
-                            })}
+                                    <div style={{ color: '#fff', fontSize: '28px', fontWeight: 800, letterSpacing: '-0.02em' }}>
+                                        {m.value}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
@@ -507,22 +524,107 @@ export default function ExecutiveDashboard() {
         );
     };
 
+    // Forbidden State
+    if (error === "FORBIDDEN") {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[70vh] p-8">
+                <div
+                    style={{
+                        background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+                        padding: '24px',
+                        borderRadius: '24px',
+                        marginBottom: '24px',
+                    }}
+                >
+                    <Lock size={48} style={{ color: '#dc2626' }} />
+                </div>
+                <h2 style={{ fontSize: '28px', fontWeight: 800, color: '#0f172a', marginBottom: '12px' }}>
+                    Acceso Restringido
+                </h2>
+                <p style={{ color: '#64748b', maxWidth: '400px', textAlign: 'center', marginBottom: '32px', fontSize: '16px' }}>
+                    Esta sección contiene información sensible y solo está disponible para los propietarios del negocio.
+                </p>
+                <button
+                    onClick={() => router.push("/dashboard")}
+                    style={{
+                        background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                        color: '#fff',
+                        padding: '14px 32px',
+                        borderRadius: '14px',
+                        border: 'none',
+                        fontSize: '15px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.5)',
+                        transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 15px 30px -5px rgba(59, 130, 246, 0.6)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 10px 25px -5px rgba(59, 130, 246, 0.5)';
+                    }}
+                >
+                    Volver al Dashboard
+                </button>
+            </div>
+        );
+    }
+
+    // Loading State
+    if (loading) {
+        return (
+            <div className="min-h-[60vh] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-5">
+                    <div
+                        style={{
+                            width: '56px',
+                            height: '56px',
+                            border: '4px solid #e2e8f0',
+                            borderTopColor: '#6366f1',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite',
+                        }}
+                    />
+                    <p style={{ color: '#64748b', fontSize: '15px', fontWeight: 600 }}>Cargando métricas ejecutivas...</p>
+                </div>
+                <style jsx>{`
+                    @keyframes spin {
+                        to { transform: rotate(360deg); }
+                    }
+                `}</style>
+            </div>
+        );
+    }
+
+    const visibleWidgets = widgets.filter(w => w.visible);
+
     return (
-        <div>
-            {/* HEADER INDEPENDIENTE */}
+        <div style={{ padding: '8px', minHeight: '100vh' }}>
+            {/* Header */}
             <div style={{
-                padding: 'var(--spacing-lg)',
-                marginBottom: '64px',
-                position: 'relative',
-                zIndex: 10
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+                marginBottom: '40px',
+                paddingBottom: '24px',
+                borderBottom: '1px solid #e2e8f0',
             }}>
-                <div className="flex items-center justify-between">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 mb-3">
+                        <h1 style={{
+                            fontSize: '32px',
+                            fontWeight: 800,
+                            color: '#0f172a',
+                            letterSpacing: '-0.03em',
+                            marginBottom: '8px',
+                        }}>
                             Dashboard Ejecutivo
                         </h1>
-                        <p className="text-muted-foreground text-lg">
-                            Personaliza tu vista arrastrando y configurando los widgets
+                        <p style={{ color: '#64748b', fontSize: '16px', fontWeight: 500 }}>
+                            Visión estratégica en tiempo real para la toma de decisiones.
                         </p>
                     </div>
                     <button
@@ -530,98 +632,157 @@ export default function ExecutiveDashboard() {
                         style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '8px',
-                            height: '44px',
-                            padding: '0 20px',
-                            borderRadius: '12px',
-                            border: editMode ? 'none' : '1px solid #e2e8f0',
-                            backgroundColor: editMode ? '#059669' : 'white',
-                            color: editMode ? 'white' : '#475569',
+                            gap: '10px',
+                            padding: '12px 24px',
+                            borderRadius: '14px',
+                            border: 'none',
                             fontSize: '14px',
-                            fontWeight: 600,
+                            fontWeight: 700,
                             cursor: 'pointer',
-                            boxShadow: editMode ? '0 4px 12px rgba(5, 150, 105, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.05)',
-                            transition: 'all 0.2s'
+                            transition: 'all 0.2s ease',
+                            background: editMode
+                                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                                : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                            color: '#fff',
+                            boxShadow: editMode
+                                ? '0 10px 25px -5px rgba(16, 185, 129, 0.5)'
+                                : '0 10px 25px -5px rgba(99, 102, 241, 0.5)',
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)';
                         }}
                     >
                         <Settings size={18} />
-                        {editMode ? "Guardar" : "Personalizar"}
+                        {editMode ? "Guardar Diseño" : "Personalizar Vista"}
                     </button>
                 </div>
             </div>
 
-            {/* Edit Mode Controls */}
+            {/* Edit Mode Panel */}
             {editMode && (
-                <div style={{ padding: '0 var(--spacing-lg)', marginBottom: '32px' }}>
-                    <div className="p-4 rounded-lg bg-slate-50 border border-slate-200">
-                        <div className="flex items-center justify-between mb-3">
-                            <h3 className="font-semibold">Widgets Disponibles</h3>
-                            <button
-                                onClick={resetConfiguration}
-                                className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            >
-                                Restaurar
-                            </button>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {widgets.map(widget => (
+                <div
+                    style={{
+                        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                        borderRadius: '20px',
+                        padding: '24px',
+                        marginBottom: '32px',
+                        border: '2px dashed #cbd5e1',
+                    }}
+                >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                        <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#334155' }}>Widgets Disponibles</h3>
+                        <button
+                            onClick={resetConfiguration}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '8px 16px',
+                                borderRadius: '10px',
+                                border: 'none',
+                                background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+                                color: '#dc2626',
+                                fontSize: '13px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)';
+                            }}
+                        >
+                            <RotateCcw size={14} />
+                            Restaurar
+                        </button>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                        {widgets.map(widget => {
+                            const palette = COLORS[widget.colorKey];
+                            return (
                                 <button
                                     key={widget.id}
                                     onClick={() => toggleWidgetVisibility(widget.id)}
-                                    className={`px-3 py-1.5 text-sm rounded-lg border-2 transition-all flex items-center gap-2 ${widget.visible
-                                        ? "border-primary-600 bg-primary-50"
-                                        : "border-slate-200 bg-white"
-                                        }`}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '10px',
+                                        padding: '10px 18px',
+                                        borderRadius: '12px',
+                                        border: widget.visible ? 'none' : '2px solid #e2e8f0',
+                                        fontSize: '13px',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        background: widget.visible
+                                            ? `linear-gradient(135deg, ${palette.primary} 0%, ${palette.primary}dd 100%)`
+                                            : '#fff',
+                                        color: widget.visible ? '#fff' : '#64748b',
+                                        boxShadow: widget.visible ? `0 8px 16px ${palette.primary}40` : 'none',
+                                    }}
                                 >
-                                    {widget.visible ? <Eye size={14} /> : <EyeOff size={14} />}
+                                    {widget.visible ? <Eye size={16} /> : <EyeOff size={16} />}
                                     {widget.title}
                                 </button>
-                            ))}
-                        </div>
+                            );
+                        })}
                     </div>
                 </div>
             )}
 
-            {/* GRID 2x2 - SEPARADO DE DND */}
-            <div className="px-6">
-                {editMode ? (
-                    // Modo edición: CON drag and drop
-                    <DragDropContext onDragEnd={handleDragEnd}>
-                        <Droppable droppableId="widgets">
-                            {(provided) => (
-                                <div
-                                    {...provided.droppableProps}
-                                    ref={provided.innerRef}
-                                    className="grid grid-cols-1 md:grid-cols-2 gap-8"
-                                >
-                                    {visibleWidgets.map((widget, index) => (
-                                        <Draggable key={widget.id} draggableId={widget.id} index={index}>
-                                            {(provided, snapshot) => (
-                                                <div
-                                                    ref={provided.innerRef}
-                                                    {...provided.draggableProps}
-                                                    {...provided.dragHandleProps}
-                                                    style={provided.draggableProps.style}
-                                                >
-                                                    <WidgetCard widget={widget} isDragging={snapshot.isDragging} showGrip={true} />
-                                                </div>
-                                            )}
-                                        </Draggable>
-                                    ))}
-                                    {provided.placeholder}
-                                </div>
-                            )}
-                        </Droppable>
-                    </DragDropContext>
-                ) : (
-                    // Modo normal: SIN drag and drop - grid simple
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {visibleWidgets.map((widget) => (
-                            <WidgetCard key={widget.id} widget={widget} />
-                        ))}
-                    </div>
-                )}
-            </div>
+            {/* Content Grid */}
+            {editMode ? (
+                <DragDropContext onDragEnd={handleDragEnd}>
+                    <Droppable droppableId="widgets">
+                        {(provided) => (
+                            <div
+                                {...provided.droppableProps}
+                                ref={provided.innerRef}
+                                style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 500px), 1fr))',
+                                    gap: '28px',
+                                    paddingBottom: '48px',
+                                }}
+                            >
+                                {visibleWidgets.map((widget, index) => (
+                                    <Draggable key={widget.id} draggableId={widget.id} index={index}>
+                                        {(provided, snapshot) => (
+                                            <div
+                                                ref={provided.innerRef}
+                                                {...provided.draggableProps}
+                                                {...provided.dragHandleProps}
+                                                style={{ ...provided.draggableProps.style }}
+                                            >
+                                                <WidgetCard widget={widget} isDragging={snapshot.isDragging} showGrip={true} />
+                                            </div>
+                                        )}
+                                    </Draggable>
+                                ))}
+                                {provided.placeholder}
+                            </div>
+                        )}
+                    </Droppable>
+                </DragDropContext>
+            ) : (
+                <div
+                    style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 500px), 1fr))',
+                        gap: '28px',
+                        paddingBottom: '48px',
+                    }}
+                >
+                    {visibleWidgets.map(widget => (
+                        <WidgetCard key={widget.id} widget={widget} />
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ModernKpiCard } from "@/components/ui/modern-kpi-card";
 import Link from "next/link";
@@ -13,8 +13,10 @@ import {
     GraduationCap,
     Calendar,
     UserPlus,
-    FileText
+    FileText,
+    AlertTriangle
 } from "lucide-react";
+
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -30,14 +32,39 @@ export default function DashboardPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const pathname = usePathname();
+    const [stats, setStats] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [forbidden, setForbidden] = useState(false);
 
     useEffect(() => {
         if (status === "unauthenticated") {
-            router.push("/login");
+            router.push("/login"); // The middleware/page logic already redirects, but safe to keep
+        } else if (status === "authenticated") {
+            fetchStats();
         }
     }, [status, router]);
 
-    if (status === "loading") {
+    const fetchStats = async () => {
+        try {
+            const res = await fetch("/api/dashboard/stats");
+            if (res.status === 403) {
+                setForbidden(true);
+                return;
+            }
+            if (!res.ok) {
+                throw new Error("Error fetching dashboard stats");
+            }
+            const data = await res.json();
+            setStats(data);
+        } catch (error) {
+            console.error(error);
+            // toast.error("Error cargando estadísticas");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (status === "loading" || loading) {
         return (
             <div
                 className="flex items-center justify-center min-h-screen"
@@ -55,11 +82,6 @@ export default function DashboardPage() {
         return null;
     }
 
-    const studentsData = [220, 225, 230, 235, 240, 242, 245];
-    const coursesData = [15, 16, 17, 17, 18, 18, 18];
-    const revenueData = [38000, 40000, 42000, 43000, 44000, 44500, 45230];
-    const attendanceData = [96, 95, 94, 93, 94, 95, 94.5];
-
     // Extraer el lang del pathname
     const lang = pathname?.split('/')[1] || 'es';
 
@@ -70,6 +92,31 @@ export default function DashboardPage() {
         { icon: DollarSign, label: "Nuevo Cobro", href: `/${lang}/dashboard/finance`, gradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)" },
         { icon: FileText, label: "Reportes", href: `/${lang}/dashboard/reports`, gradient: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)" }
     ];
+
+    if (forbidden) {
+        return (
+            <div className="min-h-screen p-8 flex flex-col items-center justify-center">
+                <div className="bg-orange-100 p-6 rounded-full mb-6">
+                    <AlertTriangle className="h-12 w-12 text-orange-600" />
+                </div>
+                <h1 className="text-3xl font-bold text-slate-800 mb-2">Vista Principal Limitada</h1>
+                <p className="text-slate-500 max-w-md text-center mb-8">
+                    Este dashboard muestra estadísticas financieras sensibles.
+                    Como no eres el propietario, puedes acceder a tus secciones específicas desde el menú lateral.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
+                    {quickActions.map(action => (
+                        <Link key={action.label} href={action.href} className="flex flex-col items-center p-6 bg-white border rounded-xl hover:shadow-md transition-shadow">
+                            <div className="p-3 rounded-full bg-slate-100 mb-3">
+                                <action.icon size={24} className="text-slate-600" />
+                            </div>
+                            <span className="font-semibold text-slate-700">{action.label}</span>
+                        </Link>
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -98,43 +145,43 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     <ModernKpiCard
                         title="Total Alumnos"
-                        value="245"
+                        value={stats?.totalStudents || 0}
                         icon={GraduationCap}
-                        trend={12}
+                        // trend={12} // Trend calculation is complex, omitting for now to avoid fake data
                         positive={true}
                         gradientClass="gradient-students"
                         subtitle="Inscritos activos"
-                        sparklineData={studentsData}
+                        sparklineData={undefined} // Removed fake sparkline
                     />
                     <ModernKpiCard
                         title="Cursos Activos"
-                        value="18"
+                        value={stats?.activeCourses || 0}
                         icon={BookOpen}
-                        trend={5.8}
+                        // trend={5.8}
                         positive={true}
                         gradientClass="gradient-courses"
                         subtitle="En este periodo"
-                        sparklineData={coursesData}
+                        sparklineData={undefined}
                     />
                     <ModernKpiCard
                         title="Ingresos del Mes"
-                        value="$45,230"
+                        value={`$${(stats?.totalSales || 0).toLocaleString()}`}
                         icon={DollarSign}
-                        trend={8.3}
+                        // trend={8.3}
                         positive={true}
                         gradientClass="gradient-finance"
                         subtitle="MXN"
-                        sparklineData={revenueData}
+                        sparklineData={undefined}
                     />
                     <ModernKpiCard
                         title="Asistencia"
-                        value="94.5%"
+                        value={`${stats?.attendanceAvg || 0}%`}
                         icon={Calendar}
-                        trend={1.2}
-                        positive={false}
+                        // trend={1.2}
+                        positive={stats?.attendanceAvg >= 90}
                         gradientClass="gradient-reports"
                         subtitle="Promedio semanal"
-                        sparklineData={attendanceData}
+                        sparklineData={undefined}
                     />
                 </div>
             </motion.div>
@@ -226,11 +273,11 @@ export default function DashboardPage() {
                         </div>
                     </motion.div>
 
-                    {/* ACTIVIDAD RECIENTE */}
+                    {/* LOW STOCK ALERT (NEW) instead of Fake Activity */}
                     <motion.div
                         className="kpi-card-modern"
                         style={{
-                            background: 'linear-gradient(135deg, rgba(254, 243, 199, 0.5) 0%, rgba(253, 230, 138, 0.5) 100%)',
+                            background: 'linear-gradient(135deg, rgba(254, 226, 226, 0.5) 0%, rgba(254, 202, 202, 0.5) 100%)',
                             position: 'relative'
                         }}
                         initial={{ opacity: 0, y: 20 }}
@@ -238,90 +285,40 @@ export default function DashboardPage() {
                         transition={{ delay: 0.1 }}
                         whileHover={{ y: -4 }}
                     >
-                        <div style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            background: 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 100%)',
-                            pointerEvents: 'none'
-                        }} />
-
                         <div style={{ position: 'relative', zIndex: 1, marginBottom: 'var(--spacing-lg)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
                                 <div className="kpi-icon-gradient" style={{
                                     marginBottom: 'var(--spacing-sm)',
-                                    background: 'rgba(245, 158, 11, 0.15)',
-                                    color: '#d97706'
+                                    background: 'rgba(239, 68, 68, 0.15)',
+                                    color: '#b91c1c'
                                 }}>
-                                    <FileText size={32} />
+                                    <AlertTriangle size={32} />
                                 </div>
                                 <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b' }}>
-                                    Actividad Reciente
+                                    Alertas de Inventario
                                 </h3>
                             </div>
-                            <span style={{
-                                fontSize: '12px',
-                                fontWeight: 700,
-                                color: '#92400e',
-                                background: 'rgba(254, 243, 199, 0.8)',
-                                padding: '6px 12px',
-                                borderRadius: 'var(--radius-sm)',
-                                border: '1px solid rgba(217, 119, 6, 0.2)'
-                            }}>
-                                HOY
-                            </span>
                         </div>
 
-                        <div className="space-y-6" style={{ position: 'relative', zIndex: 1 }}>
-                            {[
-                                { icon: DollarSign, title: "Pago registrado", desc: "Juan Pérez - $2,500 MXN", time: "5 min", color: '#10b981' },
-                                { icon: UserPlus, title: "Nuevo alumno", desc: "María González - 5to A", time: "1 hora", color: '#3b82f6' },
-                                { icon: Calendar, title: "Pago vencido", desc: "Carlos Ramírez", time: "2 horas", color: '#f59e0b' },
-                                { icon: BookOpen, title: "Asistencia", desc: "Matemáticas - 3B", time: "3 horas", color: '#8b5cf6' }
-                            ].map((activity, index) => (
-                                <motion.div
-                                    key={index}
-                                    className="flex gap-4 relative"
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.2 + index * 0.1 }}
-                                >
-                                    {index !== 3 && (
-                                        <div style={{
-                                            position: 'absolute',
-                                            left: '32px',
-                                            top: '64px',
-                                            bottom: '-24px',
-                                            width: '2px',
-                                            background: 'rgba(120, 113, 108, 0.2)'
-                                        }} />
-                                    )}
-
-                                    <div className="kpi-icon-gradient" style={{
-                                        flexShrink: 0,
-                                        background: `${activity.color}15`,
-                                        color: activity.color
-                                    }}>
-                                        <activity.icon size={32} />
-                                    </div>
-
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '4px' }}>
-                                            <p style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>
-                                                {activity.title}
-                                            </p>
-                                            <span style={{ fontSize: '12px', fontWeight: 600, color: '#78716c', whiteSpace: 'nowrap' }}>
-                                                {activity.time}
-                                            </span>
+                        <div className="space-y-4" style={{ position: 'relative', zIndex: 1 }}>
+                            {stats?.lowStockProducts.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center p-4 text-emerald-600">
+                                    <p className="font-semibold">¡Todo en orden!</p>
+                                    <p className="text-sm">No hay productos con bajo inventario.</p>
+                                </div>
+                            ) : (
+                                stats?.lowStockProducts.map((product: any, index: number) => (
+                                    <div key={index} className="flex justify-between items-center bg-white/50 p-3 rounded-lg border border-red-100">
+                                        <div>
+                                            <p className="font-bold text-slate-800">{product.name}</p>
+                                            <p className="text-xs text-slate-500">SKU: {product.sku}</p>
                                         </div>
-                                        <p style={{ fontSize: '13px', fontWeight: 500, color: '#64748b' }}>
-                                            {activity.desc}
-                                        </p>
+                                        <div className="text-red-600 font-bold bg-red-50 px-3 py-1 rounded-full text-sm">
+                                            {product.inventory.reduce((acc: number, item: any) => acc + item.quantity, 0)} unid.
+                                        </div>
                                     </div>
-                                </motion.div>
-                            ))}
+                                ))
+                            )}
                         </div>
                     </motion.div>
                 </div>

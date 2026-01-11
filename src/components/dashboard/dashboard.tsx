@@ -8,6 +8,7 @@ import { SalesChart } from "@/components/analytics/sales-chart";
 export function Dashboard({ dict }: { dict: any }) {
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [forbidden, setForbidden] = useState(false);
     const t = dict.dashboard.home;
 
     useEffect(() => {
@@ -17,6 +18,10 @@ export function Dashboard({ dict }: { dict: any }) {
     const fetchStats = async () => {
         try {
             const res = await fetch("/api/dashboard/stats");
+            if (res.status === 403) {
+                setForbidden(true);
+                return;
+            }
             const data = await res.json();
             if (data.error) {
                 console.error(data.error);
@@ -32,8 +37,24 @@ export function Dashboard({ dict }: { dict: any }) {
 
     if (loading) return <div>{t.loading}</div>;
 
+    if (forbidden) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-4 p-8 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="bg-slate-200 p-4 rounded-full">
+                    <AlertTriangle className="h-8 w-8 text-slate-500" />
+                </div>
+                <div className="text-center">
+                    <h3 className="text-lg font-semibold text-slate-900">Vista Restringida</h3>
+                    <p className="text-sm text-slate-500 max-w-sm mt-1">
+                        Las métricas financieras están disponibles solo para administradores.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 animate-in fade-in duration-500">
             <h2 className="text-3xl font-bold tracking-tight">{t.title}</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
