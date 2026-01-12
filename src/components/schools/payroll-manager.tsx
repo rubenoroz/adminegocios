@@ -22,6 +22,7 @@ interface Employee {
     salary: number | null;
     paymentFrequency: string;
     hireDate: string;
+    reservePercentage?: number;
 }
 
 interface CommissionSummary {
@@ -165,7 +166,11 @@ export function PayrollManager() {
             }
 
             // Calculate payroll with commissions included
-            const payrollDetails = calculatePayrollDetails(baseSalary, commissionAmount);
+            const payrollDetails = calculatePayrollDetails(
+                baseSalary,
+                commissionAmount,
+                employee.reservePercentage || 0
+            );
 
             const blob = await generatePayrollReceiptPDF({
                 businessName: business.name,

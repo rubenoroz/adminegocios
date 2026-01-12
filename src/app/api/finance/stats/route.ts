@@ -37,6 +37,7 @@ export async function GET(req: Request) {
         let pending = 0;
         let overdue = 0;
         let total = 0;
+        let totalReserve = 0;
 
         fees.forEach(fee => {
             const paidAmount = fee.payments.reduce((sum, p) => sum + p.amount, 0);
@@ -46,6 +47,11 @@ export async function GET(req: Request) {
 
             // Collected this month
             fee.payments.forEach(payment => {
+                // Reserve Calculation: Sum all historical reserves
+                if (payment.reserveAmount) {
+                    totalReserve += payment.reserveAmount;
+                }
+
                 if (payment.date >= monthStart && payment.date <= monthEnd) {
                     collected += payment.amount;
                 }
@@ -66,7 +72,8 @@ export async function GET(req: Request) {
             collected: Math.round(collected * 100) / 100,
             pending: Math.round(pending * 100) / 100,
             overdue: Math.round(overdue * 100) / 100,
-            total: Math.round(total * 100) / 100
+            total: Math.round(total * 100) / 100,
+            totalReserve: Math.round(totalReserve * 100) / 100
         });
 
     } catch (error) {

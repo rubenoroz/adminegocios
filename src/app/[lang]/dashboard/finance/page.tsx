@@ -15,7 +15,8 @@ export default function FinancePage() {
         collected: 0,
         pending: 0,
         overdue: 0,
-        total: 0
+        total: 0,
+        totalReserve: 0
     });
 
     useEffect(() => {
@@ -94,11 +95,11 @@ export default function FinancePage() {
                         subtitle="Pagos con fecha excedida"
                     />
                     <ModernKpiCard
-                        title="Total Registrado"
-                        value={`$${stats.total.toLocaleString()}`}
+                        title="Reserva Acumulada"
+                        value={`$${(stats.totalReserve || 0).toLocaleString()}`}
                         icon={TrendingUp}
                         gradientClass="gradient-students"
-                        subtitle="Monto total histórico"
+                        subtitle="Fondo de reserva"
                     />
                 </div>
             </motion.div>

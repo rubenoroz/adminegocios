@@ -30,7 +30,7 @@ export function SchoolStaff() {
     const [open, setOpen] = useState(false);
     const [newEmployee, setNewEmployee] = useState({
         firstName: "", lastName: "", email: "", phone: "", role: "TEACHER",
-        paymentModel: "FIXED", salary: "", commissionPercentage: ""
+        paymentModel: "FIXED", salary: "", commissionPercentage: "", reservePercentage: ""
     });
     const [isSaving, setIsSaving] = useState(false);
 
@@ -80,13 +80,15 @@ export function SchoolStaff() {
                     branchId: selectedBranch?.id,
                     businessId: selectedBranch?.businessId,
                     salary: newEmployee.salary ? parseFloat(newEmployee.salary) : null,
-                    commissionPercentage: newEmployee.commissionPercentage ? parseFloat(newEmployee.commissionPercentage) : null
+                    salary: newEmployee.salary ? parseFloat(newEmployee.salary) : null,
+                    commissionPercentage: newEmployee.commissionPercentage ? parseFloat(newEmployee.commissionPercentage) : null,
+                    reservePercentage: newEmployee.reservePercentage ? parseFloat(newEmployee.reservePercentage) : null
                 })
             });
             if (res.ok) {
                 toast({ title: "Personal agregado exitosamente" });
                 setOpen(false);
-                setNewEmployee({ firstName: "", lastName: "", email: "", phone: "", role: "TEACHER", paymentModel: "FIXED", salary: "", commissionPercentage: "" });
+                setNewEmployee({ firstName: "", lastName: "", email: "", phone: "", role: "TEACHER", paymentModel: "FIXED", salary: "", commissionPercentage: "", reservePercentage: "" });
                 fetchEmployees();
             } else {
                 const error = await res.json();
@@ -114,7 +116,9 @@ export function SchoolStaff() {
         setEditingEmployee({
             ...emp,
             salary: emp.salary?.toString() || "",
-            commissionPercentage: emp.commissionPercentage?.toString() || ""
+            salary: emp.salary?.toString() || "",
+            commissionPercentage: emp.commissionPercentage?.toString() || "",
+            reservePercentage: emp.reservePercentage?.toString() || ""
         });
         setEditOpen(true);
     };
@@ -134,7 +138,9 @@ export function SchoolStaff() {
                     role: editingEmployee.role,
                     paymentModel: editingEmployee.paymentModel,
                     salary: editingEmployee.salary ? parseFloat(editingEmployee.salary) : null,
-                    commissionPercentage: editingEmployee.commissionPercentage ? parseFloat(editingEmployee.commissionPercentage) : null
+                    salary: editingEmployee.salary ? parseFloat(editingEmployee.salary) : null,
+                    commissionPercentage: editingEmployee.commissionPercentage ? parseFloat(editingEmployee.commissionPercentage) : null,
+                    reservePercentage: editingEmployee.reservePercentage ? parseFloat(editingEmployee.reservePercentage) : null
                 })
             });
             if (res.ok) {
@@ -286,6 +292,20 @@ export function SchoolStaff() {
                                             placeholder={newEmployee.paymentModel === "COMMISSION" ? "60" : "15000"}
                                         />
                                     </div>
+                                    {(newEmployee.paymentModel === "COMMISSION" || newEmployee.paymentModel === "MIXED") && (
+                                        <div style={{ gridColumn: '1 / -1' }}>
+                                            <label style={{ display: "block", fontSize: "14px", fontWeight: 500, color: "#374151", marginBottom: "8px" }}>% Reserva Acumulada (Opcional)</label>
+                                            <input
+                                                type="number"
+                                                value={newEmployee.reservePercentage || ''}
+                                                onChange={(e) => setNewEmployee({ ...newEmployee, reservePercentage: e.target.value })}
+                                                className="modern-input"
+                                                placeholder="Ej: 5 (para 5%)"
+                                                max="100"
+                                            />
+                                            <p style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>Porcentaje que se retiene de la comisión para el fondo de reserva del maestro.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <DialogFooter style={{ gap: "12px" }}>
@@ -620,6 +640,22 @@ export function SchoolStaff() {
                                         placeholder="60"
                                         style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '2px solid #e2e8f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
                                     />
+                                </div>
+                            )}
+
+                            {(editingEmployee.paymentModel === 'COMMISSION' || editingEmployee.paymentModel === 'MIXED') && (
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>🏦 % Reserva Acumulada (Opcional)</label>
+                                    <input
+                                        type="number"
+                                        value={editingEmployee.reservePercentage || ''}
+                                        onChange={(e) => setEditingEmployee({ ...editingEmployee, reservePercentage: e.target.value })}
+                                        placeholder="Ej: 5"
+                                        style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '2px solid #e2e8f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                                    />
+                                    <p style={{ fontSize: '11px', color: '#64748b', marginTop: '6px' }}>
+                                        Este porcentaje se descontará de la comisión y se guardará como un fondo.
+                                    </p>
                                 </div>
                             )}
                         </div>

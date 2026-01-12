@@ -92,7 +92,7 @@ export default function SchoolPage() {
     const [activeSection, setActiveSection] = useState<SectionType>(sectionFromUrl);
     const [activeSubTab, setActiveSubTab] = useState<SubTabType>(subTabFromUrl);
     const [financeSubTab, setFinanceSubTab] = useState<"fees" | "templates">("fees");
-    const [financeStats, setFinanceStats] = useState({ collected: 0, pending: 0, overdue: 0, total: 0 });
+    const [financeStats, setFinanceStats] = useState({ collected: 0, pending: 0, overdue: 0, total: 0, totalReserve: 0 });
     const [enableParentsModule, setEnableParentsModule] = useState(true);
 
     // Fetch business settings to check if parents module is enabled
@@ -148,7 +148,7 @@ export default function SchoolPage() {
     useEffect(() => {
         if (activeSubTab === "finance" && selectedBranch?.businessId) {
             fetch(`/api/finance/stats?businessId=${selectedBranch.businessId}`)
-                .then(res => res.ok ? res.json() : { collected: 0, pending: 0, overdue: 0, total: 0 })
+                .then(res => res.ok ? res.json() : { collected: 0, pending: 0, overdue: 0, total: 0, totalReserve: 0 })
                 .then(data => setFinanceStats(data))
                 .catch(() => { });
         }
@@ -261,11 +261,11 @@ export default function SchoolPage() {
                                     subtitle="Pagos con fecha excedida"
                                 />
                                 <ModernKpiCard
-                                    title="Total Registrado"
-                                    value={`$${financeStats.total.toLocaleString()}`}
+                                    title="Reserva Acumulada"
+                                    value={`$${(financeStats.totalReserve || 0).toLocaleString()}`}
                                     icon={TrendingUp}
                                     gradientClass="gradient-students"
-                                    subtitle="Monto total histórico"
+                                    subtitle="Fondo de reserva"
                                 />
                             </div>
 

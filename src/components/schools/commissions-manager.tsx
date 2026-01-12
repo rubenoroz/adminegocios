@@ -413,7 +413,7 @@ export function CommissionsManager() {
 
             {/* DETAIL MODAL */}
             <Dialog open={!!selectedTeacher} onOpenChange={(open) => !open && setSelectedTeacher(null)}>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto pr-extra" style={{ borderRadius: '24px', padding: '0' }}>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto gap-0 border-0" style={{ borderRadius: '24px', padding: '0', gap: '0' }}>
                     {/* Modern Header with Gradient */}
                     <div style={{
                         background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
@@ -436,12 +436,12 @@ export function CommissionsManager() {
                                 {selectedTeacher?.teacher.firstName?.[0]}{selectedTeacher?.teacher.lastName?.[0]}
                             </div>
                             <div>
-                                <h2 style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>
+                                <DialogTitle style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>
                                     {selectedTeacher?.teacher.firstName} {selectedTeacher?.teacher.lastName}
-                                </h2>
-                                <p style={{ opacity: 0.9, fontSize: '14px', marginTop: '4px' }}>
+                                </DialogTitle>
+                                <DialogDescription style={{ opacity: 0.9, fontSize: '14px', marginTop: '4px', color: 'white' }}>
                                     {selectedTeacher?.teacher.commissionPercentage || 0}% comisión • {selectedTeacher?.paymentCount || 0} pagos pendientes
-                                </p>
+                                </DialogDescription>
                             </div>
                         </div>
                     </div>

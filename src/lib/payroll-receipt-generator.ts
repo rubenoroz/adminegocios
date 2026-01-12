@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 interface PayrollReceiptData {
     // Business Info
@@ -43,11 +43,18 @@ const DEFAULT_DEDUCTIONS = {
  * @param baseSalary - Fixed salary amount
  * @param commissions - Pending commissions amount (optional)
  */
-export function calculatePayrollDetails(baseSalary: number, commissions: number = 0) {
+export function calculatePayrollDetails(baseSalary: number, commissions: number = 0, reservePercentage: number = 0) {
     const totalGross = baseSalary + commissions;
+
+    // Reserve calculation (applied to commissions or total? usually commissions based on context)
+    // "Example: Total * (1 - Reserve%)" implied it applies to the commission part in the UI context.
+    // Let's assume it applies to commissions as per previous user request context ("retiene de la comisión").
+    const reserveAmount = commissions * (reservePercentage / 100);
+
     const imss = totalGross * DEFAULT_DEDUCTIONS.IMSS;
     const isr = totalGross * DEFAULT_DEDUCTIONS.ISR;
-    const totalDeductions = imss + isr;
+
+    const totalDeductions = imss + isr + reserveAmount;
     const netSalary = totalGross - totalDeductions;
 
     // Build perceptions array
@@ -56,13 +63,19 @@ export function calculatePayrollDetails(baseSalary: number, commissions: number 
         perceptions.push({ label: 'Comisiones por Clases', amount: commissions });
     }
 
+    const deductions = [
+        { label: 'IMSS (3%)', amount: imss },
+        { label: 'ISR (10%)', amount: isr },
+    ];
+
+    if (reserveAmount > 0) {
+        deductions.push({ label: `Fondo de Reserva (${reservePercentage}%)`, amount: reserveAmount });
+    }
+
     return {
         baseSalary,
         perceptions,
-        deductions: [
-            { label: 'IMSS (3%)', amount: imss },
-            { label: 'ISR (10%)', amount: isr },
-        ],
+        deductions,
         totalGross,
         totalDeductions,
         netSalary,
@@ -194,7 +207,7 @@ export async function generatePayrollReceiptPDF(data: PayrollReceiptData): Promi
     const totalDeductions = data.deductions.reduce((sum, d) => sum + d.amount, 0);
     const netSalary = data.baseSalary + totalPerceptions - totalDeductions;
 
-    (doc as any).autoTable({
+    autoTable(doc, {
         startY: yPos,
         head: [['Concepto', '', 'Monto']],
         body: tableData,
