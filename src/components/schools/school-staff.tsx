@@ -80,7 +80,6 @@ export function SchoolStaff() {
                     branchId: selectedBranch?.id,
                     businessId: selectedBranch?.businessId,
                     salary: newEmployee.salary ? parseFloat(newEmployee.salary) : null,
-                    salary: newEmployee.salary ? parseFloat(newEmployee.salary) : null,
                     commissionPercentage: newEmployee.commissionPercentage ? parseFloat(newEmployee.commissionPercentage) : null,
                     reservePercentage: newEmployee.reservePercentage ? parseFloat(newEmployee.reservePercentage) : null
                 })
@@ -116,7 +115,6 @@ export function SchoolStaff() {
         setEditingEmployee({
             ...emp,
             salary: emp.salary?.toString() || "",
-            salary: emp.salary?.toString() || "",
             commissionPercentage: emp.commissionPercentage?.toString() || "",
             reservePercentage: emp.reservePercentage?.toString() || ""
         });
@@ -137,7 +135,6 @@ export function SchoolStaff() {
                     phone: editingEmployee.phone,
                     role: editingEmployee.role,
                     paymentModel: editingEmployee.paymentModel,
-                    salary: editingEmployee.salary ? parseFloat(editingEmployee.salary) : null,
                     salary: editingEmployee.salary ? parseFloat(editingEmployee.salary) : null,
                     commissionPercentage: editingEmployee.commissionPercentage ? parseFloat(editingEmployee.commissionPercentage) : null,
                     reservePercentage: editingEmployee.reservePercentage ? parseFloat(editingEmployee.reservePercentage) : null
