@@ -240,6 +240,7 @@ interface ModernSelectProps {
     required?: boolean;
     disabled?: boolean;
     className?: string;
+    inline?: boolean;
 }
 
 export function ModernSelect({
@@ -250,25 +251,25 @@ export function ModernSelect({
     placeholder = "Seleccionar...",
     required = false,
     disabled = false,
-    className = ""
+    className = "",
+    inline = false
 }: ModernSelectProps) {
     return (
-        <div className="modern-input-wrapper">
+        <div className={`flex flex-col gap-2 ${className}`}>
+            {label && (
+                <label className="text-sm font-semibold text-slate-700 ml-1">
+                    {label}{required && <span className="text-red-500 ml-1">*</span>}
+                </label>
+            )}
             <PremiumSelect
                 value={value}
                 onValueChange={onChange}
                 options={options}
                 placeholder={placeholder}
                 disabled={disabled}
-                className={className}
-            // We don't pass 'label' here because PremiumSelect uses it as an internal dropdown header
-            // and we want to render the form label standardly below.
+                className="" // Reset className for inner component as wrapper handles layout
+                inline={inline}
             />
-            {label && (
-                <label className="modern-input-label">
-                    {label}{required && " *"}
-                </label>
-            )}
         </div>
     );
 }

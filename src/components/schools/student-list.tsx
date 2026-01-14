@@ -168,18 +168,28 @@ export function StudentList() {
                 if (selectedGroupKey) {
                     const group = groupsOptions.find(g => g.key === selectedGroupKey);
                     if (group) {
-                        const enrollPromises = group.scheduleIds.map(scheduleId =>
-                            fetch("/api/schedule-enrollments", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    scheduleId,
-                                    studentIds: [createdStudent.id],
-                                    skipConflictCheck: true // Force enroll for new students
+                        const enrollmentResponses = await Promise.all(
+                            group.scheduleIds.map(scheduleId =>
+                                fetch("/api/schedule-enrollments", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                        scheduleId,
+                                        studentIds: [createdStudent.id],
+                                        skipConflictCheck: true
+                                    })
                                 })
-                            })
+                            )
                         );
-                        await Promise.all(enrollPromises);
+
+                        // Check if all enrollments succeeded
+                        const failed = enrollmentResponses.filter(r => !r.ok);
+                        if (failed.length > 0) {
+                            console.error("Failed to enroll in some schedules", failed);
+                            const firstError = await failed[0].text();
+                            console.error("Enrollment error details:", firstError);
+                            alert(`El alumno se creó, pero hubo un error al inscribirlo en el grupo: ${firstError}`);
+                        }
                     }
                 }
             } else {
@@ -242,9 +252,26 @@ export function StudentList() {
 
     // EDIT FUNCTIONALITY
     const handleEdit = (student: any) => {
+        // Try to find if student belongs to any of our groups
+        // We look for a group where the student is enrolled in at least one schedule
+        // Ideally, they should be in all, but we take the first match
+        let foundGroupKey = "";
+
+        if (student.enrollments && student.enrollments.length > 0) {
+            const studentScheduleIds = student.enrollments.map((e: any) => e.scheduleId);
+
+            // Find a group that contains one of the student's schedules
+            const match = groupsOptions.find(g =>
+                g.scheduleIds.some(sId => studentScheduleIds.includes(sId))
+            );
+
+            if (match) foundGroupKey = match.key;
+        }
+
         setEditingStudent({
             ...student,
-            branchIds: student.branches?.map((b: any) => b.id) || []
+            branchIds: student.branches?.map((b: any) => b.id) || [],
+            groupKey: foundGroupKey
         });
         setEditOpen(true);
     };
@@ -267,9 +294,31 @@ export function StudentList() {
             });
 
             if (res.ok) {
+                // Enroll in Group Logic (Edit Mode)
+                if (editingStudent.groupKey) {
+                    const group = groupsOptions.find(g => g.key === editingStudent.groupKey);
+                    if (group) {
+                        const enrollmentResponses = await Promise.all(
+                            group.scheduleIds.map(scheduleId =>
+                                fetch("/api/schedule-enrollments", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                        scheduleId,
+                                        studentIds: [editingStudent.id],
+                                        skipConflictCheck: true
+                                    })
+                                })
+                            )
+                        );
+                        // Optional: Check failures same as create
+                    }
+                }
+
                 setEditOpen(false);
                 setEditingStudent(null);
                 refetch();
+                alert("Alumno actualizado correctamente");
             } else {
                 console.error("Failed to update student");
             }
@@ -490,8 +539,9 @@ export function StudentList() {
                                         label="Inscribir a Grupo (Opcional)"
                                         value={selectedGroupKey}
                                         onChange={(val: string) => setSelectedGroupKey(val)}
-                                        placeholder="-- No inscribir --"
+                                        placeholder="Seleccionar curso/grupo..."
                                         options={groupsOptions.map(g => ({ value: g.key, label: g.label }))}
+                                        inline={true}
                                     />
                                     <p className="text-xs text-slate-500 mt-1">
                                         Se inscribirá al alumno en todos los horarios de este grupo.
@@ -1046,6 +1096,21 @@ export function StudentList() {
                             value={editingStudent?.guardianPhone || ""}
                             onChange={(val) => setEditingStudent({ ...editingStudent, guardianPhone: val })}
                         />
+
+                        {/* GROUP SELECTOR (EDIT) */}
+                        <div className="col-span-2">
+                            <ModernSelect
+                                label="Inscribir a Grupo"
+                                value={editingStudent?.groupKey || ""}
+                                onChange={(val: string) => setEditingStudent({ ...editingStudent, groupKey: val })}
+                                placeholder="-- Seleccionar Grupo --"
+                                options={groupsOptions.map(g => ({ value: g.key, label: g.label }))}
+                                inline={true}
+                            />
+                            <p className="text-xs text-slate-500 mt-1">
+                                Seleccionar un grupo inscribirá al alumno en todos sus horarios.
+                            </p>
+                        </div>
 
                         {/* BRANCH SELECTOR */}
                         <div className="col-span-2 pt-4 border-t border-slate-100">
