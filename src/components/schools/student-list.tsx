@@ -1,25 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Plus, GraduationCap, CreditCard, Award, Ban, Trash2, PlayCircle, Users, UserCheck, DollarSign, AlertCircle, X, Check, Edit } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { StudentPaymentModal } from "@/components/schools/student-payment-modal";
-import { useBranchData, useBranchCreate } from "@/hooks/use-branch-data";
+import { useBranchData } from "@/hooks/use-branch-data";
 import { useBranch } from "@/context/branch-context";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ModernPageHeader } from "@/components/ui/modern-page-header";
 import { StatsCard } from "@/components/ui/stats-card";
 import { ModernFilterBar } from "@/components/ui/modern-filter-bar";
 import { ModernTable } from "@/components/ui/modern-table";
-import { ModernInput } from "@/components/ui/modern-components";
+import { ModernInput, ModernSelect } from "@/components/ui/modern-components";
 import { ModernKpiCard } from "@/components/ui/modern-kpi-card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BranchMultiSelector } from "@/components/shared/branch-multi-selector";
 
+interface ClassSchedule {
+    id: string;
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+    title: string | null;
+    groupName: string | null;
+    course: {
+        id: string;
+        name: string;
+        color: string | null;
+    } | null;
+}
+
+interface AggregatedGroup {
+    key: string;
+    groupName: string | null;
+    courseName: string;
+    scheduleIds: string[];
+    days: number[];
+    startTime: string;
+    endTime: string;
+}
+
+const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
 export function StudentList() {
     const { data: students, loading, refetch } = useBranchData<any[]>('/api/students/enhanced');
-    const createStudent = useBranchCreate('/api/students');
+
     const { selectedBranch } = useBranch();
 
     const [open, setOpen] = useState(false);
@@ -35,8 +61,61 @@ export function StudentList() {
         branchIds: [] as string[]
     });
 
-    // Need branches list for selection
+    // Group Selection State
+    const [schedules, setSchedules] = useState<ClassSchedule[]>([]);
+    const [selectedGroupKey, setSelectedGroupKey] = useState<string>("");
+
+    useEffect(() => {
+        if (selectedBranch?.businessId) {
+            fetch(`/api/class-schedules?businessId=${selectedBranch.businessId}`)
+                .then(res => res.ok ? res.json() : [])
+                .then(data => setSchedules(data))
+                .catch(err => console.error("Error loading schedules", err));
+        }
+    }, [selectedBranch?.businessId]);
+
+
+
     const { branches } = useBranch();
+
+    // Aggregate schedules into groups
+
+
+    // Memoize the aggregation logic
+    const groupsOptions = useMemo<{ key: string, label: string, scheduleIds: string[] }[]>(() => {
+        const groupMap = new Map<string, AggregatedGroup>();
+
+        for (const schedule of schedules) {
+            const key = schedule.groupName
+                ? `group:${schedule.groupName}:${schedule.course?.id || 'no-course'}`
+                : `schedule:${schedule.id}`;
+
+            if (groupMap.has(key)) {
+                const existing = groupMap.get(key)!;
+                if (!existing.days.includes(schedule.dayOfWeek)) {
+                    existing.days.push(schedule.dayOfWeek);
+                    existing.days.sort((a, b) => a - b);
+                }
+                existing.scheduleIds.push(schedule.id);
+            } else {
+                groupMap.set(key, {
+                    key,
+                    groupName: schedule.groupName,
+                    courseName: schedule.course?.name || schedule.title || "Sin nombre",
+                    scheduleIds: [schedule.id],
+                    days: [schedule.dayOfWeek],
+                    startTime: schedule.startTime,
+                    endTime: schedule.endTime
+                });
+            }
+        }
+
+        return Array.from(groupMap.values()).map(g => ({
+            key: g.key,
+            scheduleIds: g.scheduleIds,
+            label: `${g.courseName} ${g.groupName ? `(${g.groupName})` : ''} - ${g.days.map(d => dayNames[d]).join(", ")} ${g.startTime}`
+        }));
+    }, [schedules]);
 
     // Payment Modal State
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -69,11 +148,44 @@ export function StudentList() {
                 return;
             }
 
-            await createStudent({
+            const payload = {
                 ...newStudent,
                 businessId: selectedBranch.businessId,
                 branchIds: newStudent.branchIds
+            };
+
+            // Manual fetch to ensure I get the ID
+            const res = await fetch('/api/students', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
             });
+
+            if (res.ok) {
+                const createdStudent = await res.json();
+
+                // Enroll in Group Logic
+                if (selectedGroupKey) {
+                    const group = groupsOptions.find(g => g.key === selectedGroupKey);
+                    if (group) {
+                        const enrollPromises = group.scheduleIds.map(scheduleId =>
+                            fetch("/api/schedule-enrollments", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    scheduleId,
+                                    studentIds: [createdStudent.id],
+                                    skipConflictCheck: true // Force enroll for new students
+                                })
+                            })
+                        );
+                        await Promise.all(enrollPromises);
+                    }
+                }
+            } else {
+                throw new Error("Failed to create student");
+            }
+
             setOpen(false);
             refetch();
             setNewStudent({
@@ -85,6 +197,9 @@ export function StudentList() {
                 guardianPhone: "",
                 branchIds: []
             });
+            setSelectedGroupKey(""); // Reset group selection
+
+
         } catch (error) {
             console.error(error);
         } finally {
@@ -368,6 +483,20 @@ export function StudentList() {
                                     value={newStudent.guardianPhone}
                                     onChange={(val) => setNewStudent({ ...newStudent, guardianPhone: val })}
                                 />
+
+                                {/* SELECTOR DE GRUPO (OPCIONAL) */}
+                                <div className="col-span-2">
+                                    <ModernSelect
+                                        label="Inscribir a Grupo (Opcional)"
+                                        value={selectedGroupKey}
+                                        onChange={(val: string) => setSelectedGroupKey(val)}
+                                        placeholder="-- No inscribir --"
+                                        options={groupsOptions.map(g => ({ value: g.key, label: g.label }))}
+                                    />
+                                    <p className="text-xs text-slate-500 mt-1">
+                                        Se inscribirá al alumno en todos los horarios de este grupo.
+                                    </p>
+                                </div>
 
                                 {/* SELECTOR DE SUCURSALES */}
                                 <div className="pt-4 border-t border-slate-100 col-span-2">

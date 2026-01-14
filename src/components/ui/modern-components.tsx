@@ -228,3 +228,47 @@ export function ModernToast({ message, variant = "info", onClose }: ToastProps) 
         </motion.div>
     );
 }
+
+import { PremiumSelect } from "@/components/ui/premium-select";
+
+interface ModernSelectProps {
+    label?: string;
+    value: string;
+    onChange: (value: string) => void;
+    options: { value: string; label: string }[];
+    placeholder?: string;
+    required?: boolean;
+    disabled?: boolean;
+    className?: string;
+}
+
+export function ModernSelect({
+    label,
+    value,
+    onChange,
+    options,
+    placeholder = "Seleccionar...",
+    required = false,
+    disabled = false,
+    className = ""
+}: ModernSelectProps) {
+    return (
+        <div className="modern-input-wrapper">
+            <PremiumSelect
+                value={value}
+                onValueChange={onChange}
+                options={options}
+                placeholder={placeholder}
+                disabled={disabled}
+                className={className}
+            // We don't pass 'label' here because PremiumSelect uses it as an internal dropdown header
+            // and we want to render the form label standardly below.
+            />
+            {label && (
+                <label className="modern-input-label">
+                    {label}{required && " *"}
+                </label>
+            )}
+        </div>
+    );
+}
