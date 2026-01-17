@@ -61,6 +61,26 @@ export async function POST(req: Request) {
     }
 }
 
+
+export async function GET(req: Request) {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user?.businessId) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    try {
+        const business = await prisma.business.findUnique({
+            where: { id: session.user.businessId }
+        });
+
+        return NextResponse.json(business);
+    } catch (error) {
+        console.error("[BUSINESS_GET]", error);
+        return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    }
+}
+
 export async function PATCH(req: Request) {
     const session = await getServerSession(authOptions);
 
@@ -71,7 +91,7 @@ export async function PATCH(req: Request) {
     try {
         const body = await req.json();
         console.log("[BUSINESS_PATCH] Payload:", body);
-        const { name, taxId, legalName, taxRegime, taxZipCode, enableParentsModule, defaultPaymentDay, paymentGraceDays } = body;
+        const { name, taxId, legalName, taxRegime, taxZipCode, enableParentsModule, defaultPaymentDay, paymentGraceDays, paymentMode, enrollmentFee, enrollmentFeeMode } = body;
 
         // Basic validation could be improved
 
@@ -86,6 +106,12 @@ export async function PATCH(req: Request) {
                 ...(enableParentsModule !== undefined && { enableParentsModule }),
                 ...(defaultPaymentDay !== undefined && { defaultPaymentDay }),
                 ...(paymentGraceDays !== undefined && { paymentGraceDays }),
+                ...(paymentMode !== undefined && { paymentMode }),
+                ...(enrollmentFee !== undefined && { enrollmentFee }),
+                ...(paymentMode !== undefined && { paymentMode }),
+                ...(enrollmentFee !== undefined && { enrollmentFee }),
+                ...(enrollmentFeeMode !== undefined && { enrollmentFeeMode }),
+                ...(body.commissionOnInscription !== undefined && { commissionOnInscription: body.commissionOnInscription }),
             }
         });
 

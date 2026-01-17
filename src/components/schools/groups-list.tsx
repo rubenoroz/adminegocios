@@ -215,7 +215,7 @@ export function GroupsList() {
         setModalSaving(true);
 
         try {
-            // Update each schedule in the group
+            // Update each schedule in the group (teacher, classroom)
             const updatePromises = selectedGroup.scheduleIds.map(scheduleId =>
                 fetch(`/api/class-schedules/${scheduleId}`, {
                     method: "PATCH",
@@ -229,61 +229,79 @@ export function GroupsList() {
 
             await Promise.all(updatePromises);
 
-            // Update enrollments for each schedule - with conflict check
-            let hasConflicts = false;
-            let conflictMessages: string[] = [];
+            // Calculate which students were ADDED vs REMOVED
+            const originalStudentIds = selectedGroup.enrolledStudentIds;
+            const newStudentIds = modalSelectedStudents;
 
-            for (const scheduleId of selectedGroup.scheduleIds) {
-                const res = await fetch("/api/schedule-enrollments", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        scheduleId,
-                        studentIds: modalSelectedStudents,
-                    }),
-                });
+            const addedStudents = newStudentIds.filter(id => !originalStudentIds.includes(id));
+            const removedStudents = originalStudentIds.filter(id => !newStudentIds.includes(id));
 
-                if (res.status === 409) {
-                    const data = await res.json();
-                    if (data.hasConflicts) {
-                        hasConflicts = true;
-                        data.conflicts.forEach((c: any) => {
-                            conflictMessages.push(`${c.studentName} ya tiene "${c.conflictingCourse}" a las ${c.time}`);
-                        });
+            // DELETE removed students from ALL schedules in the group
+            if (removedStudents.length > 0) {
+                const deletePromises: Promise<Response>[] = [];
+                for (const scheduleId of selectedGroup.scheduleIds) {
+                    for (const studentId of removedStudents) {
+                        deletePromises.push(
+                            fetch(`/api/schedule-enrollments?scheduleId=${scheduleId}&studentId=${studentId}`, {
+                                method: "DELETE",
+                            })
+                        );
+                    }
+                }
+                await Promise.all(deletePromises);
+            }
+
+            // POST new enrollments (only for added students)
+            if (addedStudents.length > 0) {
+                let hasConflicts = false;
+                let conflictMessages: string[] = [];
+
+                for (const scheduleId of selectedGroup.scheduleIds) {
+                    const res = await fetch("/api/schedule-enrollments", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            scheduleId,
+                            studentIds: addedStudents,
+                        }),
+                    });
+
+                    if (res.status === 409) {
+                        const data = await res.json();
+                        if (data.hasConflicts) {
+                            hasConflicts = true;
+                            data.conflicts.forEach((c: any) => {
+                                conflictMessages.push(`${c.studentName} ya tiene "${c.conflictingCourse}" a las ${c.time}`);
+                            });
+                        }
+                    }
+                }
+
+                if (hasConflicts) {
+                    const shouldContinue = window.confirm(
+                        `⚠️ Conflictos de horario detectados:\n\n${conflictMessages.join('\n')}\n\n¿Desea inscribir de todos modos?`
+                    );
+
+                    if (shouldContinue) {
+                        for (const scheduleId of selectedGroup.scheduleIds) {
+                            await fetch("/api/schedule-enrollments", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    scheduleId,
+                                    studentIds: addedStudents,
+                                    skipConflictCheck: true,
+                                }),
+                            });
+                        }
+                        toast({ title: "Grupo actualizado", description: "Se guardaron los cambios con conflictos de horario." });
+                    } else {
+                        toast({ title: "Inscripción cancelada", description: "Solo se procesaron las desinscripciones." });
                     }
                 }
             }
 
-            if (hasConflicts) {
-                // Show conflict warning and ask if user wants to continue
-                const shouldContinue = window.confirm(
-                    `⚠️ Conflictos de horario detectados:\n\n${conflictMessages.join('\n')}\n\n¿Desea inscribir de todos modos?`
-                );
-
-                if (shouldContinue) {
-                    // Re-send with skipConflictCheck
-                    for (const scheduleId of selectedGroup.scheduleIds) {
-                        await fetch("/api/schedule-enrollments", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                scheduleId,
-                                studentIds: modalSelectedStudents,
-                                skipConflictCheck: true,
-                            }),
-                        });
-                    }
-                    toast({ title: "Grupo actualizado", description: "Se guardaron los cambios con conflictos de horario." });
-                } else {
-                    toast({ title: "Inscripción cancelada", description: "No se realizaron cambios en las inscripciones." });
-                    closeModal();
-                    fetchSchedules();
-                    return;
-                }
-            } else {
-                toast({ title: "Grupo actualizado", description: "Los cambios se guardaron correctamente." });
-            }
-
+            toast({ title: "Grupo actualizado", description: "Los cambios se guardaron correctamente." });
             closeModal();
             fetchSchedules(); // Refresh data
         } catch (error) {

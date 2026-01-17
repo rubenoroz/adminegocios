@@ -780,6 +780,67 @@ export function EmployeeList() {
                                     <div style={{ flex: 1, fontSize: '14px', color: '#475569' }}>
                                         <div style={{ marginBottom: '8px' }}>📧 {employee.email}</div>
                                         {employee.phone && <div>📱 {employee.phone}</div>}
+
+                                        {/* Financial Info */}
+                                        <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                            {/* Debug only - remove later or keep for check */}
+                                            {/* Debug indicator */}
+                                            {/* <div style={{fontSize: '10px', color: 'red'}}>DEBUG: Salary={employee.salary}</div> */}
+
+                                            {/* Base Salary / Hourly Rate */}
+                                            {(employee.salary) && (
+                                                <div style={{ fontSize: '14px', color: '#475569', fontWeight: '500' }}>
+                                                    💰 Sueldo Base: <span className="font-bold text-slate-800">${parseFloat(String(employee.salary)).toLocaleString('es-MX')}</span>
+                                                </div>
+                                            )}
+                                            {(employee.hourlyRate) && (
+                                                <div style={{ fontSize: '14px', color: '#475569', fontWeight: '500' }}>
+                                                    ⏱ Pago por Hora: <span className="font-bold text-slate-800">${parseFloat(String(employee.hourlyRate)).toLocaleString('es-MX')}</span>
+                                                </div>
+                                            )}
+
+                                            {/* Commissions Section - Force Show for Teachers/Commission Models */}
+                                            {(employee.role === 'TEACHER' || employee.paymentModel === 'COMMISSION' || employee.paymentModel === 'MIXED') && (
+                                                <div style={{
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    gap: '4px',
+                                                    marginTop: '4px',
+                                                    paddingTop: '8px',
+                                                    borderTop: '1px dashed #e2e8f0'
+                                                }}>
+                                                    {/* Monthly Commission (Paid) */}
+                                                    <div style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '6px',
+                                                        backgroundColor: ((employee as any).monthlyCommission || 0) > 0 ? '#d1fae5' : '#f1f5f9',
+                                                        padding: '4px 8px',
+                                                        borderRadius: '6px'
+                                                    }}>
+                                                        <TrendingUp size={14} color={((employee as any).monthlyCommission || 0) > 0 ? "#059669" : "#94a3b8"} />
+                                                        <span style={{ fontSize: '12px', color: ((employee as any).monthlyCommission || 0) > 0 ? '#059669' : '#64748b', fontWeight: 'bold' }}>
+                                                            Coms. Cobradas (Mes): ${((employee as any).monthlyCommission || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Projected Commission (Pending) */}
+                                                    <div style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '6px',
+                                                        backgroundColor: ((employee as any).projectedCommission || 0) > 0 ? '#e0e7ff' : '#f1f5f9',
+                                                        padding: '4px 8px',
+                                                        borderRadius: '6px'
+                                                    }}>
+                                                        <TrendingUp size={14} color={((employee as any).projectedCommission || 0) > 0 ? "#4338ca" : "#94a3b8"} />
+                                                        <span style={{ fontSize: '12px', color: ((employee as any).projectedCommission || 0) > 0 ? '#4338ca' : '#64748b', fontWeight: 'bold' }}>
+                                                            Proyectado (Pendiente): ${((employee as any).projectedCommission || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* PAGO + ACCIONES (misma fila) */}

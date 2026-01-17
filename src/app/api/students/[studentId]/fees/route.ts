@@ -59,6 +59,85 @@ export async function POST(
         }
 
         const paymentAmount = parseFloat(amount);
+        let finalTeacherId = teacherId || null;
+        let finalCommission: number | null = teacherCommission ? parseFloat(teacherCommission) : null;
+
+        // AUTOMATIC COMMISSION CALCULATION
+        // We attempt auto-calculation if no teacher is provided.
+        // The logic inside will determine if we SHOULD skip based on configuration (e.g. Inscriptions).
+        if (!finalTeacherId && !finalCommission) {
+            try {
+                // 1. Get Course ID and Template from Fee to check type
+                const feeRecord = await prisma.studentFee.findUnique({
+                    where: { id: feeId },
+                    select: {
+                        courseId: true,
+                        template: true, // To check if it's INSCRIPTION
+                        expectedTeacherId: true,
+                        expectedCommission: true
+                    }
+                });
+
+                // 2. Priority check: Use projected values if available
+                if (feeRecord?.expectedTeacherId && feeRecord?.expectedCommission) {
+                    finalTeacherId = feeRecord.expectedTeacherId;
+                    finalCommission = feeRecord.expectedCommission;
+                    console.log(`[PAYMENT] Using projected commission: Teacher=${finalTeacherId}, Amount=${finalCommission}`);
+                }
+                // 3. Fallback: Auto-calculate if no projection exists
+                else if (feeRecord?.courseId) {
+                    // 2. Find Student's Schedule for this course
+                    const enrollment = await prisma.scheduleEnrollment.findFirst({
+                        where: {
+                            studentId: studentId,
+                            schedule: {
+                                courseId: feeRecord.courseId
+                            }
+                        },
+                        include: {
+                            schedule: {
+                                include: {
+                                    teacher: {
+                                        include: {
+                                            employee: true // Need employee ID for StudentPayment
+                                        }
+                                    },
+                                    business: true // Need to check commissionOnInscription
+                                }
+                            }
+                        }
+                    });
+
+                    // 3. Check Global Config for Inscription
+                    const businessConfig = enrollment?.schedule?.business;
+
+                    // Safe access to template properties to avoid type errors
+                    const templateName = (feeRecord.template as any)?.name || (feeRecord.template as any)?.title || '';
+                    const templateType = (feeRecord.template as any)?.type || (feeRecord.template as any)?.category || '';
+
+                    const isInscription = templateType === 'INSCRIPTION' || templateName.toLowerCase().includes('inscri');
+
+                    // Force boolean check
+                    const allowInscriptionCommission = (businessConfig as any)?.commissionOnInscription === true;
+
+                    const shouldCalculate = !isInscription || (isInscription && allowInscriptionCommission);
+
+                    if (shouldCalculate) {
+                        // 4. If teacher found, calculate commission
+                        const teacherUser = enrollment?.schedule?.teacher;
+                        if (teacherUser?.employee && teacherUser.paymentModel === 'COMMISSION' && teacherUser.commissionPercentage) {
+                            finalTeacherId = teacherUser.employee.id;
+                            finalCommission = (paymentAmount * teacherUser.commissionPercentage) / 100;
+                            console.log(`[AUTO-COMMISSION] Teacher: ${teacherUser.name}, Rate: ${teacherUser.commissionPercentage}%, Amount: ${finalCommission}`);
+                        }
+                    } else {
+                        console.log(`[AUTO-COMMISSION] Skipped. Is Inscription: ${isInscription}, Config Allowed: ${allowInscriptionCommission}`);
+                    }
+                }
+            } catch (err) {
+                console.error("Error calculating auto-commission:", err);
+            }
+        }
 
         // 1. Create the payment record with commission data
         const payment = await prisma.studentPayment.create({
@@ -67,9 +146,9 @@ export async function POST(
                 amount: paymentAmount,
                 method,
                 // Link to teacher for commission tracking
-                teacherId: teacherId || null,
+                teacherId: finalTeacherId,
                 // Commission tracking
-                teacherCommission: teacherCommission ? parseFloat(teacherCommission) : null,
+                teacherCommission: finalCommission,
                 reserveAmount: reserveAmount ? parseFloat(reserveAmount) : null,
                 schoolAmount: schoolAmount ? parseFloat(schoolAmount) : null,
                 // Invoicing

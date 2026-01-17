@@ -11,7 +11,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { studentId, name, percentage, amount } = body;
+        const { studentId, name, percentage, amount, scheduleId } = body;
 
         if (!studentId || !name || (!percentage && !amount)) {
             return new NextResponse("Missing required fields", { status: 400 });
@@ -23,6 +23,7 @@ export async function POST(req: Request) {
                 name,
                 percentage: percentage ? parseFloat(percentage) : null,
                 amount: amount ? parseFloat(amount) : null,
+                scheduleId: scheduleId || null, // null = applies to all groups
                 active: true,
             },
         });
@@ -57,6 +58,17 @@ export async function GET(req: Request) {
                         matricula: true,
                     },
                 },
+                schedule: {
+                    select: {
+                        id: true,
+                        groupName: true,
+                        course: {
+                            select: {
+                                name: true
+                            }
+                        }
+                    }
+                }
             },
         });
 

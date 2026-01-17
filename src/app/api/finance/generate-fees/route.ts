@@ -42,7 +42,12 @@ export async function POST(req: NextRequest) {
                 student: true,
                 schedule: {
                     include: {
-                        course: true
+                        course: true,
+                        teacher: {
+                            include: {
+                                employee: true
+                            }
+                        }
                     }
                 }
             }
@@ -58,7 +63,15 @@ export async function POST(req: NextRequest) {
             },
             include: {
                 student: true,
-                course: true
+                course: {
+                    include: {
+                        teacher: {
+                            include: {
+                                employee: true
+                            }
+                        }
+                    }
+                }
             }
         });
 
@@ -115,13 +128,25 @@ export async function POST(req: NextRequest) {
 
             if (existingFeeKeys.has(feeKey)) continue;
 
+            let expectedTeacherId = null;
+            let expectedCommission = null;
+
+            // Calculate Expected Commission (Projected)
+            const teacherUser = enrollment.schedule.teacher;
+            if (teacherUser?.employee && teacherUser.paymentModel === 'COMMISSION' && teacherUser.commissionPercentage) {
+                expectedTeacherId = teacherUser.employee.id;
+                expectedCommission = ((course.price || 0) * teacherUser.commissionPercentage) / 100;
+            }
+
             feesToCreate.push({
                 studentId: enrollment.studentId,
                 title: feeTitle,
                 amount: course.price || 0,
                 dueDate,
                 status: 'PENDING',
-                courseId: course.id
+                courseId: course.id,
+                expectedTeacherId,
+                expectedCommission
             });
         }
 
@@ -136,13 +161,25 @@ export async function POST(req: NextRequest) {
 
             if (existingFeeKeys.has(feeKey)) continue;
 
+            let expectedTeacherId = null;
+            let expectedCommission = null;
+
+            // Calculate Expected Commission (Projected)
+            const teacherUser = enrollment.course.teacher;
+            if (teacherUser?.employee && teacherUser.paymentModel === 'COMMISSION' && teacherUser.commissionPercentage) {
+                expectedTeacherId = teacherUser.employee.id;
+                expectedCommission = ((enrollment.course.price || 0) * teacherUser.commissionPercentage) / 100;
+            }
+
             feesToCreate.push({
                 studentId: enrollment.studentId,
                 title: feeTitle,
                 amount: enrollment.course.price || 0,
                 dueDate,
                 status: 'PENDING',
-                courseId: enrollment.course.id
+                courseId: enrollment.course.id,
+                expectedTeacherId,
+                expectedCommission
             });
         }
 

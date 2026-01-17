@@ -20,6 +20,10 @@ interface BusinessFormProps {
         enableParentsModule?: boolean;
         defaultPaymentDay?: number;
         paymentGraceDays?: number;
+        paymentMode?: string;
+        enrollmentFee?: number;
+        enrollmentFeeMode?: string;
+        commissionOnInscription?: boolean; // New field
     };
     lang: string;
 }
@@ -42,7 +46,11 @@ export function BusinessForm({ business, lang }: BusinessFormProps) {
         taxZipCode: business.taxZipCode || "",
         enableParentsModule: business.enableParentsModule ?? true,
         defaultPaymentDay: business.defaultPaymentDay ?? 1,
-        paymentGraceDays: business.paymentGraceDays ?? 5
+        paymentGraceDays: business.paymentGraceDays ?? 5,
+        paymentMode: business.paymentMode ?? "FIXED_DAY",
+        enrollmentFee: business.enrollmentFee ?? 0,
+        enrollmentFeeMode: business.enrollmentFeeMode ?? "CALENDAR_YEAR",
+        commissionOnInscription: business.commissionOnInscription ?? false
     });
 
     const [isDirty, setIsDirty] = useState(false);
@@ -56,7 +64,11 @@ export function BusinessForm({ business, lang }: BusinessFormProps) {
             formData.taxZipCode !== (business.taxZipCode || "") ||
             formData.enableParentsModule !== (business.enableParentsModule ?? true) ||
             formData.defaultPaymentDay !== (business.defaultPaymentDay ?? 1) ||
-            formData.paymentGraceDays !== (business.paymentGraceDays ?? 5);
+            formData.paymentGraceDays !== (business.paymentGraceDays ?? 5) ||
+            formData.paymentMode !== (business.paymentMode ?? "FIXED_DAY") ||
+            formData.enrollmentFee !== (business.enrollmentFee ?? 0) ||
+            formData.enrollmentFeeMode !== (business.enrollmentFeeMode ?? "CALENDAR_YEAR") ||
+            formData.commissionOnInscription !== (business.commissionOnInscription ?? false);
         setIsDirty(isChanged);
     }, [formData, business]);
 
@@ -248,12 +260,143 @@ export function BusinessForm({ business, lang }: BusinessFormProps) {
                             </div>
 
                             <div className="mt-3 p-3 bg-white rounded-lg text-sm text-purple-700">
-                                📅 Los pagos se marcan vencidos a partir del día <strong>{Math.min(28, formData.defaultPaymentDay + formData.paymentGraceDays)}</strong> de cada mes.
+                                {formData.paymentMode === "FIXED_DAY" ? (
+                                    <>📅 Los pagos se marcan vencidos a partir del día <strong>{Math.min(28, formData.defaultPaymentDay + formData.paymentGraceDays)}</strong> de cada mes.</>
+                                ) : (
+                                    <>📅 Los pagos vencen en la fecha de inscripción (o el próximo día de clase) + <strong>{formData.paymentGraceDays}</strong> días de gracia.</>
+                                )}
+                            </div>
+
+                            {/* Payment Mode Selector */}
+                            <div className="mt-4 pt-4 border-t border-purple-200">
+                                <label className="text-sm font-medium text-slate-700 mb-3 block">Modo de Cobro</label>
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-3 p-3 bg-white rounded-lg cursor-pointer border-2 transition-colors"
+                                        style={{ borderColor: formData.paymentMode === "FIXED_DAY" ? "#8b5cf6" : "transparent" }}>
+                                        <input
+                                            type="radio"
+                                            name="paymentMode"
+                                            value="FIXED_DAY"
+                                            checked={formData.paymentMode === "FIXED_DAY"}
+                                            onChange={() => setFormData(prev => ({ ...prev, paymentMode: "FIXED_DAY" }))}
+                                            className="accent-purple-600"
+                                        />
+                                        <div>
+                                            <p className="font-medium text-slate-800">Día Fijo</p>
+                                            <p className="text-xs text-slate-500">Todos los alumnos pagan el mismo día del mes</p>
+                                        </div>
+                                    </label>
+                                    <label className="flex items-center gap-3 p-3 bg-white rounded-lg cursor-pointer border-2 transition-colors"
+                                        style={{ borderColor: formData.paymentMode === "ENROLLMENT_DATE" ? "#8b5cf6" : "transparent" }}>
+                                        <input
+                                            type="radio"
+                                            name="paymentMode"
+                                            value="ENROLLMENT_DATE"
+                                            checked={formData.paymentMode === "ENROLLMENT_DATE"}
+                                            onChange={() => setFormData(prev => ({ ...prev, paymentMode: "ENROLLMENT_DATE" }))}
+                                            className="accent-purple-600"
+                                        />
+                                        <div>
+                                            <p className="font-medium text-slate-800">Fecha de Inscripción</p>
+                                            <p className="text-xs text-slate-500">Cada alumno paga en su fecha de inscripción (o el próximo día de clase)</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Enrollment Fee Section */}
+                        <div>
+                            <div className="flex items-center gap-2 mb-4">
+                                <GraduationCap className="h-5 w-5 text-purple-500" />
+                                <h4 className="text-lg font-semibold text-slate-800">Cuota de Inscripción</h4>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                        Monto de Inscripción (por defecto)
+                                    </label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500">$</span>
+                                        <Input
+                                            type="number"
+                                            placeholder="0.00"
+                                            value={formData.enrollmentFee}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, enrollmentFee: parseFloat(e.target.value) || 0 }))}
+                                            className="pl-7 bg-white border-slate-200 focus:ring-purple-500"
+                                        />
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-1">
+                                        Este monto se puede personalizar por alumno
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        ¿Cuándo se cobra la inscripción?
+                                    </label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <label
+                                            className="flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-purple-50"
+                                            style={{ borderColor: formData.enrollmentFeeMode === "CALENDAR_YEAR" ? "#8b5cf6" : "transparent" }}>
+                                            <input
+                                                type="radio"
+                                                name="enrollmentFeeMode"
+                                                value="CALENDAR_YEAR"
+                                                checked={formData.enrollmentFeeMode === "CALENDAR_YEAR"}
+                                                onChange={() => setFormData(prev => ({ ...prev, enrollmentFeeMode: "CALENDAR_YEAR" }))}
+                                                className="w-4 h-4 text-purple-600"
+                                            />
+                                            <div>
+                                                <p className="font-medium text-slate-800">Año Calendario</p>
+                                                <p className="text-xs text-slate-500">Se cobra al inscribirse y cada enero</p>
+                                            </div>
+                                        </label>
+                                        <label
+                                            className="flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-purple-50"
+                                            style={{ borderColor: formData.enrollmentFeeMode === "EVERY_12_MONTHS" ? "#8b5cf6" : "transparent" }}>
+                                            <input
+                                                type="radio"
+                                                name="enrollmentFeeMode"
+                                                value="EVERY_12_MONTHS"
+                                                checked={formData.enrollmentFeeMode === "EVERY_12_MONTHS"}
+                                                onChange={() => setFormData(prev => ({ ...prev, enrollmentFeeMode: "EVERY_12_MONTHS" }))}
+                                                className="w-4 h-4 text-purple-600"
+                                            />
+                                            <div>
+                                                <p className="font-medium text-slate-800">Cada 12 Meses</p>
+                                                <p className="text-xs text-slate-500">Se cobra al inscribirse y cada 12 meses desde esa fecha</p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
+
+            {/* Commissions Settings */}
+            <div style={{
+                marginTop: '16px',
+                paddingTop: '24px',
+                paddingBottom: '24px',
+                borderTop: '1px solid #f1f5f9'
+            }}>
+                <h3 className="text-sm font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                    <Switch
+                        checked={formData.commissionOnInscription}
+                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, commissionOnInscription: checked }))}
+                    />
+                    <span>Generar Comisión por Inscripción</span>
+                </h3>
+                <p className="text-xs text-slate-500 pl-12 -mt-2 max-w-2xl">
+                    Si se activa, el sistema pre-seleccionará automáticamente al maestro del curso al pagar una inscripción (si el maestro tiene comisiones configuradas).
+                    <br />
+                    Si se desactiva, el campo de maestro aparecerá vacío ("Sin comisión") por defecto, permitiendo asignación manual opcional.
+                </p>
+            </div>
 
             {/* Unified Footer Actions */}
             <div className="flex items-center justify-between w-full pt-10 mt-4 border-t border-slate-100">

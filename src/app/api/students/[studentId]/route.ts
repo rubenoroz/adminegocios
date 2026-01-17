@@ -29,7 +29,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ studen
 
         const { studentId } = await params;
         const body = await req.json();
-        const { status, firstName, lastName, email, matricula, guardianName, guardianPhone, branchIds } = body;
+        const { status, firstName, lastName, email, matricula, address, guardianName, guardianPhone, branchIds, enrollmentDate, enrollmentFeeOverride } = body;
 
         // Build update data dynamically
         const updateData: any = {};
@@ -38,8 +38,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ studen
         if (lastName !== undefined) updateData.lastName = lastName;
         if (email !== undefined) updateData.email = email;
         if (matricula !== undefined) updateData.matricula = matricula;
+        if (address !== undefined) updateData.address = address;
         if (guardianName !== undefined) updateData.guardianName = guardianName;
         if (guardianPhone !== undefined) updateData.guardianPhone = guardianPhone;
+        if (enrollmentDate !== undefined) updateData.enrollmentDate = enrollmentDate ? new Date(enrollmentDate) : null;
+        if (enrollmentFeeOverride !== undefined) updateData.enrollmentFeeOverride = enrollmentFeeOverride;
 
         // Handle branch connections (many-to-many)
         if (branchIds !== undefined) {

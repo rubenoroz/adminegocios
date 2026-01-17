@@ -45,6 +45,14 @@ interface Scholarship {
     percentage: number | null;
     amount: number | null;
     active: boolean;
+    scheduleId: string | null;
+    schedule?: {
+        id: string;
+        groupName: string;
+        course?: {
+            name: string;
+        };
+    } | null;
     student: {
         id: string;
         firstName: string;
@@ -58,6 +66,16 @@ interface Student {
     firstName: string;
     lastName: string;
     matricula: string;
+    scheduleEnrollments?: {
+        scheduleId: string;
+        schedule: {
+            id: string;
+            groupName: string;
+            course?: {
+                name: string;
+            };
+        };
+    }[];
 }
 
 export function ScholarshipManager() {
@@ -69,9 +87,14 @@ export function ScholarshipManager() {
 
     // Form states
     const [selectedStudent, setSelectedStudent] = useState("");
+    const [selectedSchedule, setSelectedSchedule] = useState("");
     const [scholarshipName, setScholarshipName] = useState("");
     const [discountType, setDiscountType] = useState<"percentage" | "amount">("percentage");
     const [discountValue, setDiscountValue] = useState("");
+
+    // Get enrollments for selected student
+    const selectedStudentData = students.find(s => s.id === selectedStudent);
+    const studentEnrollments = selectedStudentData?.scheduleEnrollments || [];
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
@@ -95,7 +118,8 @@ export function ScholarshipManager() {
 
     const fetchStudents = async () => {
         try {
-            const res = await fetch("/api/students");
+            // Fetch enhanced students with enrollments
+            const res = await fetch("/api/students/enhanced");
             if (res.ok) {
                 const data = await res.json();
                 setStudents(data);
@@ -121,6 +145,7 @@ export function ScholarshipManager() {
             const payload: any = {
                 studentId: selectedStudent,
                 name: scholarshipName,
+                scheduleId: selectedSchedule || null, // null = applies to all groups
             };
 
             if (discountType === "percentage") {
@@ -190,6 +215,7 @@ export function ScholarshipManager() {
 
     const resetForm = () => {
         setSelectedStudent("");
+        setSelectedSchedule("");
         setScholarshipName("");
         setDiscountType("percentage");
         setDiscountValue("");
@@ -229,7 +255,7 @@ export function ScholarshipManager() {
                         <div className="space-y-4 py-4">
                             <div className="space-y-2">
                                 <Label>Estudiante</Label>
-                                <Select value={selectedStudent} onValueChange={setSelectedStudent}>
+                                <Select value={selectedStudent} onValueChange={(val) => { setSelectedStudent(val); setSelectedSchedule(""); }}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Selecciona un estudiante" />
                                     </SelectTrigger>
@@ -242,6 +268,29 @@ export function ScholarshipManager() {
                                     </SelectContent>
                                 </Select>
                             </div>
+
+                            {selectedStudent && studentEnrollments.length > 0 && (
+                                <div className="space-y-2">
+                                    <Label>Grupo (opcional - déjalo vacío para aplicar a todos)</Label>
+                                    <Select value={selectedSchedule} onValueChange={setSelectedSchedule}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Todos los grupos" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="">Todos los grupos</SelectItem>
+                                            {studentEnrollments.map((enrollment: any) => (
+                                                <SelectItem key={enrollment.scheduleId} value={enrollment.scheduleId}>
+                                                    {enrollment.schedule?.groupName || 'Grupo'} - {enrollment.schedule?.course?.name || 'Sin curso'}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-xs text-muted-foreground">
+                                        Si seleccionas un grupo, la beca solo aplica a ese grupo específico.
+                                    </p>
+                                </div>
+                            )}
+
                             <div className="space-y-2">
                                 <Label>Nombre de la Beca</Label>
                                 <Input
@@ -300,6 +349,7 @@ export function ScholarshipManager() {
                             <TableRow>
                                 <TableHead>Estudiante</TableHead>
                                 <TableHead>Matrícula</TableHead>
+                                <TableHead>Grupo</TableHead>
                                 <TableHead>Nombre de Beca</TableHead>
                                 <TableHead>Descuento</TableHead>
                                 <TableHead>Estado</TableHead>
@@ -316,6 +366,15 @@ export function ScholarshipManager() {
                                         </div>
                                     </TableCell>
                                     <TableCell>{scholarship.student.matricula}</TableCell>
+                                    <TableCell>
+                                        {scholarship.schedule ? (
+                                            <Badge variant="outline" className="text-xs">
+                                                {scholarship.schedule.groupName || 'Grupo'} - {scholarship.schedule.course?.name || ''}
+                                            </Badge>
+                                        ) : (
+                                            <span className="text-muted-foreground text-xs">Todos los grupos</span>
+                                        )}
+                                    </TableCell>
                                     <TableCell>{scholarship.name}</TableCell>
                                     <TableCell className="font-semibold text-green-600">
                                         {getDiscountDisplay(scholarship)}
@@ -340,7 +399,7 @@ export function ScholarshipManager() {
                             ))}
                             {scholarships.length === 0 && !loading && (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                                         No hay becas asignadas aún.
                                     </TableCell>
                                 </TableRow>

@@ -101,14 +101,22 @@ export function StudentPaymentModal({
     // Billing Profiles
     const [billingProfiles, setBillingProfiles] = useState<any[]>([]);
 
+    // Configuration
+    const [businessConfig, setBusinessConfig] = useState<any>(null);
+
+    // Fetch business config
+    useEffect(() => {
+        fetch('/api/business')
+            .then(res => res.json())
+            .then(data => setBusinessConfig(data))
+            .catch(err => console.error("Failed to load business config", err));
+    }, []);
+
     // Cancellation
     const [cancellingFeeId, setCancellingFeeId] = useState<string | null>(null);
     const [cancellationReason, setCancellationReason] = useState("");
     const [customReason, setCustomReason] = useState("");
     const [cancelling, setCancelling] = useState(false);
-
-
-    // Fetch billing profiles when modal opens
     useEffect(() => {
         if (isOpen && studentId) {
             fetchBillingProfiles();
@@ -414,16 +422,32 @@ export function StudentPaymentModal({
                                                                     setCancellingFeeId(null); // Clear cancel mode
                                                                     setPaymentAmount(balance.toString());
 
-                                                                    // Auto-detect teacher from course
-                                                                    const courseTeacher = fee.course?.teacher;
-                                                                    if (courseTeacher) {
-                                                                        // Find employee with same email that has commission
-                                                                        const matchingEmployee = teachers.find(
-                                                                            t => t.email === courseTeacher.email
-                                                                        );
-                                                                        if (matchingEmployee) {
-                                                                            setSelectedTeacherId(matchingEmployee.id);
+                                                                    // Logic for auto-detecting teacher
+                                                                    const title = fee.title.toLowerCase();
+                                                                    const isInscription = title.includes("inscripción") || title.includes("inscription") || title.includes("matrícula");
+
+                                                                    // Check global config for inscriptions
+                                                                    // Default to FALSE if config not loaded yet, or strictly respect the setting
+                                                                    const allowAutoSelect = !isInscription || (businessConfig?.commissionOnInscription === true);
+
+                                                                    if (allowAutoSelect) {
+                                                                        const courseTeacher = fee.course?.teacher;
+                                                                        if (courseTeacher) {
+                                                                            // Find employee with same email that has commission
+                                                                            const matchingEmployee = teachers.find(
+                                                                                t => t.email === courseTeacher.email
+                                                                            );
+                                                                            if (matchingEmployee) {
+                                                                                setSelectedTeacherId(matchingEmployee.id);
+                                                                            } else {
+                                                                                setSelectedTeacherId(""); // Reset if no match found
+                                                                            }
+                                                                        } else {
+                                                                            setSelectedTeacherId(""); // Reset if no teacher
                                                                         }
+                                                                    } else {
+                                                                        // If it's inscription and config says NO, ensure field is empty
+                                                                        setSelectedTeacherId("");
                                                                     }
                                                                 }}
                                                             >

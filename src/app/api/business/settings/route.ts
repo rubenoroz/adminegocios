@@ -22,6 +22,8 @@ export async function GET() {
                 paymentGraceDays: true,
                 expenseReservePercentage: true,
                 benefitsReservePercentage: true,
+                enrollmentFee: true,
+                enrollmentFeeMode: true,
             }
         });
 

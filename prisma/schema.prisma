@@ -161,6 +161,12 @@ model Business {
   // School payment settings
   defaultPaymentDay  Int  @default(1)  // Default day of month for student payments (1-28)
   paymentGraceDays   Int  @default(5)  // Days after payment day before marking as overdue
+  paymentMode        String  @default("FIXED_DAY") // FIXED_DAY, ENROLLMENT_DATE
+  
+  // Enrollment fee settings
+  enrollmentFee         Float   @default(0)  // Default enrollment/inscription fee
+  enrollmentFeeMode     String  @default("CALENDAR_YEAR")  // CALENDAR_YEAR (charge on new year) or EVERY_12_MONTHS (charge 12 months after enrollment)
+  commissionOnInscription Boolean @default(false) // If true, enrollment fees generate commission for teachers
   
   // School feature toggles
   enableParentsModule  Boolean  @default(true)  // Show/hide Parents section (for schools with minors)
@@ -450,7 +456,8 @@ model Employee {
   branches    Branch[]
   
   scheduledPayments ScheduledPayment[]
-  classPayments     StudentPayment[]  // Payments where this employee was the teacher
+  commissionPayments StudentPayment[]  // Payments where this employee was the teacher (commission)
+  expectedCommissions StudentFee[] @relation("FeeExpectedTeacher") // Fees where this employee is projected to receive commission
   commissionSettlements CommissionSettlement[]  // Liquidaciones de comisiones
   appointments Appointment[]  // Citas asignadas a este empleado
   authorizedCourses CourseTeacher[]  // Courses this teacher is authorized to teach
@@ -633,6 +640,10 @@ model Student {
   paymentDay      Int?      // Individual payment day (1-28), overrides business default
   enrollmentDate  DateTime  @default(now())  // When student enrolled
   
+  // Enrollment fee (inscripción)
+  enrollmentFeeOverride   Float?     // Override business default (null = use default)
+  lastEnrollmentFeeDate   DateTime?  // Last time enrollment fee was charged (for 12-month mode)
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
@@ -677,6 +688,7 @@ model Course {
   notes       StudentNote[]
   schedules   ClassSchedule[]
   fees        StudentFee[]
+  scholarships Scholarship[]
   
   @@index([businessId])
   @@index([teacherId])
@@ -858,6 +870,14 @@ model Scholarship {
   studentId   String
   student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   
+  // Optional: if null, applies to ALL groups; if set, only applies to this specific group
+  scheduleId  String?
+  schedule    ClassSchedule?  @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  
+  // Legacy: courseId (can be removed later, scheduleId is more granular)
+  courseId    String?
+  course      Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  
   active      Boolean  @default(true)
 }
 
@@ -879,6 +899,11 @@ model StudentFee {
   
   originalAmount  Float? // Before discount
   discountApplied Float  @default(0)
+  
+  // Proyección de Comisión (Snapshot al crear la cuota)
+  expectedTeacherId String?
+  expectedTeacher   Employee? @relation("FeeExpectedTeacher", fields: [expectedTeacherId], references: [id])
+  expectedCommission Float?
   
   // Cancellation tracking
   cancelledAt       DateTime?
@@ -1036,6 +1061,9 @@ model ClassSchedule {
   
   // Students enrolled in this specific schedule
   enrollments ScheduleEnrollment[]
+  
+  // Scholarships that apply to this specific group
+  scholarships Scholarship[]
   
   // Cancellations/Exceptions for recurring schedules
   cancellations ClassScheduleCancellation[]

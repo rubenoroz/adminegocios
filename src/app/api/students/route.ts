@@ -78,7 +78,7 @@ export async function POST(req: Request) {
 
         const body = await req.json();
         // branchIds should be an array of strings
-        const { firstName, lastName, matricula, email, phone, businessId, branchIds } = body;
+        const { firstName, lastName, matricula, email, phone, address, guardianName, guardianPhone, businessId, branchIds } = body;
 
         if (!firstName || !lastName || !matricula || !businessId) {
             return new NextResponse("Missing required fields", { status: 400 });
@@ -110,6 +110,7 @@ export async function POST(req: Request) {
                 matricula,
                 email,
                 phone,
+                address,
                 businessId,
                 branches: {
                     connect: connectedBranches

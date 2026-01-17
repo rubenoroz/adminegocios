@@ -41,6 +41,11 @@ export async function GET(req: Request) {
             ];
         }
 
+        // Date range for current month commissions
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
         const employees = await prisma.employee.findMany({
             where: whereClause,
             orderBy: [
@@ -51,14 +56,47 @@ export async function GET(req: Request) {
                 branches: true,
                 user: {
                     select: { id: true, name: true, email: true }
+                },
+                // Include payments where this employee is the teacher (commission)
+                commissionPayments: {
+                    where: {
+                        date: {
+                            gte: firstDay,
+                            lte: lastDay
+                        },
+                        teacherCommission: { gt: 0 }
+                    },
+                    select: {
+                        teacherCommission: true
+                    }
+                },
+                // Include projected commissions (Pending Fees)
+                expectedCommissions: {
+                    where: {
+                        dueDate: {
+                            gte: firstDay,
+                            lte: lastDay
+                        },
+                        status: 'PENDING',
+                        expectedCommission: { gt: 0 }
+                    },
+                    select: {
+                        expectedCommission: true
+                    }
                 }
             }
         });
 
-        const employeesWithNames = employees.map(emp => ({
-            ...emp,
-            name: `${emp.firstName} ${emp.lastName}`
-        }));
+        const employeesWithNames = employees.map((emp: any) => {
+            const monthlyCommission = emp.commissionPayments.reduce((sum: number, p: any) => sum + (p.teacherCommission || 0), 0);
+            const projectedCommission = emp.expectedCommissions.reduce((sum: number, p: any) => sum + (p.expectedCommission || 0), 0);
+            return {
+                ...emp,
+                name: `${emp.firstName} ${emp.lastName}`,
+                monthlyCommission, // New calculated field
+                projectedCommission // Future Commission
+            };
+        });
 
         return NextResponse.json(employeesWithNames);
     } catch (error) {
