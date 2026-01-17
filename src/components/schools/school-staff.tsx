@@ -6,7 +6,7 @@ import { Plus, Users, Briefcase, GraduationCap, Edit, Trash2, Key, X, Check, Tre
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useBranch } from "@/context/branch-context";
-import { toast } from "sonner";
+
 import { useToast } from "@/components/ui/use-toast";
 import { ModernKpiCard } from "@/components/ui/modern-kpi-card";
 import { ModernFilterBar } from "@/components/ui/modern-filter-bar";
@@ -42,24 +42,32 @@ export function SchoolStaff() {
     // Settlement State
     const [settlingEmployee, setSettlingEmployee] = useState<any>(null);
     const [isSettling, setIsSettling] = useState(false);
+    const [includeSalary, setIncludeSalary] = useState(false);
+    const [includeCommissions, setIncludeCommissions] = useState(true);
 
     const handleSettleCommission = async () => {
         if (!settlingEmployee) return;
+        if (!includeSalary && !includeCommissions) return;
 
         setIsSettling(true);
         try {
             const res = await fetch(`/api/employees/${settlingEmployee.id}/settle`, {
-                method: 'POST'
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    paySalary: includeSalary,
+                    payCommissions: includeCommissions
+                })
             });
             const data = await res.json();
 
             if (!res.ok) throw new Error(data.error);
 
-            toast.success("Comisiones liquidadas exitosamente");
+            toast({ title: "Pago registrado exitosamente" });
             setSettlingEmployee(null);
             fetchEmployees();
         } catch (error: any) {
-            toast.error(error.message || "Error al liquidar comisiones");
+            toast({ title: error.message || "Error al registrar pago", variant: "destructive" });
         } finally {
             setIsSettling(false);
         }
@@ -933,44 +941,172 @@ export function SchoolStaff() {
             </Dialog >
 
             {/* Settlement Confirmation Dialog */}
-            <Dialog open={!!settlingEmployee} onOpenChange={(open) => !open && setSettlingEmployee(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Liquidar Comisiones</DialogTitle>
-                        <DialogDescription>
-                            ¿Estás seguro de que deseas liquidar las comisiones pendientes de <strong>{settlingEmployee?.firstName} {settlingEmployee?.lastName}</strong>?
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="py-4">
-                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                            <p className="text-sm text-slate-500 mb-1">Monto a liquidar:</p>
-                            <p className="text-2xl font-bold text-green-600">
-                                ${(settlingEmployee?.monthlyCommission || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+            <Dialog open={!!settlingEmployee} onOpenChange={(open) => { if (!open) { setSettlingEmployee(null); setIncludeSalary(false); setIncludeCommissions(true); } }}>
+                <DialogContent className="p-0 border-0 bg-transparent shadow-none max-w-sm sm:max-w-md">
+                    <div style={{
+                        backgroundColor: '#f8fafc',
+                        borderRadius: '24px',
+                        overflow: 'hidden',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}>
+                        {/* Modern Header with Gradient */}
+                        <div style={{
+                            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                            padding: '32px 24px',
+                            textAlign: 'center',
+                            color: 'white',
+                            position: 'relative'
+                        }}>
+                            <div style={{
+                                backgroundColor: 'rgba(255,255,255,0.1)',
+                                width: '64px', height: '64px', borderRadius: '20px',
+                                margin: '0 auto 16px auto',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                backdropFilter: 'blur(4px)',
+                                border: '1px solid rgba(255,255,255,0.1)'
+                            }}>
+                                <Briefcase size={32} color="#34d399" />
+                            </div>
+                            <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '6px', color: 'white', lineHeight: '1.2' }}>Registrar Pago</h2>
+                            <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
+                                Selecciona los conceptos a pagar a<br />
+                                <span style={{ color: 'white', fontWeight: 600, fontSize: '16px' }}>{settlingEmployee?.firstName} {settlingEmployee?.lastName}</span>
                             </p>
                         </div>
-                        <p className="text-xs text-slate-400 mt-2">
-                            Esta acción registrará un pago único por el total acumulado y reiniciará el contador de comisiones del mes.
-                        </p>
-                    </div>
 
-                    <DialogFooter>
-                        <button
-                            onClick={() => setSettlingEmployee(null)}
-                            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            onClick={handleSettleCommission}
-                            disabled={isSettling}
-                            className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50"
-                        >
-                            {isSettling ? "Procesando..." : "Confirmar Liquidación"}
-                        </button>
-                    </DialogFooter>
+                        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {/* Option: Salary */}
+                            {(settlingEmployee?.salary || 0) > 0 && (
+                                <div
+                                    onClick={() => setIncludeSalary(!includeSalary)}
+                                    style={{
+                                        backgroundColor: 'white',
+                                        border: includeSalary ? '2px solid #3b82f6' : '2px solid #e2e8f0',
+                                        padding: '16px', borderRadius: '16px',
+                                        cursor: 'pointer', transition: 'all 0.2s',
+                                        boxShadow: includeSalary ? '0 4px 12px rgba(59, 130, 246, 0.15)' : 'none',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                        opacity: 1
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                        <div style={{
+                                            width: '40px', height: '40px', borderRadius: '50%',
+                                            backgroundColor: includeSalary ? '#eff6ff' : '#f1f5f9',
+                                            color: includeSalary ? '#2563eb' : '#94a3b8',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                        }}>
+                                            <Briefcase size={20} />
+                                        </div>
+                                        <div>
+                                            <p style={{ fontWeight: 700, color: '#1e293b', fontSize: '15px', margin: 0 }}>Sueldo Fijo</p>
+                                            <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>Nómina Base</p>
+                                        </div>
+                                    </div>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <p style={{ fontWeight: 800, fontSize: '16px', color: includeSalary ? '#2563eb' : '#94a3b8', margin: 0 }}>
+                                            ${parseFloat(String(settlingEmployee?.salary || 0)).toLocaleString('es-MX')}
+                                        </p>
+                                        {includeSalary && <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}><Check size={16} color="#3b82f6" /></div>}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Option: Commissions */}
+                            {((settlingEmployee?.monthlyCommission || 0) > 0) && (
+                                <div
+                                    onClick={() => setIncludeCommissions(!includeCommissions)}
+                                    style={{
+                                        backgroundColor: 'white',
+                                        border: includeCommissions ? '2px solid #10b981' : '2px solid #e2e8f0',
+                                        padding: '16px', borderRadius: '16px',
+                                        cursor: 'pointer', transition: 'all 0.2s',
+                                        boxShadow: includeCommissions ? '0 4px 12px rgba(16, 185, 129, 0.15)' : 'none',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                        opacity: 1
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                        <div style={{
+                                            width: '40px', height: '40px', borderRadius: '50%',
+                                            backgroundColor: includeCommissions ? '#ecfdf5' : '#f1f5f9',
+                                            color: includeCommissions ? '#059669' : '#94a3b8',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                        }}>
+                                            <TrendingUp size={20} />
+                                        </div>
+                                        <div>
+                                            <p style={{ fontWeight: 700, color: '#1e293b', fontSize: '15px', margin: 0 }}>Comisiones</p>
+                                            <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>Acumulado del Mes</p>
+                                        </div>
+                                    </div>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <p style={{ fontWeight: 800, fontSize: '16px', color: includeCommissions ? '#059669' : '#94a3b8', margin: 0 }}>
+                                            ${(settlingEmployee?.monthlyCommission || 0).toLocaleString('es-MX')}
+                                        </p>
+                                        {includeCommissions && <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}><Check size={16} color="#10b981" /></div>}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Total Section */}
+                            <div style={{
+                                marginTop: '8px', padding: '20px', borderRadius: '16px',
+                                backgroundColor: '#0f172a', color: 'white',
+                                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                                border: '1px solid rgba(255,255,255,0.1)'
+                            }}>
+                                <div>
+                                    <p style={{ color: '#94a3b8', fontSize: '11px', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.5px', marginBottom: '4px' }}>Total a Pagar</p>
+                                    <p style={{ fontSize: '13px', color: '#cbd5e1' }}>
+                                        {[(includeSalary ? 'Sueldo' : ''), (includeCommissions ? 'Comisiones' : '')].filter(Boolean).join(' + ') || 'Nada seleccionado'}
+                                    </p>
+                                </div>
+                                <p style={{ fontSize: '28px', fontWeight: 800 }}>
+                                    ${(
+                                        (includeSalary ? parseFloat(String(settlingEmployee?.salary || 0)) : 0) +
+                                        (includeCommissions ? (settlingEmployee?.monthlyCommission || 0) : 0)
+                                    ).toLocaleString('es-MX')}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div style={{ padding: '24px', backgroundColor: 'white', borderTop: '1px solid #f1f5f9', display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={() => { setSettlingEmployee(null); }}
+                                style={{
+                                    flex: 1, padding: '14px', borderRadius: '12px',
+                                    backgroundColor: '#f1f5f9', color: '#64748b', fontWeight: 700,
+                                    border: 'none', cursor: 'pointer', fontSize: '14px',
+                                    transition: 'background 0.2s'
+                                }}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleSettleCommission}
+                                disabled={isSettling || (!includeSalary && !includeCommissions)}
+                                style={{
+                                    flex: 2, padding: '14px', borderRadius: '12px',
+                                    background: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)',
+                                    color: 'white', fontWeight: 700,
+                                    border: 'none', cursor: (isSettling || (!includeSalary && !includeCommissions)) ? 'not-allowed' : 'pointer', fontSize: '14px',
+                                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.25)',
+                                    opacity: (isSettling || (!includeSalary && !includeCommissions)) ? 0.6 : 1,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                    transition: 'transform 0.1s'
+                                }}
+                            >
+                                {isSettling ? "Procesando..." : "Confirmar Pago"} <Check size={18} />
+                            </button>
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
-        </div >
+        </div>
     );
 }

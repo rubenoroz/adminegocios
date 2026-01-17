@@ -52,72 +52,62 @@ export async function POST(req: Request) {
             }
         });
 
-        console.log(`[PAYMENT_DEBUG] Fee Data found:`, {
-            hasCourse: !!feeData?.course,
-            courseId: feeData?.course?.id,
-            courseName: feeData?.course?.name
-        });
+        // Commission Logic: Prefer the explicitly stored "expected" values on the Fee
+        // This ensures that "Projected" matches "Paid".
+        if (feeData) {
+            // Check if we have an expected teacher linked
+            if (feeData.expectedTeacherId) {
+                teacherId = feeData.expectedTeacherId;
 
-        // Helper to get Commission % and ID
-        const getTeacherCommissionData = (teacherUser: any): { id: string, pct: number, reservePct: number } | null => {
-            if (!teacherUser?.employee) return null;
-            const emp = teacherUser.employee;
-            if (emp.paymentModel === 'COMMISSION' || emp.paymentModel === 'MIXED') {
-                return {
-                    id: emp.id,
-                    pct: emp.commissionPercentage || 0,
-                    reservePct: emp.reservePercentage || 0
-                };
-            }
-            return null;
-        };
+                // If we also have a projected amount, we use the IMPLIED percentage 
+                // to calculate the commission for THIS partial/full payment.
+                // Formula: (ExpectedCommission / TotalFeeAmount) * PaymentAmount
+                if ((feeData.expectedCommission || 0) > 0 && feeData.amount > 0) {
+                    const inferredRate = Number(feeData.expectedCommission) / Number(feeData.amount);
+                    teacherCommission = amount * inferredRate;
 
-        let commissionData = null;
-
-        // 1. Try to find teacher via Schedule (Group) Enrollment
-        if (feeData?.studentId && feeData?.courseId) {
-            const groupEnrollment = await prisma.scheduleEnrollment.findFirst({
-                where: {
-                    studentId: feeData.studentId,
-                    status: 'ACTIVE',
-                    schedule: {
-                        courseId: feeData.courseId
-                    }
-                },
-                include: {
-                    schedule: {
-                        include: {
-                            teacher: {
-                                include: { employee: true }
+                    console.log(`[PAYMENT_DEBUG] Using stored expectation. Inferred Rate: ${inferredRate}, Commission: ${teacherCommission}`);
+                } else {
+                    // Fallback: If no expected amount, try to fetch current teacher rate?
+                    // Ideally expectedCommission should be set. If 0, maybe 0 is correct.
+                    console.log(`[PAYMENT_DEBUG] Teacher found (${teacherId}) but expectedCommission is 0 or invalid.`);
+                }
+            } else {
+                // FALLBACK: Try to find teacher via Schedule (Group) Enrollment ONLY if not set on Fee
+                // (Retaining existing logic as backup for old records)
+                if (feeData.studentId && feeData.courseId) {
+                    const groupEnrollment = await prisma.scheduleEnrollment.findFirst({
+                        where: {
+                            studentId: feeData.studentId,
+                            status: 'ACTIVE',
+                            schedule: {
+                                courseId: feeData.courseId
                             }
+                        },
+                        include: {
+                            schedule: {
+                                include: {
+                                    teacher: {
+                                        include: { employee: true }
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    if (groupEnrollment?.schedule?.teacher?.employee) {
+                        const emp = groupEnrollment.schedule.teacher.employee;
+                        if (emp.paymentModel === 'COMMISSION' || emp.paymentModel === 'MIXED') {
+                            teacherId = emp.id;
+                            const pct = emp.commissionPercentage || 0;
+                            if (pct > 0) {
+                                teacherCommission = amount * (pct / 100);
+                            }
+                            console.log(`[PAYMENT_DEBUG] Found Group Teacher via fallback: ${emp.firstName}, Commission: ${teacherCommission}`);
                         }
                     }
                 }
-            });
-
-            if (groupEnrollment?.schedule?.teacher) {
-                console.log(`[PAYMENT_DEBUG] Found Group Teacher: ${groupEnrollment.schedule.teacher.name}`);
-                commissionData = getTeacherCommissionData(groupEnrollment.schedule.teacher);
-            } else {
-                console.log(`[PAYMENT_DEBUG] No teacher assigned to the schedule/group - no commission will be calculated`);
             }
-        }
-
-        if (commissionData) {
-            teacherId = commissionData.id;
-            console.log(`[PAYMENT_DEBUG] Teacher ID for commission: ${teacherId}, %: ${commissionData.pct}`);
-
-            if (commissionData.pct > 0) {
-                teacherCommission = amount * (commissionData.pct / 100);
-                console.log(`[PAYMENT_DEBUG] Commission calculated: ${teacherCommission}`);
-            }
-
-            if (commissionData.reservePct > 0 && teacherCommission > 0) {
-                reserveAmount = teacherCommission * (commissionData.reservePct / 100);
-                console.log(`[PAYMENT_DEBUG] Reserve calculated: ${reserveAmount}`);
-            }
-        } else {
-            console.log(`[PAYMENT_DEBUG] No commissionable teacher found via Group or Course`);
         }
 
         schoolAmount = amount - teacherCommission;
