@@ -60,12 +60,21 @@ export function StudentList() {
         address: "",
         guardianName: "",
         guardianPhone: "",
-        branchIds: [] as string[]
+        branchIds: [] as string[],
+        referralSource: ""
     });
 
     // Group Selection State
     const [schedules, setSchedules] = useState<ClassSchedule[]>([]);
     const [selectedGroupKey, setSelectedGroupKey] = useState<string>("");
+
+    // Scholarship State (for new student)
+    const [addScholarship, setAddScholarship] = useState(false);
+    const [scholarshipData, setScholarshipData] = useState({
+        name: "",
+        percentage: "",
+        amount: ""
+    });
 
     useEffect(() => {
         if (selectedBranch?.businessId) {
@@ -194,6 +203,26 @@ export function StudentList() {
                             console.error("Enrollment error details:", firstError);
                             alert(`El alumno se creó, pero hubo un error al inscribirlo en el grupo: ${firstError}`);
                         }
+
+                        // Create scholarship if specified
+                        if (addScholarship && (scholarshipData.percentage || scholarshipData.amount)) {
+                            try {
+                                // Create scholarship for the first schedule of the group
+                                await fetch("/api/scholarships", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                        studentId: createdStudent.id,
+                                        scheduleId: group.scheduleIds[0], // Associate with first schedule of the group
+                                        name: scholarshipData.name || "Beca",
+                                        percentage: scholarshipData.percentage ? parseFloat(scholarshipData.percentage) : null,
+                                        amount: scholarshipData.amount ? parseFloat(scholarshipData.amount) : null
+                                    })
+                                });
+                            } catch (scholarshipError) {
+                                console.error("Error creating scholarship:", scholarshipError);
+                            }
+                        }
                     }
                 }
             } else {
@@ -210,9 +239,12 @@ export function StudentList() {
                 address: "",
                 guardianName: "",
                 guardianPhone: "",
-                branchIds: []
+                branchIds: [],
+                referralSource: ""
             });
             setSelectedGroupKey(""); // Reset group selection
+            setAddScholarship(false); // Reset scholarship
+            setScholarshipData({ name: "", percentage: "", amount: "" });
 
 
         } catch (error) {
@@ -568,6 +600,26 @@ export function StudentList() {
                                     onChange={(val) => setNewStudent({ ...newStudent, guardianPhone: val })}
                                 />
 
+                                {/* FUENTE DE REFERENCIA */}
+                                <div className="col-span-2">
+                                    <ModernSelect
+                                        label="¿Cómo nos conociste?"
+                                        value={newStudent.referralSource}
+                                        onChange={(val: string) => setNewStudent({ ...newStudent, referralSource: val })}
+                                        placeholder="Seleccionar..."
+                                        options={[
+                                            { value: "TIKTOK", label: "🎵 TikTok" },
+                                            { value: "FACEBOOK", label: "📘 Facebook" },
+                                            { value: "INSTAGRAM", label: "📷 Instagram" },
+                                            { value: "GOOGLE", label: "🔍 Google / Búsqueda web" },
+                                            { value: "REFERRAL", label: "👥 Recomendación de amigo/familiar" },
+                                            { value: "WALK_IN", label: "🚶 Visitaron el local" },
+                                            { value: "OTHER", label: "📌 Otro" }
+                                        ]}
+                                        inline={true}
+                                    />
+                                </div>
+
                                 {/* SELECTOR DE GRUPO (OPCIONAL) */}
                                 <div className="col-span-2">
                                     <ModernSelect
@@ -581,6 +633,85 @@ export function StudentList() {
                                     <p className="text-xs text-slate-500 mt-1">
                                         Se inscribirá al alumno en todos los horarios de este grupo.
                                     </p>
+
+                                    {/* BECA (Solo aparece si se seleccionó un grupo) */}
+                                    {selectedGroupKey && (
+                                        <div style={{
+                                            marginTop: "16px",
+                                            padding: "16px",
+                                            backgroundColor: "#fefce8",
+                                            borderRadius: "12px",
+                                            border: "1px solid #fef08a"
+                                        }}>
+                                            <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", marginBottom: addScholarship ? "16px" : 0 }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={addScholarship}
+                                                    onChange={(e) => setAddScholarship(e.target.checked)}
+                                                    style={{ width: "18px", height: "18px", accentColor: "#eab308" }}
+                                                />
+                                                <span style={{ fontWeight: 600, color: "#854d0e", fontSize: "14px" }}>
+                                                    🏅 Agregar Beca/Descuento
+                                                </span>
+                                            </label>
+
+                                            {addScholarship && (
+                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+                                                    <div>
+                                                        <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", fontWeight: 500, color: "#78716c" }}>Nombre de la beca</label>
+                                                        <input
+                                                            type="text"
+                                                            value={scholarshipData.name}
+                                                            onChange={(e) => setScholarshipData({ ...scholarshipData, name: e.target.value })}
+                                                            placeholder="Ej: Beca Excelencia"
+                                                            style={{
+                                                                width: "100%",
+                                                                padding: "10px 12px",
+                                                                borderRadius: "8px",
+                                                                border: "1px solid #e2e8f0",
+                                                                fontSize: "14px"
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", fontWeight: 500, color: "#78716c" }}>Porcentaje (%)</label>
+                                                        <input
+                                                            type="number"
+                                                            value={scholarshipData.percentage}
+                                                            onChange={(e) => setScholarshipData({ ...scholarshipData, percentage: e.target.value, amount: "" })}
+                                                            placeholder="Ej: 25"
+                                                            min="0"
+                                                            max="100"
+                                                            style={{
+                                                                width: "100%",
+                                                                padding: "10px 12px",
+                                                                borderRadius: "8px",
+                                                                border: "1px solid #e2e8f0",
+                                                                fontSize: "14px"
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", fontWeight: 500, color: "#78716c" }}>O monto fijo ($)</label>
+                                                        <input
+                                                            type="number"
+                                                            value={scholarshipData.amount}
+                                                            onChange={(e) => setScholarshipData({ ...scholarshipData, amount: e.target.value, percentage: "" })}
+                                                            placeholder="Ej: 500"
+                                                            min="0"
+                                                            style={{
+                                                                width: "100%",
+                                                                padding: "10px 12px",
+                                                                borderRadius: "8px",
+                                                                border: "1px solid #e2e8f0",
+                                                                fontSize: "14px"
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* SELECTOR DE SUCURSALES */}
@@ -1508,10 +1639,12 @@ export function StudentList() {
                             </label>
                             <input
                                 type="date"
-                                value={editingStudent?.enrollmentDate ? new Date(editingStudent.enrollmentDate).toISOString().split('T')[0] : ''}
+                                value={editingStudent?.enrollmentDate
+                                    ? new Date(editingStudent.enrollmentDate).toISOString().split('T')[0]
+                                    : new Date().toISOString().split('T')[0]}
                                 onChange={(e) => setEditingStudent({
                                     ...editingStudent,
-                                    enrollmentDate: e.target.value ? new Date(e.target.value).toISOString() : null
+                                    enrollmentDate: e.target.value ? new Date(e.target.value).toISOString() : new Date().toISOString()
                                 })}
                                 style={{
                                     width: '100%',
@@ -1525,7 +1658,7 @@ export function StudentList() {
                                 }}
                             />
                             <p className="text-xs text-slate-500 mt-1">
-                                Esta fecha determina cuándo vence el pago mensual. Déjala vacía para usar la fecha de inscripción al grupo.
+                                Esta fecha determina cuándo vence el pago mensual. Por defecto es la fecha de hoy.
                             </p>
                         </div>
 

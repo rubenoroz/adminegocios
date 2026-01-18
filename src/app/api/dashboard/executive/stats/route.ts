@@ -212,6 +212,42 @@ export async function GET(req: Request) {
             weeklyAttendance.reduce((acc, curr) => acc + curr.asistencia, 0) / 7
         ); // Simple avg of daily avgs
 
+        // 7. Referral Sources (How students found us)
+        const studentsWithReferral = await prisma.student.findMany({
+            where: {
+                businessId,
+                status: "ACTIVE"
+            },
+            select: {
+                referralSource: true
+            }
+        });
+
+        const referralCounts: Record<string, number> = {};
+        for (const student of studentsWithReferral) {
+            const source = student.referralSource || "UNKNOWN";
+            referralCounts[source] = (referralCounts[source] || 0) + 1;
+        }
+
+        const referralLabels: Record<string, { label: string; color: string }> = {
+            TIKTOK: { label: "TikTok", color: "#000000" },
+            FACEBOOK: { label: "Facebook", color: "#1877F2" },
+            INSTAGRAM: { label: "Instagram", color: "#E4405F" },
+            GOOGLE: { label: "Google", color: "#4285F4" },
+            REFERRAL: { label: "Recomendación", color: "#10B981" },
+            WALK_IN: { label: "Visita local", color: "#F59E0B" },
+            OTHER: { label: "Otro", color: "#8B5CF6" },
+            UNKNOWN: { label: "Sin especificar", color: "#64748B" }
+        };
+
+        const referralSources = Object.entries(referralCounts)
+            .map(([source, count]) => ({
+                name: referralLabels[source]?.label || source,
+                value: count,
+                color: referralLabels[source]?.color || "#6B7280"
+            }))
+            .sort((a, b) => b.value - a.value);
+
         return NextResponse.json({
             paymentStatus: paymentsChart,
             courseDistribution,
@@ -219,6 +255,7 @@ export async function GET(req: Request) {
             attendanceData: weeklyAttendance,
             revenueData,
             teacherPerformance,
+            referralSources,
             metrics: {
                 students: totalStudents,
                 courses: realTotalCourses,

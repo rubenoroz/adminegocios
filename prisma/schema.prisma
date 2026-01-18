@@ -644,6 +644,9 @@ model Student {
   enrollmentFeeOverride   Float?     // Override business default (null = use default)
   lastEnrollmentFeeDate   DateTime?  // Last time enrollment fee was charged (for 12-month mode)
   
+  // Marketing/Referral tracking
+  referralSource  String?  // TIKTOK, FACEBOOK, INSTAGRAM, GOOGLE, REFERRAL, WALK_IN, OTHER
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   

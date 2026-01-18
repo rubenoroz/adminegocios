@@ -254,7 +254,9 @@ export function GroupsList() {
             // POST new enrollments (only for added students)
             if (addedStudents.length > 0) {
                 let hasConflicts = false;
+                let hasCapacityWarning = false;
                 let conflictMessages: string[] = [];
+                let capacityMessages: string[] = [];
 
                 for (const scheduleId of selectedGroup.scheduleIds) {
                     const res = await fetch("/api/schedule-enrollments", {
@@ -274,30 +276,54 @@ export function GroupsList() {
                                 conflictMessages.push(`${c.studentName} ya tiene "${c.conflictingCourse}" a las ${c.time}`);
                             });
                         }
+                        if (data.hasCapacityWarning) {
+                            hasCapacityWarning = true;
+                            capacityMessages.push(data.message);
+                        }
                     }
                 }
 
+                // Handle capacity warnings first
+                if (hasCapacityWarning) {
+                    const shouldContinue = window.confirm(
+                        `${capacityMessages.join('\n\n')}`
+                    );
+
+                    if (!shouldContinue) {
+                        toast({ title: "Inscripción cancelada", description: "No se agregaron los alumnos debido al límite de capacidad.", variant: "destructive" });
+                        setModalSaving(false);
+                        return;
+                    }
+                }
+
+                // Handle conflicts
                 if (hasConflicts) {
                     const shouldContinue = window.confirm(
                         `⚠️ Conflictos de horario detectados:\n\n${conflictMessages.join('\n')}\n\n¿Desea inscribir de todos modos?`
                     );
 
-                    if (shouldContinue) {
-                        for (const scheduleId of selectedGroup.scheduleIds) {
-                            await fetch("/api/schedule-enrollments", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    scheduleId,
-                                    studentIds: addedStudents,
-                                    skipConflictCheck: true,
-                                }),
-                            });
-                        }
-                        toast({ title: "Grupo actualizado", description: "Se guardaron los cambios con conflictos de horario." });
-                    } else {
+                    if (!shouldContinue) {
                         toast({ title: "Inscripción cancelada", description: "Solo se procesaron las desinscripciones." });
+                        setModalSaving(false);
+                        return;
                     }
+                }
+
+                // If user confirmed through warnings, proceed with enrollment
+                if (hasConflicts || hasCapacityWarning) {
+                    for (const scheduleId of selectedGroup.scheduleIds) {
+                        await fetch("/api/schedule-enrollments", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                scheduleId,
+                                studentIds: addedStudents,
+                                skipConflictCheck: true,
+                                skipCapacityWarning: true,
+                            }),
+                        });
+                    }
+                    toast({ title: "Grupo actualizado", description: "Se guardaron los cambios con advertencias." });
                 }
             }
 

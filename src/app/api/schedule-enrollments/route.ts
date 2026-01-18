@@ -71,12 +71,49 @@ export async function POST(request: NextRequest) {
                 endTime: true,
                 courseId: true,
                 businessId: true,
-                course: { select: { name: true } }
+                classroomId: true,
+                course: { select: { name: true } },
+                classroom: { select: { id: true, name: true, capacity: true } },
+                _count: { select: { enrollments: { where: { status: "ACTIVE" } } } }
             }
         });
 
         if (!targetSchedule) {
             return NextResponse.json({ error: "Schedule not found" }, { status: 404 });
+        }
+
+        // Check classroom capacity
+        const currentEnrollments = targetSchedule._count.enrollments;
+        const classroomCapacity = targetSchedule.classroom?.capacity;
+        const classroomName = targetSchedule.classroom?.name || "el salón";
+
+        if (classroomCapacity && !body.skipCapacityWarning) {
+            const newTotal = currentEnrollments + studentIds.length;
+            const occupancyPercentage = (currentEnrollments / classroomCapacity) * 100;
+
+            if (newTotal > classroomCapacity) {
+                // Classroom will be OVER capacity
+                return NextResponse.json({
+                    hasCapacityWarning: true,
+                    warningType: "OVER_CAPACITY",
+                    classroomName,
+                    currentEnrollments,
+                    capacity: classroomCapacity,
+                    newTotal,
+                    message: `⚠️ ${classroomName} excederá su capacidad. Capacidad: ${classroomCapacity}, Inscritos actuales: ${currentEnrollments}, Nuevos: ${studentIds.length}. Total sería: ${newTotal}. ¿Desea continuar?`
+                }, { status: 409 });
+            } else if (occupancyPercentage >= 90 || newTotal === classroomCapacity) {
+                // Classroom is almost full (90%+) or will be exactly full
+                return NextResponse.json({
+                    hasCapacityWarning: true,
+                    warningType: "ALMOST_FULL",
+                    classroomName,
+                    currentEnrollments,
+                    capacity: classroomCapacity,
+                    newTotal,
+                    message: `⚠️ ${classroomName} está casi lleno. Capacidad: ${classroomCapacity}, Inscritos actuales: ${currentEnrollments}. Después de inscribir tendrá: ${newTotal}. ¿Desea continuar?`
+                }, { status: 409 });
+            }
         }
 
         // Helper to check if two time ranges overlap

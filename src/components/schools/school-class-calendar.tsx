@@ -193,10 +193,13 @@ export function SchoolClassCalendar() {
 
         schedules.forEach(schedule => {
             try {
-                // Ensure validFrom is a valid date object
-                const validFromDate = schedule.validFrom ? new Date(schedule.validFrom) : new Date(0);
+                // For permanent classes (no validFrom), use today as the start date
+                // This ensures we only show future classes, not past ones
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const validFromDate = schedule.validFrom ? new Date(schedule.validFrom) : today;
 
-                // Determine the starting point: max(view start, schedule start)
+                // Determine the starting point: max(view start, schedule start, today for permanent)
                 let currentDate = new Date(Math.max(startRange.getTime(), validFromDate.getTime()));
 
                 // Ensure dayOfWeek is a number
@@ -840,6 +843,7 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
     const [groupName, setGroupName] = useState(initialData?.groupName || "");
     const [selectedStudents, setSelectedStudents] = useState<string[]>(initialData?.studentIds || []);
     const [isRecurring, setIsRecurring] = useState(initialData ? false : true); // Default to false if editing
+    const [isPermanent, setIsPermanent] = useState(true); // Default: permanent (no end date)
     const [validFrom, setValidFrom] = useState(format(new Date(), "yyyy-MM-dd"));
     const [validUntil, setValidUntil] = useState(format(addMonths(new Date(), 3), "yyyy-MM-dd"));
     const [selectedDays, setSelectedDays] = useState<number[]>(initialData ? [initialData.dayOfWeek] : [selectedSlot.start.getDay()]);
@@ -981,8 +985,8 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
                             dayOfWeek,
                             startTime,
                             endTime,
-                            validFrom: isRecurring ? validFrom : null,
-                            validUntil: isRecurring ? validUntil : null,
+                            validFrom: isRecurring && !isPermanent ? validFrom : null,
+                            validUntil: isRecurring && !isPermanent ? validUntil : null,
                         }),
                     })
                 );
@@ -1231,6 +1235,28 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
                     </label>
                 </div>
 
+                {/* Permanent Toggle (only if recurring) */}
+                {isRecurring && (
+                    <div style={{ marginBottom: "16px", marginLeft: "28px" }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+                            <input
+                                type="checkbox"
+                                checked={isPermanent}
+                                onChange={(e) => setIsPermanent(e.target.checked)}
+                                style={{ width: "18px", height: "18px", accentColor: "#8b5cf6" }}
+                            />
+                            <span style={{ fontWeight: 500, color: "#334155", fontSize: "14px" }}>
+                                Permanente (sin fecha de fin)
+                            </span>
+                        </label>
+                        <p style={{ fontSize: "12px", color: "#64748b", marginTop: "4px", marginLeft: "28px" }}>
+                            {isPermanent
+                                ? "✓ Esta clase se repetirá indefinidamente cada semana"
+                                : "Define las fechas de inicio y fin del periodo"}
+                        </p>
+                    </div>
+                )}
+
                 {/* Days of Week Selector */}
                 <div style={{ marginBottom: "16px" }}>
                     <label style={{ display: "block", marginBottom: "8px", fontWeight: 500, color: "#334155", fontSize: "14px" }}>
@@ -1260,8 +1286,8 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
                     </div>
                 </div>
 
-                {/* Date Range (only if recurring) */}
-                {isRecurring && (
+                {/* Date Range (only if recurring AND not permanent) */}
+                {isRecurring && !isPermanent && (
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "24px" }}>
                         <div>
                             <label style={{ display: "block", marginBottom: "6px", fontWeight: 500, color: "#334155", fontSize: "14px" }}>

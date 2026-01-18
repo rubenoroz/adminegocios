@@ -10,7 +10,7 @@ import {
 } from "recharts";
 import {
     GripVertical, Settings, TrendingUp, Users, DollarSign, BookOpen,
-    Calendar, Eye, EyeOff, CreditCard, GraduationCap, UserCheck, Lock, RotateCcw
+    Calendar, Eye, EyeOff, CreditCard, GraduationCap, UserCheck, Lock, RotateCcw, Megaphone
 } from "lucide-react";
 
 // Premium color palette with better contrast
@@ -46,6 +46,15 @@ const defaultWidgetsStructure: Widget[] = [
         visible: true,
         colorKey: "rose",
         icon: CreditCard,
+    },
+    {
+        id: "referrals",
+        title: "¿Cómo nos conocieron?",
+        type: "chart",
+        chartType: "pie",
+        visible: true,
+        colorKey: "indigo",
+        icon: Megaphone,
     },
     {
         id: "courses",
@@ -140,13 +149,14 @@ export default function ExecutiveDashboard() {
             const data = await res.json();
             setMetrics(data.metrics);
 
-            const savedConfig = localStorage.getItem('dashboard-executive-config-v2');
+            const savedConfig = localStorage.getItem('dashboard-executive-config-v3'); // v3 to force reset with new referrals widget
             let baseWidgets = defaultWidgetsStructure;
 
             if (savedConfig) {
                 try {
                     const parsed = JSON.parse(savedConfig);
-                    baseWidgets = parsed.map((savedW: Widget) => {
+                    // Map saved widgets
+                    const mappedSavedWidgets = parsed.map((savedW: Widget) => {
                         const defaultW = defaultWidgetsStructure.find(dw => dw.id === savedW.id);
                         return {
                             ...savedW,
@@ -154,6 +164,12 @@ export default function ExecutiveDashboard() {
                             colorKey: defaultW?.colorKey || savedW.colorKey,
                         };
                     });
+
+                    // Add any NEW widgets that don't exist in saved config
+                    const savedIds = parsed.map((w: Widget) => w.id);
+                    const newWidgets = defaultWidgetsStructure.filter(dw => !savedIds.includes(dw.id));
+
+                    baseWidgets = [...mappedSavedWidgets, ...newWidgets];
                 } catch (e) {
                     console.error("Error parsing saved config", e);
                 }
@@ -169,6 +185,7 @@ export default function ExecutiveDashboard() {
                     case "revenue": widgetData = data.revenueData; break;
                     case "revenue-trend": widgetData = data.revenueData; break;
                     case "teachers": widgetData = data.teacherPerformance; break;
+                    case "referrals": widgetData = data.referralSources || []; break;
                 }
                 return { ...w, data: widgetData };
             });
@@ -186,7 +203,7 @@ export default function ExecutiveDashboard() {
     useEffect(() => {
         if (!loading && !error) {
             const configToSave = widgets.map(({ data, ...rest }) => rest);
-            localStorage.setItem('dashboard-executive-config-v2', JSON.stringify(configToSave));
+            localStorage.setItem('dashboard-executive-config-v3', JSON.stringify(configToSave));
         }
     }, [widgets, loading, error]);
 
@@ -204,7 +221,7 @@ export default function ExecutiveDashboard() {
 
     const resetConfiguration = () => {
         if (confirm('¿Restaurar configuración por defecto?')) {
-            localStorage.removeItem('dashboard-executive-config-v2');
+            localStorage.removeItem('dashboard-executive-config-v3');
             fetchData();
         }
     };
