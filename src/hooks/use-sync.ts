@@ -64,18 +64,23 @@ export function useSync() {
             }
 
             // 2. Sync Products (Download latest)
-            const res = await fetch("/api/products");
-            if (res.ok) {
-                const products = await res.json();
-                await db.products.clear();
-                await db.products.bulkPut(products.map((p: { id: string, name: string, price: number, sku?: string, category?: string }) => ({
-                    id: p.id,
-                    name: p.name,
-                    price: p.price,
-                    sku: p.sku,
-                    category: p.category,
-                    syncStatus: 'synced'
-                })));
+            try {
+                const res = await fetch("/api/products");
+                if (res.ok) {
+                    const products = await res.json();
+                    await db.products.clear();
+                    await db.products.bulkPut(products.map((p: { id: string, name: string, price: number, sku?: string, category?: string }) => ({
+                        id: p.id,
+                        name: p.name,
+                        price: p.price,
+                        sku: p.sku,
+                        category: p.category,
+                        syncStatus: 'synced'
+                    })));
+                }
+            } catch (productError) {
+                // Silently handle product sync errors - may be auth issue or network
+                console.warn("Product sync skipped:", productError);
             }
 
             await updatePendingCount();

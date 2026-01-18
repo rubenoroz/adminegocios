@@ -970,11 +970,11 @@ export function SchoolStaff() {
                             }}>
                                 <Briefcase size={32} color="#34d399" />
                             </div>
-                            <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '6px', color: 'white', lineHeight: '1.2' }}>Registrar Pago</h2>
-                            <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
+                            <DialogTitle style={{ fontSize: '22px', fontWeight: 800, marginBottom: '6px', color: 'white', lineHeight: '1.2' }}>Registrar Pago</DialogTitle>
+                            <DialogDescription style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
                                 Selecciona los conceptos a pagar a<br />
                                 <span style={{ color: 'white', fontWeight: 600, fontSize: '16px' }}>{settlingEmployee?.firstName} {settlingEmployee?.lastName}</span>
-                            </p>
+                            </DialogDescription>
                         </div>
 
                         <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>

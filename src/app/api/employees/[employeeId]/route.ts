@@ -114,6 +114,52 @@ export async function PATCH(
             }
         });
 
+        // ==========================================
+        // AUTO-RECALCULATE COMMISSIONS IF % CHANGED
+        // ==========================================
+        if (commissionPercentage !== undefined) {
+            const newPct = parseFloat(commissionPercentage) || 0;
+            console.log(`[COMMISSION_SYNC] Recalculating commissions for Employee ${employeeId} with new rate: ${newPct}%`);
+
+            // 1. Recalculate PROJECTED commissions on PENDING/PARTIAL/OVERDUE fees
+            const pendingFees = await prisma.studentFee.findMany({
+                where: {
+                    expectedTeacherId: employeeId,
+                    status: { in: ['PENDING', 'PARTIAL', 'OVERDUE'] }
+                }
+            });
+
+            for (const fee of pendingFees) {
+                const newExpectedCommission = fee.amount * (newPct / 100);
+                await prisma.studentFee.update({
+                    where: { id: fee.id },
+                    data: { expectedCommission: newExpectedCommission }
+                });
+            }
+            console.log(`[COMMISSION_SYNC] Updated ${pendingFees.length} projected fee commissions.`);
+
+            // 2. Recalculate UNSETTLED payment commissions (not yet paid out to teacher)
+            const unsettledPayments = await prisma.studentPayment.findMany({
+                where: {
+                    teacherId: employeeId,
+                    isSettled: false
+                }
+            });
+
+            for (const payment of unsettledPayments) {
+                const newCommission = payment.amount * (newPct / 100);
+                await prisma.studentPayment.update({
+                    where: { id: payment.id },
+                    data: {
+                        teacherCommission: newCommission,
+                        schoolAmount: payment.amount - newCommission
+                    }
+                });
+            }
+            console.log(`[COMMISSION_SYNC] Updated ${unsettledPayments.length} unsettled payment commissions.`);
+        }
+        // ==========================================
+
         return NextResponse.json(employee);
     } catch (error) {
         console.error(error);

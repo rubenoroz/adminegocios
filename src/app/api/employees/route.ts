@@ -77,7 +77,7 @@ export async function GET(req: Request) {
                             gte: firstDay,
                             lte: lastDay
                         },
-                        status: 'PENDING',
+                        status: { in: ['PENDING', 'PARTIAL', 'OVERDUE'] },
                         expectedCommission: { gt: 0 }
                     },
                     select: {

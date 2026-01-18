@@ -48,7 +48,8 @@ export async function POST(req: Request) {
                         id: true,
                         name: true
                     }
-                }
+                },
+                template: true
             }
         });
 
@@ -74,39 +75,84 @@ export async function POST(req: Request) {
                 }
             } else {
                 // FALLBACK: Try to find teacher via Schedule (Group) Enrollment ONLY if not set on Fee
-                // (Retaining existing logic as backup for old records)
-                if (feeData.studentId && feeData.courseId) {
-                    const groupEnrollment = await prisma.scheduleEnrollment.findFirst({
-                        where: {
-                            studentId: feeData.studentId,
-                            status: 'ACTIVE',
-                            schedule: {
-                                courseId: feeData.courseId
-                            }
+                console.log(`[COMMISSION_DEBUG] Fallback: Searching ALL active enrollments for Student ${feeData.studentId} Course ${feeData.courseId}`);
+
+                const groupEnrollments = await prisma.scheduleEnrollment.findMany({
+                    where: {
+                        studentId: feeData.studentId,
+                        schedule: {
+                            courseId: feeData.courseId
                         },
-                        include: {
-                            schedule: {
-                                include: {
-                                    teacher: {
-                                        include: { employee: true }
+                        status: 'ACTIVE'
+                    },
+                    include: {
+                        schedule: {
+                            include: {
+                                teacher: {
+                                    include: {
+                                        employee: true
                                     }
                                 }
                             }
                         }
-                    });
+                    }
+                });
 
-                    if (groupEnrollment?.schedule?.teacher?.employee) {
-                        const emp = groupEnrollment.schedule.teacher.employee;
+                console.log(`[COMMISSION_DEBUG] Found ${groupEnrollments.length} active enrollments.`);
+
+                let foundValidTeacher = false;
+
+                for (const enrollment of groupEnrollments) {
+                    if (enrollment?.schedule?.teacher?.employee) {
+                        const emp = enrollment.schedule.teacher.employee;
+                        console.log(`[COMMISSION_DEBUG] Checking Teacher ${emp.firstName} (Schedule ${enrollment.scheduleId}). Model: ${emp.paymentModel}`);
+
                         if (emp.paymentModel === 'COMMISSION' || emp.paymentModel === 'MIXED') {
                             teacherId = emp.id;
-                            const pct = emp.commissionPercentage || 0;
-                            if (pct > 0) {
-                                teacherCommission = amount * (pct / 100);
-                            }
-                            console.log(`[PAYMENT_DEBUG] Found Group Teacher via fallback: ${emp.firstName}, Commission: ${teacherCommission}`);
+                            const commissionPct = emp.commissionPercentage || 0;
+
+                            // Recalculate based on current payment amount
+                            teacherCommission = amount * (commissionPct / 100);
+                            console.log(`[COMMISSION_DEBUG] Logic Success: Calculated Commission: ${teacherCommission} (${commissionPct}%)`);
+                            foundValidTeacher = true;
+                            break; // Stop at first valid teacher
                         }
                     }
                 }
+
+                if (!foundValidTeacher) {
+                    console.log(`[COMMISSION_DEBUG] Fallback Failed: No valid teacher found in any of the ${groupEnrollments.length} enrollments.`);
+                }
+            }
+        }
+
+
+        console.log(`[PAYMENT_FINAL] Creating Payment. Teacher: ${teacherId}, Commission: ${teacherCommission}`);
+
+        // NEW: Enrollment Fee Commission Guard
+        // Check if this is an enrollment fee and if commissions are enabled for it
+        if (teacherCommission > 0) {
+            const business = await prisma.business.findUnique({
+                where: { id: businessId },
+                select: { commissionOnInscription: true }
+            });
+
+            // Identify as Enrollment if linked to REGISTRATION template OR title contains "Inscripción"/"Enrollment"
+            const normalizedTitle = feeData?.title?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || '';
+            const isEnrollment =
+                feeData?.template?.category === 'REGISTRATION' ||
+                normalizedTitle.includes('inscripci') ||
+                normalizedTitle.includes('enrollment') ||
+                normalizedTitle.includes('matricula');
+
+            if (isEnrollment && !business?.commissionOnInscription) {
+                console.log(`[PAYMENT_DEBUG] Commission blocked: Fee identified as Enrollment and commissionOnInscription is false.`);
+                teacherCommission = 0;
+                // We also clear teacherId to prevent it from cluttering the teacher's list if it's 0-value
+                // unless we want to track "sales" without commission. For now, let's keep it clean.
+                // teacherId = null; // Optional: Decide if we want to unlink the teacher entirely. 
+                // Given the user's feedback ("se van al maestro"), unlinking is safer visually.
+                teacherId = null;
             }
         }
 

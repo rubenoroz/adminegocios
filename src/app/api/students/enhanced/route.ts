@@ -240,8 +240,34 @@ export async function GET(req: Request) {
                             console.log(`  Discount: ${discount}, Final: ${finalAmount}`);
                         }
 
-                        // Create the fee
+                        // Create the fee with auto-calculated teacher commission
                         try {
+                            // Find the teacher for this course's group (from first schedule)
+                            let expectedTeacherId: string | null = null;
+                            let expectedCommission: number | null = null;
+
+                            const firstScheduleId = course.scheduleIds[0];
+                            if (firstScheduleId) {
+                                const scheduleWithTeacher = await prisma.classSchedule.findUnique({
+                                    where: { id: firstScheduleId },
+                                    include: {
+                                        teacher: {
+                                            include: { employee: true }
+                                        }
+                                    }
+                                });
+
+                                if (scheduleWithTeacher?.teacher?.employee) {
+                                    const emp = scheduleWithTeacher.teacher.employee;
+                                    if (emp.paymentModel === 'COMMISSION' || emp.paymentModel === 'MIXED') {
+                                        expectedTeacherId = emp.id;
+                                        const pct = emp.commissionPercentage || 0;
+                                        expectedCommission = finalAmount * (pct / 100);
+                                        console.log(`[AUTO FEE] Teacher: ${emp.firstName}, Commission: ${expectedCommission} (${pct}%)`);
+                                    }
+                                }
+                            }
+
                             await prisma.studentFee.create({
                                 data: {
                                     title: `${course.courseName} - ${nextPaymentDate.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })}`,
@@ -251,7 +277,9 @@ export async function GET(req: Request) {
                                     dueDate: nextPaymentDate,
                                     status: paymentStatus === "OVERDUE" ? "OVERDUE" : "PENDING",
                                     studentId: student.id,
-                                    courseId: course.courseId
+                                    courseId: course.courseId,
+                                    expectedTeacherId,
+                                    expectedCommission
                                 }
                             });
                             totalDebt += finalAmount; // Update total for UI
