@@ -7,14 +7,14 @@ import { prisma } from "@/lib/prisma";
 // POST /api/employees/[employeeId]/settle
 export async function POST(
     req: Request,
-    { params }: { params: { employeeId: string } }
+    { params }: { params: Promise<{ employeeId: string }> }
 ) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?.email) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { employeeId } = params;
+    const { employeeId } = await params;
     if (!employeeId) {
         return NextResponse.json({ error: "Employee ID required" }, { status: 400 });
     }
@@ -60,7 +60,7 @@ export async function POST(
                     amount: totalAmount,
                     method: 'CASH', // Default or from body? Let's assume CASH for now or simplistic.
                     employeeId: employeeId,
-                    businessId: user.businessId,
+                    businessId: user.businessId!,
                     date: new Date()
                 }
             });
@@ -83,7 +83,7 @@ export async function POST(
                     description: `Pago de comisiones (Liquidación)`,
                     amount: totalAmount,
                     category: 'SALARY',
-                    businessId: user.businessId,
+                    businessId: user.businessId!,
                     date: new Date()
                 }
             });
