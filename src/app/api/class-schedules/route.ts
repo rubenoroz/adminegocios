@@ -36,7 +36,8 @@ export async function GET(request: NextRequest) {
                 teacher: {
                     select: {
                         id: true,
-                        name: true
+                        firstName: true,
+                        lastName: true
                     }
                 },
                 enrollments: {

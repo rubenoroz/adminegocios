@@ -31,7 +31,8 @@ interface ClassSchedule {
     } | null;
     teacher: {
         id: string;
-        name: string;
+        firstName: string;
+        lastName: string;
     } | null;
     _count: {
         enrollments: number;
@@ -51,7 +52,7 @@ interface AggregatedGroup {
     courseName: string;
     courseId: string | null;
     courseColor: string;
-    teacher: { id: string; name: string } | null;
+    teacher: { id: string; firstName: string; lastName: string } | null;
     classroom: { id: string; name: string } | null;
     days: number[];
     startTime: string;
@@ -413,7 +414,7 @@ export function GroupsList() {
                     courseName: schedule.course?.name || schedule.title || "Grupo sin nombre",
                     courseId: schedule.course?.id || null,
                     courseColor: schedule.course?.color || "#3B82F6",
-                    teacher: schedule.teacher || schedule.course?.teacher || null,
+                    teacher: schedule.teacher ? { id: schedule.teacher.id, firstName: schedule.teacher.firstName, lastName: schedule.teacher.lastName } : (schedule.course?.teacher ? { id: schedule.course.teacher.id, firstName: schedule.course.teacher.name.split(' ')[0] || '', lastName: schedule.course.teacher.name.split(' ').slice(1).join(' ') || '' } : null),
                     classroom: schedule.classroom,
                     days: [schedule.dayOfWeek],
                     startTime: schedule.startTime,
@@ -435,7 +436,7 @@ export function GroupsList() {
             searchValue === "" ||
             group.courseName.toLowerCase().includes(searchLower) ||
             group.groupName?.toLowerCase().includes(searchLower) ||
-            group.teacher?.name.toLowerCase().includes(searchLower) ||
+            `${group.teacher?.firstName || ''} ${group.teacher?.lastName || ''}`.toLowerCase().includes(searchLower) ||
             group.days.some(d => dayNamesFull[d].toLowerCase().includes(searchLower));
 
         const matchesDay = filterDay.length === 0 || group.days.some(d => filterDay.includes(d.toString()));
@@ -647,9 +648,9 @@ export function GroupsList() {
                                                     fontWeight: "bold",
                                                 }}
                                             >
-                                                {group.teacher.name?.split(" ").map((n) => n[0]).join("").slice(0, 2) || "?"}
+                                                {`${group.teacher.firstName[0]}${group.teacher.lastName[0]}`}
                                             </div>
-                                            <span style={{ fontSize: "14px", color: "#475569" }}>{group.teacher.name}</span>
+                                            <span style={{ fontSize: "14px", color: "#475569" }}>{`${group.teacher.firstName} ${group.teacher.lastName}`}</span>
                                         </div>
                                     )}
 

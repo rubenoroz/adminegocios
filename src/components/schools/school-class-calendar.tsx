@@ -78,7 +78,7 @@ interface ClassSchedule {
     classroomId: string | null;
     classroom?: { id: string; name: string } | null;
     teacherId?: string | null;
-    teacher?: { id: string; name: string } | null;
+    teacher?: { id: string; firstName: string; lastName: string } | null;
     enrollments?: { student: { id: string; firstName: string; lastName: string } }[];
     cancellations?: { date: string }[];
     validFrom?: string | null;
@@ -257,7 +257,7 @@ export function SchoolClassCalendar() {
                             classroomId: schedule.classroomId,
                             classroomName: schedule.classroom?.name || "Sin aula",
                             teacherId: schedule.teacherId,
-                            teacherName: schedule.teacher?.name || schedule.course?.teacher?.name || "Sin maestro",
+                            teacherName: schedule.teacher ? `${schedule.teacher.firstName} ${schedule.teacher.lastName}` : (schedule.course?.teacher?.name || "Sin maestro"),
                             status: isCancelled ? "CANCELLED" : "ACTIVE",
                             dayOfWeek: targetDay,
                             startTime: schedule.startTime,

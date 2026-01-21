@@ -33,7 +33,7 @@ export async function PATCH(
             include: {
                 course: { select: { id: true, name: true } },
                 classroom: { select: { id: true, name: true } },
-                teacher: { select: { id: true, name: true } }
+                teacher: { select: { id: true, firstName: true, lastName: true } }
             }
         });
 
