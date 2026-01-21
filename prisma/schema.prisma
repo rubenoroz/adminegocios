@@ -67,7 +67,6 @@ model User {
   hourlyRate    Float?    @default(0)
   paymentModel  String?   @default("HOURLY") // HOURLY, COMMISSION
   commissionPercentage Float? @default(0)
-  schedules     ClassSchedule[]
   
   // Communication
   authoredAnnouncements Announcement[]
@@ -461,6 +460,7 @@ model Employee {
   commissionSettlements CommissionSettlement[]  // Liquidaciones de comisiones
   appointments Appointment[]  // Citas asignadas a este empleado
   authorizedCourses CourseTeacher[]  // Courses this teacher is authorized to teach
+  schedules ClassSchedule[] @relation("ScheduleTeacher")  // Horarios de clase donde este empleado es el maestro
 }
 
 model Expense {
@@ -1046,9 +1046,9 @@ model ClassSchedule {
   courseId    String?
   course      Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
   
-  // Optional: Override default teacher for this specific class time
+  // Optional: Override default teacher for this specific class time (now uses Employee)
   teacherId   String?
-  teacher     User?    @relation(fields: [teacherId], references: [id])
+  teacher     Employee? @relation("ScheduleTeacher", fields: [teacherId], references: [id])
   
   classroomId String?
   classroom   Classroom? @relation(fields: [classroomId], references: [id])

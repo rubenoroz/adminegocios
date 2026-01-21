@@ -281,17 +281,15 @@ export function SchoolClassCalendar() {
         setEvents(newEvents);
     }, [schedules, date]);
 
-    // Fetch teachers (employees with userId)
+    // Fetch teachers (all employees can be assigned as teachers)
     const fetchTeachers = useCallback(async () => {
         if (!selectedBranch?.businessId) return;
         try {
             const res = await fetch(`/api/employees?businessId=${selectedBranch.businessId}`);
             if (res.ok) {
                 const data = await res.json();
-                // Only include employees that have a valid userId (linked to User table)
-                const validTeachers = data
-                    .filter((e: any) => e.userId)
-                    .map((e: any) => ({ id: e.userId, name: e.name }));
+                // Include ALL employees (they don't need a user account to be assigned as teachers)
+                const validTeachers = data.map((e: any) => ({ id: e.id, name: e.name }));
                 setTeachers(validTeachers);
             }
         } catch (error) {
