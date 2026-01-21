@@ -97,11 +97,7 @@ export async function POST(
                         include: {
                             schedule: {
                                 include: {
-                                    teacher: {
-                                        include: {
-                                            employee: true // Need employee ID for StudentPayment
-                                        }
-                                    },
+                                    teacher: true, // Now Employee directly
                                     business: true // Need to check commissionOnInscription
                                 }
                             }
@@ -124,11 +120,12 @@ export async function POST(
 
                     if (shouldCalculate) {
                         // 4. If teacher found, calculate commission
-                        const teacherUser = enrollment?.schedule?.teacher;
-                        if (teacherUser?.employee && teacherUser.paymentModel === 'COMMISSION' && teacherUser.commissionPercentage) {
-                            finalTeacherId = teacherUser.employee.id;
-                            finalCommission = (paymentAmount * teacherUser.commissionPercentage) / 100;
-                            console.log(`[AUTO-COMMISSION] Teacher: ${teacherUser.name}, Rate: ${teacherUser.commissionPercentage}%, Amount: ${finalCommission}`);
+                        // schedule.teacher is now Employee directly
+                        const teacher = enrollment?.schedule?.teacher;
+                        if (teacher && teacher.paymentModel === 'COMMISSION' && teacher.commissionPercentage) {
+                            finalTeacherId = teacher.id;
+                            finalCommission = (paymentAmount * teacher.commissionPercentage) / 100;
+                            console.log(`[AUTO-COMMISSION] Teacher: ${teacher.firstName}, Rate: ${teacher.commissionPercentage}%, Amount: ${finalCommission}`);
                         }
                     } else {
                         console.log(`[AUTO-COMMISSION] Skipped. Is Inscription: ${isInscription}, Config Allowed: ${allowInscriptionCommission}`);

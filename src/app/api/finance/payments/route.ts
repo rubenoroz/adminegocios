@@ -88,11 +88,7 @@ export async function POST(req: Request) {
                     include: {
                         schedule: {
                             include: {
-                                teacher: {
-                                    include: {
-                                        employee: true
-                                    }
-                                }
+                                teacher: true  // Now Employee directly
                             }
                         }
                     }
@@ -103,13 +99,14 @@ export async function POST(req: Request) {
                 let foundValidTeacher = false;
 
                 for (const enrollment of groupEnrollments) {
-                    if (enrollment?.schedule?.teacher?.employee) {
-                        const emp = enrollment.schedule.teacher.employee;
-                        console.log(`[COMMISSION_DEBUG] Checking Teacher ${emp.firstName} (Schedule ${enrollment.scheduleId}). Model: ${emp.paymentModel}`);
+                    // schedule.teacher is now Employee directly
+                    const teacher = enrollment?.schedule?.teacher;
+                    if (teacher) {
+                        console.log(`[COMMISSION_DEBUG] Checking Teacher ${teacher.firstName} (Schedule ${enrollment.scheduleId}). Model: ${teacher.paymentModel}`);
 
-                        if (emp.paymentModel === 'COMMISSION' || emp.paymentModel === 'MIXED') {
-                            teacherId = emp.id;
-                            const commissionPct = emp.commissionPercentage || 0;
+                        if (teacher.paymentModel === 'COMMISSION' || teacher.paymentModel === 'MIXED') {
+                            teacherId = teacher.id;
+                            const commissionPct = teacher.commissionPercentage || 0;
 
                             // Recalculate based on current payment amount
                             teacherCommission = amount * (commissionPct / 100);

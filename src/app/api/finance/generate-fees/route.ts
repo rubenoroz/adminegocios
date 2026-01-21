@@ -43,11 +43,7 @@ export async function POST(req: NextRequest) {
                 schedule: {
                     include: {
                         course: true,
-                        teacher: {
-                            include: {
-                                employee: true
-                            }
-                        }
+                        teacher: true  // Now Employee directly, not User
                     }
                 }
             }
@@ -132,10 +128,11 @@ export async function POST(req: NextRequest) {
             let expectedCommission = null;
 
             // Calculate Expected Commission (Projected)
-            const teacherUser = enrollment.schedule.teacher;
-            if (teacherUser?.employee && teacherUser.paymentModel === 'COMMISSION' && teacherUser.commissionPercentage) {
-                expectedTeacherId = teacherUser.employee.id;
-                expectedCommission = ((course.price || 0) * teacherUser.commissionPercentage) / 100;
+            // schedule.teacher is now Employee directly (not User)
+            const teacher = enrollment.schedule.teacher;
+            if (teacher && teacher.paymentModel === 'COMMISSION' && teacher.commissionPercentage) {
+                expectedTeacherId = teacher.id;
+                expectedCommission = ((course.price || 0) * teacher.commissionPercentage) / 100;
             }
 
             feesToCreate.push({

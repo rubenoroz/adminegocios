@@ -251,20 +251,17 @@ export async function GET(req: Request) {
                                 const scheduleWithTeacher = await prisma.classSchedule.findUnique({
                                     where: { id: firstScheduleId },
                                     include: {
-                                        teacher: {
-                                            include: { employee: true }
-                                        }
+                                        teacher: true  // Now Employee directly
                                     }
                                 });
 
-                                if (scheduleWithTeacher?.teacher?.employee) {
-                                    const emp = scheduleWithTeacher.teacher.employee;
-                                    if (emp.paymentModel === 'COMMISSION' || emp.paymentModel === 'MIXED') {
-                                        expectedTeacherId = emp.id;
-                                        const pct = emp.commissionPercentage || 0;
-                                        expectedCommission = finalAmount * (pct / 100);
-                                        console.log(`[AUTO FEE] Teacher: ${emp.firstName}, Commission: ${expectedCommission} (${pct}%)`);
-                                    }
+                                // schedule.teacher is now Employee directly
+                                const teacher = scheduleWithTeacher?.teacher;
+                                if (teacher && (teacher.paymentModel === 'COMMISSION' || teacher.paymentModel === 'MIXED')) {
+                                    expectedTeacherId = teacher.id;
+                                    const pct = teacher.commissionPercentage || 0;
+                                    expectedCommission = finalAmount * (pct / 100);
+                                    console.log(`[AUTO FEE] Teacher: ${teacher.firstName}, Commission: ${expectedCommission} (${pct}%)`);
                                 }
                             }
 
