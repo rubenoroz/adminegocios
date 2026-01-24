@@ -245,7 +245,6 @@ export function CourseList() {
                     teacherId: newTeacherId === "none" ? null : newTeacherId || null,
                     classroomId: newClassroomId === "none" ? null : newClassroomId || null,
                     schedules: newSchedules,
-                    schedules: newSchedules,
                     branchIds: newBranchIds,
                     price: newPrice,
                     upfrontPrice: newUpfrontPrice
