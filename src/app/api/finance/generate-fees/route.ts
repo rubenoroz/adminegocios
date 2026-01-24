@@ -71,6 +71,25 @@ export async function POST(req: NextRequest) {
             }
         });
 
+        // Get UPFRONT enrollments to exclude from monthly fees
+        const upfrontEnrollments = await prisma.enrollment.findMany({
+            where: {
+                course: {
+                    businessId: session.user.businessId
+                },
+                status: 'ACTIVE',
+                paymentScheme: 'UPFRONT'
+            },
+            select: {
+                studentId: true,
+                courseId: true
+            }
+        });
+
+        const upfrontKeys = new Set(
+            upfrontEnrollments.map(e => `${e.studentId}-${e.courseId}`)
+        );
+
         // Get existing fees for this month
         const monthStart = new Date(year, month, 1);
         const monthEnd = new Date(year, month + 1, 0);
@@ -113,6 +132,10 @@ export async function POST(req: NextRequest) {
             if (!course) continue;
 
             const studentCourseKey = `${enrollment.studentId}-${course.id}`;
+
+            // Skip if student paid UPFRONT for this course
+            if (upfrontKeys.has(studentCourseKey)) continue;
+
             if (processedKeys.has(studentCourseKey)) continue;
             processedKeys.add(studentCourseKey);
 
@@ -150,6 +173,10 @@ export async function POST(req: NextRequest) {
         // Process traditional course enrollments
         for (const enrollment of courseEnrollments) {
             const studentCourseKey = `${enrollment.studentId}-${enrollment.course.id}`;
+
+            // Skip if student paid UPFRONT for this course
+            if (upfrontKeys.has(studentCourseKey)) continue;
+
             if (processedKeys.has(studentCourseKey)) continue;
             processedKeys.add(studentCourseKey);
 

@@ -11,7 +11,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { courseId, studentIds } = body;
+        const { courseId, studentIds, paymentScheme = "MONTHLY" } = body;
 
         if (!courseId || !studentIds || !Array.isArray(studentIds)) {
             return new NextResponse("Missing required fields", { status: 400 });
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
         // Get course details for fee creation
         const course = await prisma.course.findUnique({
             where: { id: courseId },
-            select: { name: true, businessId: true, price: true }
+            select: { name: true, businessId: true, price: true, upfrontPrice: true }
         });
 
         // Create enrollments and fees for all students
@@ -31,6 +31,7 @@ export async function POST(req: Request) {
                     data: {
                         courseId,
                         studentId,
+                        paymentScheme,
                     },
                     include: {
                         student: {
@@ -44,25 +45,43 @@ export async function POST(req: Request) {
                     },
                 });
 
-                // Create initial monthly fee for current month
+                // Create initial fee based on payment scheme
                 const now = new Date();
-                const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-                    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-                const currentMonth = monthNames[now.getMonth()];
-                const dueDate = new Date(now.getFullYear(), now.getMonth() + 1, 5); // Due on 5th of next month
 
-                await prisma.studentFee.create({
-                    data: {
-                        title: `Colegiatura ${currentMonth} - ${course?.name || 'Curso'}`,
-                        amount: course?.price || 0, // Monto automático basado en el curso
-                        dueDate: dueDate,
-                        status: "PENDING",
-                        studentId: studentId,
-                        courseId: courseId,
-                        originalAmount: course?.price || 0,
-                        discountApplied: 0,
-                    }
-                });
+                if (paymentScheme === "UPFRONT") {
+                    // One-time full payment
+                    await prisma.studentFee.create({
+                        data: {
+                            title: `Pago Completo - ${course?.name || 'Curso'}`,
+                            amount: course?.upfrontPrice || course?.price || 0,
+                            dueDate: now, // Due immediately
+                            status: "PENDING",
+                            studentId: studentId,
+                            courseId: courseId,
+                            originalAmount: course?.upfrontPrice || course?.price || 0,
+                            discountApplied: 0,
+                        }
+                    });
+                } else {
+                    // Regular Monthly Fee
+                    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                    const currentMonth = monthNames[now.getMonth()];
+                    const dueDate = new Date(now.getFullYear(), now.getMonth() + 1, 5); // Due on 5th of next month
+
+                    await prisma.studentFee.create({
+                        data: {
+                            title: `Colegiatura ${currentMonth} - ${course?.name || 'Curso'}`,
+                            amount: course?.price || 0,
+                            dueDate: dueDate,
+                            status: "PENDING",
+                            studentId: studentId,
+                            courseId: courseId,
+                            originalAmount: course?.price || 0,
+                            discountApplied: 0,
+                        }
+                    });
+                }
 
                 // NOTE: Schedule enrollments are handled separately from the Calendar UI
                 // because a course can have multiple groups/schedules and the student

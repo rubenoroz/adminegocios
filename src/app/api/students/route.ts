@@ -80,7 +80,7 @@ export async function POST(req: Request) {
         // branchIds should be an array of strings
         const { firstName, lastName, matricula, email, phone, address, guardianName, guardianPhone, businessId, branchIds, referralSource } = body;
 
-        if (!firstName || !lastName || !matricula || !businessId) {
+        if (!firstName || !lastName || !businessId) {
             return new NextResponse("Missing required fields", { status: 400 });
         }
 
@@ -103,11 +103,34 @@ export async function POST(req: Request) {
             connectedBranches = branchIds.map((id: string) => ({ id }));
         }
 
+        // Check for automatic matricula generation
+        const business = await prisma.business.findUnique({ where: { id: businessId } });
+        let finalMatricula = matricula;
+
+        if (business?.autoMatriculaEnabled) {
+            const now = new Date();
+            const yearShort = now.getFullYear().toString().slice(-2);
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const sequence = (business.nextMatriculaNumber || 1).toString().padStart(4, '0');
+
+            finalMatricula = `${yearShort}${month}${sequence}`;
+
+            // Increment the counter safely
+            await prisma.business.update({
+                where: { id: businessId },
+                data: { nextMatriculaNumber: { increment: 1 } }
+            });
+        }
+
+        if (!finalMatricula) {
+            return new NextResponse("Matricula is required (or enable auto-generation)", { status: 400 });
+        }
+
         const student = await prisma.student.create({
             data: {
                 firstName,
                 lastName,
-                matricula,
+                matricula: finalMatricula,
                 email,
                 phone,
                 address,

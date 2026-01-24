@@ -12,7 +12,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { name, description, teacherId, schedules, classroomId, branchIds, price, color } = body;
+        const { name, description, teacherId, schedules, classroomId, branchIds, price, upfrontPrice, color } = body;
 
         if (!name) {
             return NextResponse.json({
@@ -52,6 +52,7 @@ export async function POST(req: Request) {
                     businessId: session.user.businessId!,
                     color: color || "#3B82F6",
                     price: price ? parseFloat(price) : 0,
+                    upfrontPrice: upfrontPrice ? parseFloat(upfrontPrice) : 0,
                     branches: {
                         connect: connectedBranches
                     }

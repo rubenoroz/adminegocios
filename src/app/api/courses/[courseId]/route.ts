@@ -140,7 +140,7 @@ export async function PATCH(
 
         const { courseId } = await params;
         const body = await req.json();
-        const { name, description, teacherId, schedule, room, classroomId, price } = body;
+        const { name, description, teacherId, schedule, room, classroomId, price, upfrontPrice } = body;
 
         // Build update data
         const updateData: any = {};
@@ -154,6 +154,10 @@ export async function PATCH(
         if (price !== undefined) {
             const parsed = parseFloat(price);
             updateData.price = isNaN(parsed) ? 0 : parsed;
+        }
+        if (upfrontPrice !== undefined) {
+            const parsed = parseFloat(upfrontPrice);
+            updateData.upfrontPrice = isNaN(parsed) ? 0 : parsed;
         }
 
         const course = await prisma.course.update({

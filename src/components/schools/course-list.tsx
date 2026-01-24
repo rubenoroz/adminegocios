@@ -35,6 +35,8 @@ interface Course {
     };
     branches?: { id: string; name: string }[];
     color?: string;
+    price?: number;
+    upfrontPrice?: number;
 }
 
 interface Teacher {
@@ -67,6 +69,7 @@ export function CourseList() {
     const [newClassroomId, setNewClassroomId] = useState("");
     const [newBranchIds, setNewBranchIds] = useState<string[]>([]);
     const [newPrice, setNewPrice] = useState("");
+    const [newUpfrontPrice, setNewUpfrontPrice] = useState("");
 
     // Edit states
     const [editOpen, setEditOpen] = useState(false);
@@ -242,8 +245,10 @@ export function CourseList() {
                     teacherId: newTeacherId === "none" ? null : newTeacherId || null,
                     classroomId: newClassroomId === "none" ? null : newClassroomId || null,
                     schedules: newSchedules,
+                    schedules: newSchedules,
                     branchIds: newBranchIds,
-                    price: newPrice
+                    price: newPrice,
+                    upfrontPrice: newUpfrontPrice
                 }),
             });
 
@@ -258,6 +263,7 @@ export function CourseList() {
                 setNewClassroomId("");
                 setNewBranchIds([]);
                 setNewPrice("");
+                setNewUpfrontPrice("");
             }
         } catch (error) {
             toast({ title: "Error al crear curso", variant: "destructive" });
@@ -298,7 +304,8 @@ export function CourseList() {
                     name: editingCourse.name,
                     description: editingCourse.description,
                     color: editingCourse.color || "#3B82F6",
-                    price: editingCourse.price
+                    price: editingCourse.price,
+                    upfrontPrice: editingCourse.upfrontPrice
                 })
             });
 
@@ -518,6 +525,20 @@ export function CourseList() {
                                             />
                                         </div>
                                         <p className="text-xs text-slate-500">Se usará para generar los cobros automáticos.</p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Precio Completo / Adelantado (Opcional)</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                                            <ModernInput
+                                                type="number"
+                                                placeholder="0.00"
+                                                value={newUpfrontPrice}
+                                                onChange={(val) => setNewUpfrontPrice(val)}
+                                                className="pl-7"
+                                            />
+                                        </div>
+                                        <p className="text-xs text-slate-500">Si se define, permite al alumno pagar todo el curso en una sola exhibición.</p>
                                     </div>
                                     <p className="text-sm text-slate-500 bg-slate-50 p-3 rounded-lg">
                                         💡 Profesores, salones y horarios se asignan desde el <strong>Calendario</strong> en la sección Académico.
@@ -963,6 +984,21 @@ export function CourseList() {
                                     className="pl-7"
                                 />
                             </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700">Precio Completo / Adelantado (Opcional)</label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                                <ModernInput
+                                    type="number"
+                                    placeholder="0.00"
+                                    value={editingCourse?.upfrontPrice || ""}
+                                    onChange={(val) => setEditingCourse({ ...editingCourse, upfrontPrice: val })}
+                                    className="pl-7"
+                                />
+                            </div>
+                            <p className="text-xs text-slate-500">Si se define, permite al alumno pagar todo el curso en una sola exhibición.</p>
                         </div>
 
                         <div className="pt-4 border-t border-slate-100">

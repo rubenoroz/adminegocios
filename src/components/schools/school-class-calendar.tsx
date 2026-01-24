@@ -10,6 +10,7 @@ import { useBranch } from "@/context/branch-context";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { MobileTimePicker } from "@/components/ui/mobile-time-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Import styles
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -52,6 +53,7 @@ interface CalendarEvent {
         instanceDate?: string;
         isCancelled?: boolean;
         courseColor?: string;
+        teacherColor?: string;
     };
 }
 
@@ -78,7 +80,7 @@ interface ClassSchedule {
     classroomId: string | null;
     classroom?: { id: string; name: string } | null;
     teacherId?: string | null;
-    teacher?: { id: string; firstName: string; lastName: string } | null;
+    teacher?: { id: string; firstName: string; lastName: string; color?: string } | null;
     enrollments?: { student: { id: string; firstName: string; lastName: string } }[];
     cancellations?: { date: string }[];
     validFrom?: string | null;
@@ -101,6 +103,17 @@ export function SchoolClassCalendar() {
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<typeof Views[keyof typeof Views]>(Views.WEEK);
     const [date, setDate] = useState(new Date());
+
+    // Filters
+    const [filterTeacher, setFilterTeacher] = useState<string>("ALL");
+    const [filterGroup, setFilterGroup] = useState<string>("ALL");
+    const [filterCourse, setFilterCourse] = useState<string>("ALL");
+
+    // Derived lists for filters
+    const uniqueGroups = useMemo(() => {
+        const groups = new Set(schedules.map(s => s.groupName).filter(Boolean));
+        return Array.from(groups).sort() as string[];
+    }, [schedules]);
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -170,6 +183,7 @@ export function SchoolClassCalendar() {
             if (res.ok) {
                 const data: ClassSchedule[] = await res.json();
                 console.log("DEBUG: Fetched schedules:", data);
+                console.log("DEBUG: First schedule teacher color:", data[0]?.teacher?.color);
                 setSchedules(data);
             }
         } catch (error) {
@@ -192,6 +206,11 @@ export function SchoolClassCalendar() {
         const endRange = addMonths(date, 2);
 
         schedules.forEach(schedule => {
+            // Apply Filters
+            if (filterTeacher !== "ALL" && schedule.teacherId !== filterTeacher) return;
+            if (filterGroup !== "ALL" && schedule.groupName !== filterGroup) return;
+            if (filterCourse !== "ALL" && schedule.courseId !== filterCourse) return;
+
             try {
                 // For permanent classes (no validFrom), use today as the start date
                 // This ensures we only show future classes, not past ones
@@ -267,7 +286,8 @@ export function SchoolClassCalendar() {
                             studentIds: enrolledStudentIds,
                             instanceDate: dateStr,
                             isCancelled: !!isCancelled,
-                            courseColor: schedule.course?.color
+                            courseColor: schedule.course?.color,
+                            teacherColor: schedule.teacher?.color
                         },
                     });
                     currentDate = addWeeks(currentDate, 1);
@@ -279,7 +299,7 @@ export function SchoolClassCalendar() {
 
         console.log("DEBUG: Generated events:", newEvents.length);
         setEvents(newEvents);
-    }, [schedules, date]);
+    }, [schedules, date, filterTeacher, filterGroup, filterCourse]);
 
     // Fetch teachers (all employees can be assigned as teachers)
     const fetchTeachers = useCallback(async () => {
@@ -347,8 +367,8 @@ export function SchoolClassCalendar() {
     // Event styling
     const eventStyleGetter = useCallback((event: CalendarEvent) => {
         const isCancelled = event.resource.isCancelled;
-        // Use course color if available, otherwise fallback to status color or default blue
-        const baseColor = event.resource.courseColor || statusColors[event.resource.status] || "#3B82F6";
+        // Use teacher color > course color > status color > default
+        const baseColor = event.resource.teacherColor || event.resource.courseColor || statusColors[event.resource.status] || "#3B82F6";
         const color = isCancelled ? "#cbd5e1" : baseColor;
 
         return {
@@ -399,6 +419,161 @@ export function SchoolClassCalendar() {
                     <GraduationCap size={28} />
                     Calendario de Clases
                 </h2>
+            </div>
+
+            {/* Filters - Premium Style */}
+            <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '16px',
+                marginBottom: '24px',
+                padding: '20px',
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.02) 100%)',
+                borderRadius: '20px',
+                border: '1px solid rgba(16, 185, 129, 0.15)',
+                boxShadow: '0 4px 20px rgba(16, 185, 129, 0.08)'
+            }}>
+                {/* Teacher Filter */}
+                <div style={{ flex: '1', minWidth: '200px' }}>
+                    <label style={{
+                        display: 'block',
+                        fontSize: '11px',
+                        textTransform: 'uppercase',
+                        color: '#10b981',
+                        fontWeight: 700,
+                        letterSpacing: '0.5px',
+                        marginBottom: '8px'
+                    }}>
+                        👨‍🏫 Filtrar por Maestro
+                    </label>
+                    <Select value={filterTeacher} onValueChange={setFilterTeacher}>
+                        <SelectTrigger style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '14px',
+                            border: '2px solid #e2e8f0',
+                            background: 'white',
+                            fontWeight: 500,
+                            fontSize: '14px',
+                            color: filterTeacher !== 'ALL' ? '#10b981' : '#475569',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                            transition: 'all 0.2s ease'
+                        }}>
+                            <SelectValue placeholder="Todos los maestros" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">Todos los maestros</SelectItem>
+                            {teachers.map(t => (
+                                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {/* Group Filter */}
+                <div style={{ flex: '1', minWidth: '200px' }}>
+                    <label style={{
+                        display: 'block',
+                        fontSize: '11px',
+                        textTransform: 'uppercase',
+                        color: '#10b981',
+                        fontWeight: 700,
+                        letterSpacing: '0.5px',
+                        marginBottom: '8px'
+                    }}>
+                        👥 Filtrar por Grupo
+                    </label>
+                    <Select value={filterGroup} onValueChange={setFilterGroup}>
+                        <SelectTrigger style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '14px',
+                            border: '2px solid #e2e8f0',
+                            background: 'white',
+                            fontWeight: 500,
+                            fontSize: '14px',
+                            color: filterGroup !== 'ALL' ? '#10b981' : '#475569',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                            transition: 'all 0.2s ease'
+                        }}>
+                            <SelectValue placeholder="Todos los grupos" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">Todos los grupos</SelectItem>
+                            {uniqueGroups.map(g => (
+                                <SelectItem key={g} value={g}>{g}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {/* Course Filter */}
+                <div style={{ flex: '1', minWidth: '200px' }}>
+                    <label style={{
+                        display: 'block',
+                        fontSize: '11px',
+                        textTransform: 'uppercase',
+                        color: '#10b981',
+                        fontWeight: 700,
+                        letterSpacing: '0.5px',
+                        marginBottom: '8px'
+                    }}>
+                        📚 Filtrar por Materia
+                    </label>
+                    <Select value={filterCourse} onValueChange={setFilterCourse}>
+                        <SelectTrigger style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '14px',
+                            border: '2px solid #e2e8f0',
+                            background: 'white',
+                            fontWeight: 500,
+                            fontSize: '14px',
+                            color: filterCourse !== 'ALL' ? '#10b981' : '#475569',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                            transition: 'all 0.2s ease'
+                        }}>
+                            <SelectValue placeholder="Todas las materias" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">Todas las materias</SelectItem>
+                            {courses.map(c => (
+                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {/* Clear Filters Button */}
+                {(filterTeacher !== 'ALL' || filterGroup !== 'ALL' || filterCourse !== 'ALL') && (
+                    <div style={{ display: 'flex', alignItems: 'flex-end', minWidth: '120px' }}>
+                        <button
+                            onClick={() => {
+                                setFilterTeacher('ALL');
+                                setFilterGroup('ALL');
+                                setFilterCourse('ALL');
+                            }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '12px 18px',
+                                borderRadius: '14px',
+                                border: 'none',
+                                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                                color: 'white',
+                                fontWeight: 600,
+                                fontSize: '13px',
+                                cursor: 'pointer',
+                                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            <X size={16} />
+                            Limpiar
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Controls (Action Buttons Only) */}
@@ -848,6 +1023,7 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
     const [saving, setSaving] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [students, setStudents] = useState<Array<{ id: string; firstName: string; lastName: string }>>([]);
+    const [studentSearchQuery, setStudentSearchQuery] = useState("");
 
     // Editable times for mobile
     // Editable times for mobile
@@ -1333,6 +1509,24 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
                         Selecciona los alumnos que asistirán a esta clase.
                     </p>
 
+                    {/* Search Input */}
+                    <div style={{ marginBottom: "12px" }}>
+                        <input
+                            type="text"
+                            placeholder="🔍 Buscar alumno por nombre..."
+                            value={studentSearchQuery}
+                            onChange={(e) => setStudentSearchQuery(e.target.value)}
+                            style={{
+                                width: "100%",
+                                padding: "10px 14px",
+                                borderRadius: "8px",
+                                border: "1px solid #e2e8f0",
+                                fontSize: "14px",
+                                backgroundColor: "#f8fafc"
+                            }}
+                        />
+                    </div>
+
                     <div style={{
                         maxHeight: "300px",
                         overflowY: "auto",
@@ -1362,6 +1556,11 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
                                 </div>
                                 {students
                                     .filter(s => selectedStudents.includes(s.id))
+                                    .filter(s => {
+                                        if (!studentSearchQuery.trim()) return true;
+                                        const fullName = `${s.firstName} ${s.lastName}`.toLowerCase();
+                                        return fullName.includes(studentSearchQuery.toLowerCase());
+                                    })
                                     .map(student => (
                                         <div
                                             key={student.id}
@@ -1403,10 +1602,19 @@ function ClassScheduleModal({ isOpen, onClose, selectedSlot, courses, classrooms
                                 top: selectedStudents.length > 0 ? "relative" : 0,
                                 zIndex: 10
                             }}>
-                                DISPONIBLES PARA INSCRIBIR ({students.length - selectedStudents.length})
+                                DISPONIBLES PARA INSCRIBIR ({students.filter(s => !selectedStudents.includes(s.id)).filter(s => {
+                                    if (!studentSearchQuery.trim()) return true;
+                                    const fullName = `${s.firstName} ${s.lastName}`.toLowerCase();
+                                    return fullName.includes(studentSearchQuery.toLowerCase());
+                                }).length})
                             </div>
                             {students
                                 .filter(s => !selectedStudents.includes(s.id))
+                                .filter(s => {
+                                    if (!studentSearchQuery.trim()) return true;
+                                    const fullName = `${s.firstName} ${s.lastName}`.toLowerCase();
+                                    return fullName.includes(studentSearchQuery.toLowerCase());
+                                })
                                 .map(student => (
                                     <div
                                         key={student.id}

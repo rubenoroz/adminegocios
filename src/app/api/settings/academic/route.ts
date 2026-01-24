@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     try {
         const business = await prisma.business.findUnique({
             where: { id: session.user.businessId },
-            select: { gradingConfig: true }
+            select: { gradingConfig: true, autoMatriculaEnabled: true }
         });
 
         const config = business?.gradingConfig ? JSON.parse(business.gradingConfig) : null;
@@ -28,7 +28,12 @@ export async function GET(req: NextRequest) {
             passingGrade: 70
         };
 
-        return NextResponse.json(config || defaultConfig);
+        const finalConfig = {
+            ...(config || defaultConfig),
+            autoMatriculaEnabled: business?.autoMatriculaEnabled ?? false
+        };
+
+        return NextResponse.json(finalConfig);
     } catch (error) {
         console.error("Error fetching academic settings:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
@@ -49,10 +54,14 @@ export async function PUT(req: NextRequest) {
             return NextResponse.json({ error: "Invalid format" }, { status: 400 });
         }
 
+        // Extract standalone fields
+        const { autoMatriculaEnabled, ...gradingConfigData } = data;
+
         await prisma.business.update({
             where: { id: session.user.businessId },
             data: {
-                gradingConfig: JSON.stringify(data)
+                gradingConfig: JSON.stringify(gradingConfigData),
+                autoMatriculaEnabled: autoMatriculaEnabled ?? undefined
             }
         });
 

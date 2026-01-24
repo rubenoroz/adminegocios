@@ -37,7 +37,8 @@ export async function GET(request: NextRequest) {
                     select: {
                         id: true,
                         firstName: true,
-                        lastName: true
+                        lastName: true,
+                        color: true
                     }
                 },
                 enrollments: {

@@ -645,7 +645,8 @@ export function EmployeeList() {
                 ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '32px' }}>
                         {filteredEmployees.map((employee, index) => {
-                            const employeeColors: Record<number, { bg: string; accent: string }> = {
+                            // Fallback color palettes for employees without custom colors
+                            const fallbackColors: Record<number, { bg: string; accent: string }> = {
                                 0: { bg: '#DBEAFE', accent: '#2563EB' },
                                 1: { bg: '#EDE9FE', accent: '#7C3AED' },
                                 2: { bg: '#FCE7F3', accent: '#DB2777' },
@@ -653,7 +654,24 @@ export function EmployeeList() {
                                 4: { bg: '#D1FAE5', accent: '#059669' },
                                 5: { bg: '#CCFBF1', accent: '#0D9488' },
                             };
-                            const colors = employeeColors[index % 6];
+
+                            // Helper to create light background from accent color
+                            const hexToLightBg = (hex: string): string => {
+                                // Convert hex to RGB, then make a light background
+                                const r = parseInt(hex.slice(1, 3), 16);
+                                const g = parseInt(hex.slice(3, 5), 16);
+                                const b = parseInt(hex.slice(5, 7), 16);
+                                // Create a light version (blend with white at 20% opacity)
+                                const lightR = Math.round(r + (255 - r) * 0.85);
+                                const lightG = Math.round(g + (255 - g) * 0.85);
+                                const lightB = Math.round(b + (255 - b) * 0.85);
+                                return `rgb(${lightR}, ${lightG}, ${lightB})`;
+                            };
+
+                            // Use employee's database color if available, otherwise use fallback
+                            const accent = employee.color || fallbackColors[index % 6].accent;
+                            const bg = employee.color ? hexToLightBg(employee.color) : fallbackColors[index % 6].bg;
+                            const colors = { bg, accent };
                             const isSelected = selectedIds.includes(employee.id);
 
                             return (

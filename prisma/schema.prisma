@@ -168,7 +168,9 @@ model Business {
   commissionOnInscription Boolean @default(false) // If true, enrollment fees generate commission for teachers
   
   // School feature toggles
-  enableParentsModule  Boolean  @default(true)  // Show/hide Parents section (for schools with minors)
+  enableParentsModule     Boolean  @default(true)  // Show/hide Parents section (for schools with minors)
+  autoMatriculaEnabled    Boolean  @default(false) // Automatically generate student matricula (YYMM + Sequence)
+  nextMatriculaNumber     Int      @default(1)     // Counter for automatic matricula generation
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -669,6 +671,7 @@ model Course {
   status      String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
   color       String?  @default("#3B82F6") // Hex color for calendar
   price       Float?   @default(0) // Monto de la colegiatura asociado a este curso
+  upfrontPrice Float?   @default(0) // Precio pago único/completo (nuevo)
   
   businessId  String
   business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
@@ -787,6 +790,7 @@ model Enrollment {
   courseId    String
   course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   status      String   @default("ACTIVE") // ACTIVE, DROPPED, COMPLETED
+  paymentScheme String   @default("MONTHLY") // MONTHLY, UPFRONT
   enrolledAt  DateTime @default(now())
   
   @@unique([studentId, courseId])

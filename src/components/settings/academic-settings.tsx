@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Loader2, Plus, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -15,6 +16,7 @@ interface Period {
 interface GradingConfig {
     periods: Period[];
     passingGrade: number;
+    autoMatriculaEnabled?: boolean;
 }
 
 export function AcademicSettings() {
@@ -132,6 +134,32 @@ export function AcademicSettings() {
                 color: '#0369A1'
             }}>
                 💡 Algunas escuelas no manejan periodos de evaluación. Si tu escuela evalúa el progreso continuo sin parciales, puedes dejar esta sección vacía.
+            </div>
+
+            {/* Auto Matricula Setting */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px',
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                border: '1px solid #E2E8F0',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+            }}>
+                <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#1E293B', margin: '0 0 4px 0' }}>
+                        Generación Automática de Matrícula
+                    </h4>
+                    <p style={{ fontSize: '13px', color: '#64748B', margin: 0 }}>
+                        Formato: AAMM + Consecutivo (Ej: {new Date().getFullYear().toString().slice(-2)}020001).
+                        Se asignará al inscribir alumnos nuevos.
+                    </p>
+                </div>
+                <Switch
+                    checked={config.autoMatriculaEnabled || false}
+                    onCheckedChange={(checked) => setConfig({ ...config, autoMatriculaEnabled: checked })}
+                />
             </div>
 
             {/* Periods header with add button */}
